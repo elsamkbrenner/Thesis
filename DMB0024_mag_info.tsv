@@ -1,0 +1,473 @@
+genome	domain	phylum	class	order	family	genus	species	completeness	contamination	mag_size
+EHA01897_bin.2	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	64.22	1.56	1184703
+EHA01893_bin.24	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	72.19	7.15	1559926
+EHA01872_bin.15	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__UBA932	g__Cryptobacteroides	s__	96.79	0.14	2210791
+EHA01871_bin.13	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola sp900546645	68.48	5.58	3994558
+EHA01927_bin.31	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	53.16	0.56	637016
+EHA01914_bin.11	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Thomasclavelia	s__Thomasclavelia spiroformis_A	55.73	2.79	1533943
+EHA01880_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	56.39	8.36	1527877
+EHA01915_bin.20	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Fimiplasma	s__	96.94	0.05	1555354
+EHA01894_bin.26	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	57.85	4.7	956163
+EHA01902_bin.3	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	50.65	6.83	1735240
+EHA01920_bin.6	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Butyricicoccaceae	g__Butyricicoccus	s__Butyricicoccus pullicaecorum_C	58.94	0	1384001
+EHA01873_bin.14	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_C	s__	99.97	0.01	1762849
+EHA01900_bin.25	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Eggerthellaceae	g__Slackia_A	s__	63.54	0.48	1150142
+EHA01926_bin.19	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	80.91	0.52	1001999
+EHA01924_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__CHH4-2	s__	52.42	3.72	1791725
+EHA01916_bin.28	d__Bacteria	p__Bacillota	c__Bacilli	o__Haloplasmatales	f__Turicibacteraceae	g__Turicibacter	s__Turicibacter sp002311155	93.56	0.48	2220414
+EHA01908_bin.14	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Tannerellaceae	g__Parabacteroides	s__Parabacteroides merdae	95.39	0.42	4015669
+EHA01876_bin.17	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	56.67	7.9	1368766
+EHA01871_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	52.51	0.41	1253681
+EHA01871_bin.14	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Prevotella	s__Prevotella copri_B	99.92	0.08	3407300
+EHA01906_bin.28	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	62.33	5.79	1469370
+EHA01877_bin.6	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	99.93	1.2	2982968
+EHA01915_bin.38	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	58.89	7.75	1373755
+EHA01891_bin.16	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Fournierella	s__	92.27	2.08	2864319
+EHA01909_bin.12	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola vulgatus	99.95	1.06	4293371
+EHA01886_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Cellulosilyticaceae	g__Zhenhengia	s__Zhenhengia yiwuensis	98.22	0.63	3440638
+EHA01897_bin.11	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum_A	s__	96.17	0.32	2553169
+EHA01879_bin.31	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	60.09	3.29	1012913
+EHA01894_bin.13	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	51.83	1.83	1239705
+EHA01914_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	98.02	0	1983228
+EHA01881_bin.21	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	75.48	3.2	1081018
+EHA01903_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Roseburia	s__Roseburia sp019421345	88.79	1.64	2550310
+EHA01891_bin.33	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	60.93	7.02	2091852
+EHA01884_bin.15	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	61.59	9.49	3042504
+EHA01880_bin.21	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Bacteroides	s__Bacteroides sp900766005	62.53	3.34	1963358
+EHA01918_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__Blautia_A massiliensis	84.9	0.21	2561223
+EHA01926_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__	85.47	0.93	2290195
+EHA01911_bin.10	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	55.99	6.29	1827754
+EHA01922_bin.19	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__UBA932	g__Cryptobacteroides	s__	98.43	0.34	2365018
+EHA01893_bin.34	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	51.32	4.19	1183260
+EHA01900_bin.52	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Holdemanella	s__	51.72	9.55	1279241
+EHA01910_bin.17	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554355	50.41	4.3	1031669
+EHA01873_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	77.08	8.61	1698152
+EHA01927_bin.5	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia hansenii	51.08	9.09	1545154
+EHA01910_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Aphodousia	s__	60.15	6.79	1442072
+EHA01921_bin.13	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Enterocloster	s__Enterocloster sp001517625	59.82	0.68	1521843
+EHA01875_bin.10	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	95.09	3.18	1501871
+EHA01913_bin.30	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900555025	51.53	6.78	1585791
+EHA01896_bin.41	d__Bacteria	p__Spirochaetota	c__Brachyspirae	o__Brachyspirales	f__Brachyspiraceae	g__Brachyspira	s__	52.14	2.37	1761270
+EHA01908_bin.9	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_D	s__	57.55	0.59	961039
+EHA01906_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	90.89	0.35	2321900
+EHA01890_bin.13	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__CALVGN01	s__	96.84	1.58	1472246
+EHA01900_bin.34	d__Bacteria	p__Bacillota_C	c__Negativicutes	o__Acidaminococcales	f__Acidaminococcaceae	g__Phascolarctobacterium_A	s__	76.45	0.11	1704386
+EHA01917_bin.11	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554355	63.37	7.49	1500512
+EHA01872_bin.37	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Paraprevotella	s__	57.79	0.26	1471527
+EHA01890_bin.39	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__	96.95	1.75	2643167
+EHA01916_bin.24	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Lactobacillaceae	g__Lactobacillus	s__Lactobacillus johnsonii	99.84	0.07	1736094
+EHA01928_bin.22	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	87.91	0.24	4555440
+EHA01887_bin.13	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola plebeius	51.86	8.27	2248627
+EHA01913_bin.17	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	63.32	0.45	841564
+EHA01892_bin.5	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	94.81	0.37	2450117
+EHA01905_bin.21	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Klebsiella	s__Klebsiella pneumoniae	86.26	1.34	4489237
+EHA01898_bin.4	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Alloprevotella	s__Alloprevotella sp000437675	92.89	0.64	2775847
+EHA01928_bin.3	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	64.22	3.65	1127236
+EHA01882_bin.21	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__	56.78	5.56	2543477
+EHA01904_bin.9	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Enterococcaceae	g__Enterococcus_B	s__Enterococcus_B hirae	100	0.18	2862920
+EHA01908_bin.32	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Marinifilaceae	g__Odoribacter	s__Odoribacter sp905193145	99.89	0.02	2566955
+EHA01908_bin.17	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ventrimonas	s__Ventrimonas sp900538475	92.07	0.25	3259502
+EHA01888_bin.10	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	81.2	0.63	1440278
+EHA01895_bin.27	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Bacteroides	s__	53.7	6.75	1926427
+EHA01902_bin.4	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Parasutterella	s__Parasutterella gallistercoris	99.99	0.05	2376522
+EHA01898_bin.17	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	50.47	8.18	1657091
+EHA01886_bin.13	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	50.96	1.78	1649041
+EHA01887_bin.31	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella sp905186105	58.55	1.67	1487165
+EHA01910_bin.16	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	50.34	9.74	1025815
+EHA01918_bin.31	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__Clostridium saudiense	52	3.61	1079982
+EHA01921_bin.41	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Romboutsia	s__Romboutsia timonensis	50.55	1.42	2028346
+EHA01919_bin.37	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__Schaedlerella sp900765975	60.66	8.14	1412704
+EHA01901_bin.3	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum sp900543125	94.54	0.55	3641550
+EHA01876_bin.8	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola sp900546645	99.33	0.09	3143751
+EHA01921_bin.25	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	71.76	1.86	1141222
+EHA01893_bin.32	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__	51.27	9.25	1588163
+EHA01879_bin.16	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Catenibacterium	s__Catenibacterium sp000437715	100	0.8	2166364
+EHA01888_bin.16	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__	80.88	4.55	2235223
+EHA01913_bin.16	d__Bacteria	p__Bacillota	c__Bacilli	o__Acholeplasmatales	f__Anaeroplasmataceae	g__CALUXS01	s__	100	0.29	1565725
+EHA01891_bin.28	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554355	69.1	3.17	1724444
+EHA01914_bin.30	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	59.77	3.11	1233442
+EHA01913_bin.4	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__CAG-274	g__Gallispira	s__Gallispira sp900543365	57.11	1.24	940311
+EHA01921_bin.27	d__Bacteria	p__Bacillota	c__Bacilli	o__Haloplasmatales	f__Turicibacteraceae	g__Turicibacter	s__	76.89	7.87	2816051
+EHA01917_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ruminococcus_B	s__	95.66	0.27	2370933
+EHA01914_bin.5	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_B	s__	70.4	1.73	1659073
+EHA01888_bin.4	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	94.69	0.07	2704864
+EHA01894_bin.33	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella sp905186105	53.56	7.49	2074789
+EHA01879_bin.23	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella sp905186105	58.74	8.7	1489891
+EHA01894_bin.20	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	60.25	1.53	1876782
+EHA01890_bin.33	d__Bacteria	p__Bacillota	c__Bacilli	o__RFN20	f__CAG-826	g__Onthovivens	s__	94.77	1.58	1564091
+EHA01920_bin.18	d__Bacteria	p__Bacillota	c__Bacilli	o__Acholeplasmatales	f__Anaeroplasmataceae	g__CALUXS01	s__	95.7	0.39	1361050
+EHA01903_bin.32	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__Schaedlerella sp900765975	84.9	2.7	2403386
+EHA01876_bin.7	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Bacteroides	s__Bacteroides sp900766005	99.94	0.04	3091519
+EHA01924_bin.10	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Faecalibacillus	s__Faecalibacillus intestinalis	99.06	1.21	2478854
+EHA01890_bin.7	d__Bacteria	p__Bacillota	c__Bacilli	o__Haloplasmatales	f__Turicibacteraceae	g__Turicibacter	s__	82.35	1.41	1977152
+EHA01892_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia	s__Escherichia coli	69.41	2.13	2988616
+EHA01926_bin.14	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Lactobacillaceae	g__Ligilactobacillus	s__Ligilactobacillus animalis	99.82	0.23	1754246
+EHA01891_bin.29	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Thomasclavelia	s__Thomasclavelia spiroformis_A	62.66	7.9	1875586
+EHA01894_bin.7	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	70.67	3.82	1355749
+EHA01875_bin.22	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	51.59	9.91	1902320
+EHA01878_bin.20	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	51.28	0.03	1430039
+EHA01882_bin.11	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	71.99	1.18	1212886
+EHA01877_bin.16	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	56.69	8.54	1631620
+EHA01901_bin.21	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	72.69	5.82	933953
+EHA01908_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Avilachnospira	s__	96.45	0.39	1744729
+EHA01919_bin.21	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900015295	87.3	0.13	1744040
+EHA01911_bin.11	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Aphodousia	s__	90.62	0.59	1571619
+EHA01925_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Roseburia	s__	99.82	0.02	2919182
+EHA01906_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	66.64	2.24	1499848
+EHA01872_bin.6	d__Bacteria	p__Bacillota	c__Bacilli	o__Acholeplasmatales	f__Anaeroplasmataceae	g__CALUXS01	s__	98.39	0.13	1570519
+EHA01905_bin.3	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	60.06	2.94	1673367
+EHA01918_bin.27	d__Bacteria	p__Actinomycetota	c__Actinomycetia	o__Actinomycetales	f__Bifidobacteriaceae	g__Bifidobacterium	s__Bifidobacterium longum	91.31	5.15	2122451
+EHA01893_bin.29	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__	s__	79.3	6.41	888613
+EHA01893_bin.18	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	51.93	5.34	3632539
+EHA01925_bin.17	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Campylobacteraceae	g__Campylobacter_D	s__Campylobacter_D upsaliensis	99.99	0.09	1707503
+EHA01907_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__	51.29	5.23	864250
+EHA01918_bin.18	d__Bacteria	p__Bacillota	c__Bacilli	o__Haloplasmatales	f__Turicibacteraceae	g__Turicibacter	s__Turicibacter sanguinis	100	1.12	3032782
+EHA01885_bin.19	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	79.95	1.34	1260988
+EHA01908_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Lawsonibacter	s__Lawsonibacter sp900754605	83.11	2.12	1599196
+EHA01893_bin.4	d__Bacteria	p__Bacillota_B	c__Peptococcia	o__Peptococcales	f__Peptococcaceae	g__UMGS1590	s__UMGS1590 sp900553245	53.74	2.5	1477074
+EHA01924_bin.36	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	56.45	8.25	1938380
+EHA01925_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	92.87	0.95	2315331
+EHA01897_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Hungatella_A	s__	96.8	0.72	3145333
+EHA01918_bin.16	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Streptococcaceae	g__Streptococcus	s__Streptococcus lutetiensis	99.98	0.06	1926862
+EHA01877_bin.19	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	63.42	9.97	1216445
+EHA01874_bin.19	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	78.07	2.67	1038842
+EHA01920_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__Blautia_A sp900541345	52.17	1.14	1321020
+EHA01928_bin.1	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	74.84	3.92	2046001
+EHA01873_bin.15	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	70.23	1.95	2028691
+EHA01914_bin.8	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_B	s__	99.32	0.79	1780462
+EHA01878_bin.29	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	69.79	4.05	2101892
+EHA01886_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__Faecalimonas sp900550235	92.99	3.54	2586719
+EHA01898_bin.14	d__Bacteria	p__Bacillota	c__Bacilli	o__Mycoplasmatales	f__Mycoplasmoidaceae	g__Mycoplasmoides	s__	61.11	2.56	525771
+EHA01900_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Butyricicoccaceae	g__Butyricicoccus	s__Butyricicoccus pullicaecorum_C	99.2	0.01	2125398
+EHA01918_bin.4	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia	s__Escherichia coli	100	0.85	5459305
+EHA01895_bin.26	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_A	s__	52.8	5.91	1214201
+EHA01895_bin.6	d__Bacteria	p__Desulfobacterota	c__Desulfovibrionia	o__Desulfovibrionales	f__Desulfovibrionaceae	g__Mailhella	s__	76.15	2.52	1635634
+EHA01917_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Fournierella	s__	76.62	5.81	1583119
+EHA01904_bin.12	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	98.85	0.09	1644693
+EHA01914_bin.4	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__MGBC140090	s__	95.54	1.02	2108706
+EHA01907_bin.8	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	99.55	1.06	3010714
+EHA01877_bin.20	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	64.95	0.11	1423584
+EHA01890_bin.32	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	89.59	2.22	1605582
+EHA01878_bin.12	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp019416865	92.1	1.66	1778958
+EHA01886_bin.1	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	93.41	0.3	3711761
+EHA01889_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella wadsworthensis_A	61.99	6.78	1590635
+EHA01872_bin.38	d__Bacteria	p__Bacillota_A	c__Clostridia	o__TANB77	f__CAG-508	g__Merdicola	s__	54.37	8.44	1949759
+EHA01890_bin.55	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__	59.7	8.88	1461755
+EHA01899_bin.29	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	53.34	4.65	904772
+EHA01915_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__	64.31	2.71	1725066
+EHA01882_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ventrimonas	s__Ventrimonas sp900538475	57.65	1.07	1787465
+EHA01908_bin.5	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Aphodousia	s__	99.57	0.39	1726543
+EHA01903_bin.5	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Faecalitalea	s__	93.4	1.72	1735091
+EHA01892_bin.22	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	65.26	1.62	884052
+EHA01904_bin.2	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Holdemanella	s__Holdemanella porci_A	99.65	1.78	1799086
+EHA01900_bin.14	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_A	s__	55.92	0.04	1332498
+EHA01918_bin.28	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__Faecalimonas umbilicata	63.46	4.34	1816796
+EHA01891_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Fournierella	s__Fournierella massiliensis	56.05	0.64	1629755
+EHA01922_bin.34	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	52.41	6.99	908458
+EHA01887_bin.10	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	53.31	2.05	978409
+EHA01926_bin.2	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp000432195	86.13	0.66	2650420
+EHA01889_bin.13	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola_A	s__	64.95	5.56	2480653
+EHA01907_bin.13	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	50.79	6.36	794478
+EHA01882_bin.22	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	68.85	2.49	1224238
+EHA01878_bin.6	d__Bacteria	p__Desulfobacterota	c__Desulfovibrionia	o__Desulfovibrionales	f__Desulfovibrionaceae	g__Mailhella	s__	93.82	0.34	2100115
+EHA01919_bin.36	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	88.16	7.08	1290701
+EHA01925_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	87.64	4.12	1458723
+EHA01892_bin.19	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_D	s__	86.55	1.49	1441880
+EHA01900_bin.48	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	66.32	3.16	1006021
+EHA01925_bin.28	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	57.18	7.99	3520690
+EHA01904_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	98.61	0.53	2557227
+EHA01918_bin.17	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	61	4.49	880058
+EHA01922_bin.23	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium_H	s__Clostridium_H novyi	68.61	8.74	1163460
+EHA01878_bin.26	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	64.52	3.61	929140
+EHA01908_bin.16	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	80.34	6.17	2115557
+EHA01879_bin.8	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	94.06	3.04	1641937
+EHA01925_bin.29	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Bacteroides	s__Bacteroides uniformis	85.18	2.54	3374006
+EHA01919_bin.24	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	88.36	0.13	2647954
+EHA01920_bin.7	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Roseburia	s__Roseburia sp019421345	73.54	2.43	2076325
+EHA01882_bin.25	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	62.33	6.77	1313657
+EHA01874_bin.13	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	53.86	1.17	649358
+EHA01890_bin.45	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900753905	50.73	3.17	1461041
+EHA01922_bin.12	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	98.73	0.02	2061282
+EHA01906_bin.10	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900556555	56.87	0.81	1724686
+EHA01918_bin.30	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__	57.51	8.96	1462038
+EHA01879_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__Blautia_A sp900541345	83.1	4.54	2413507
+EHA01903_bin.7	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Enterocloster	s__Enterocloster sp001517625	95.43	1.16	2598824
+EHA01893_bin.6	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900556555	65.13	6.27	1881938
+EHA01918_bin.23	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	68.24	7.22	1513179
+EHA01908_bin.31	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp019416865	69.57	4.99	1422651
+EHA01889_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	60.32	7.94	1626490
+EHA01916_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__	95.26	0.87	2553948
+EHA01915_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__	65.56	2.13	1199222
+EHA01872_bin.35	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	53.54	4.56	1089386
+EHA01916_bin.27	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	78.43	2	1876729
+EHA01885_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	72.55	8.32	995084
+EHA01887_bin.39	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__	s__	57.88	1.12	629655
+EHA01918_bin.20	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_G	s__	100	0	1523052
+EHA01904_bin.17	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__Clostridium paraputrificum	57.1	7.15	2549356
+EHA01903_bin.39	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__	53.95	8.38	2138387
+EHA01896_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Lachnospira	s__Lachnospira sp900552795	58.77	1.54	1425916
+EHA01919_bin.18	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Cetobacterium_A	s__Cetobacterium_A sp934085975	99.22	0.49	2575992
+EHA01878_bin.28	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	51.63	4.23	1087790
+EHA01918_bin.10	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Enterococcaceae	g__Enterococcus_B	s__Enterococcus_B faecium	93.36	3.61	2320601
+EHA01925_bin.5	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	83.72	1.13	1540034
+EHA01909_bin.13	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	52.52	8.58	658328
+EHA01884_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia hansenii	63.41	7.15	2038601
+EHA01927_bin.29	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Romboutsia_C	s__Romboutsia_C hominis	99.07	1.97	2933493
+EHA01918_bin.2	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Anaerotignaceae	g__Fimicola	s__Fimicola sp944379995	97.04	0.39	2642616
+EHA01890_bin.54	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Fournierella	s__Fournierella massiliensis	50.04	0.86	1470024
+EHA01919_bin.20	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_A	s__	54.72	0.36	1270856
+EHA01890_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Negativibacillus	s__Negativibacillus sp000435195	99.35	0.08	2007394
+EHA01891_bin.24	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	61.98	6.86	2010047
+EHA01883_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	62.61	2.74	2757982
+EHA01913_bin.5	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp019416865	50.84	6.92	1074552
+EHA01892_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	84.01	2.36	2899786
+EHA01924_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__Clostridium neonatale	100	1.66	4526348
+EHA01896_bin.35	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	81.32	6.02	2383162
+EHA01892_bin.21	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Aphodousia	s__	95.04	0.91	1542600
+EHA01886_bin.2	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Amedibacterium	s__Amedibacterium intestinale	97.6	0.93	2265811
+EHA01927_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium_AH	s__Clostridium_AH fallax	60.75	2.92	1942703
+EHA01907_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	94.51	0.43	3041976
+EHA01920_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__Schaedlerella sp900765975	53.14	0.89	1308884
+EHA01911_bin.14	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	55.65	7.83	1263892
+EHA01913_bin.20	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__CALVGN01	s__	78.74	6.48	1323365
+EHA01887_bin.23	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__	s__	96.65	0.32	2141415
+EHA01890_bin.57	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__Blautia_A sp900541345	72.45	4.01	1506177
+EHA01918_bin.5	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Faecalibacillus	s__Faecalibacillus intestinalis	73.4	3.63	1945676
+EHA01874_bin.6	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	84.34	0.25	4426259
+EHA01891_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	52.75	1.69	1560695
+EHA01907_bin.1	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola sp020026175	99.45	1.99	4024119
+EHA01908_bin.4	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Dysosmobacter	s__	78.77	0.49	1568849
+EHA01876_bin.2	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	92.55	0.15	3851664
+EHA01925_bin.25	d__Bacteria	p__Bacillota_A	c__Clostridia	o__TANB77	f__CAG-508	g__CAG-269	s__	88.89	3.45	1798450
+EHA01925_bin.7	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	73.17	3.53	1079584
+EHA01920_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia hansenii	86.62	0.39	2158803
+EHA01923_bin.2	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_A	s__	99.99	0	2366956
+EHA01876_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	60.21	4.62	621731
+EHA01890_bin.58	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Faecalibacillus	s__	56.9	7.61	1626111
+EHA01914_bin.22	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	51.25	5.29	1031291
+EHA01874_bin.12	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ruminococcus_B	s__	53.24	5.85	2162452
+EHA01924_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__CAG-274	g__Tyzzerella	s__	74.06	0.3	953055
+EHA01892_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Faecalibacterium	s__Faecalibacterium sp900540455	99.93	0.05	2342514
+EHA01927_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Dwaynesavagella	s__	98.05	2.03	2124750
+EHA01924_bin.22	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Catellicoccaceae	g__Catellicoccus	s__Catellicoccus marimammalium	76.01	1.55	911162
+EHA01925_bin.2	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	92.98	0.44	3773224
+EHA01921_bin.34	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__GCA-900066495	s__GCA-900066495 sp902362365	84.68	8.46	2791373
+EHA01886_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Clostridium_Q	s__Clostridium_Q sp000435655	98.03	0.17	2718413
+EHA01871_bin.4	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	98.12	0.45	1884402
+EHA01891_bin.15	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_C	s__	81.69	0.05	1619165
+EHA01872_bin.39	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	57.66	8.11	1764535
+EHA01899_bin.27	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	68.38	0.65	2174521
+EHA01924_bin.28	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	55.45	3	1338460
+EHA01915_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900556555	85.82	0.8	2505267
+EHA01887_bin.4	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Alloprevotella	s__	88.54	0.94	2489976
+EHA01907_bin.12	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	52.5	4.69	1684740
+EHA01891_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	87.9	1.54	3044352
+EHA01901_bin.27	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__	60.34	2.83	969194
+EHA01925_bin.6	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Tannerellaceae	g__Parabacteroides	s__Parabacteroides distasonis	74.97	1.42	3533825
+EHA01908_bin.27	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium_H	s__Clostridium_H novyi	78.37	7.02	1427689
+EHA01894_bin.1	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	59.51	3.35	2020456
+EHA01903_bin.38	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	68.06	8.09	1761237
+EHA01902_bin.12	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia	s__Escherichia coli	52.38	0.49	2561409
+EHA01926_bin.27	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	66.46	1.48	711459
+EHA01890_bin.19	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum sp023051105	85.98	0.45	4649279
+EHA01898_bin.23	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	53.61	5.73	2095207
+EHA01904_bin.22	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	51.39	2.47	659862
+EHA01926_bin.3	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella sp900551665	75.4	4.65	1489859
+EHA01906_bin.11	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Tannerellaceae	g__Parabacteroides	s__	94.46	0.13	2554279
+EHA01872_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	94.78	4.62	2083732
+EHA01879_bin.5	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola coprocola	84.79	0.47	2667745
+EHA01871_bin.16	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_B	s__	99.75	0.06	1757461
+EHA01886_bin.16	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__Clostridium sp018372875	59.46	6.44	2766064
+EHA01912_bin.15	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	57.41	0.96	1094891
+EHA01900_bin.26	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Allobaculum	s__Allobaculum stercoricanis	87.13	0.2	1943624
+EHA01927_bin.16	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Tissierellales	f__Peptoniphilaceae	g__Anaerosphaera	s__	99.71	0.02	1503915
+EHA01922_bin.6	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554355	76.98	9.09	1678702
+EHA01917_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	62.5	3.62	1246960
+EHA01915_bin.8	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_B	s__	85.08	2.95	1633977
+EHA01887_bin.32	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp019416865	54.59	2.12	1169132
+EHA01927_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__	95.1	0.39	3320496
+EHA01914_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	91.43	6.17	2995265
+EHA01874_bin.16	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__	s__	56.66	9.8	1665989
+EHA01897_bin.13	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Anaerotignaceae	g__Anaerotignum	s__	90.33	0.08	1960553
+EHA01896_bin.21	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__Faecalimonas umbilicata	54.29	4.49	1730623
+EHA01923_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	93.03	0.92	3815890
+EHA01877_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	57.55	1.75	1004279
+EHA01928_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Anaerotignaceae	g__Anaerotignum	s__Anaerotignum sp905214825	97.27	0.05	2042115
+EHA01917_bin.7	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__Blautia_A sp900541345	70.36	2.26	1520958
+EHA01878_bin.19	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	81.37	5.58	1350615
+EHA01890_bin.17	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola plebeius	94.12	1.09	3480027
+EHA01900_bin.41	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella sp900551665	67.07	9.13	1509411
+EHA01904_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	69.7	8.4	2584354
+EHA01913_bin.28	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	68.34	6.71	1613195
+EHA01902_bin.20	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Muribaculaceae	g__Limisoma	s__	97.34	0.18	2300352
+EHA01900_bin.29	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__Blautia_A sp900541345	81.95	0.15	2151911
+EHA01928_bin.8	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Streptococcaceae	g__Lactococcus	s__Lactococcus lactis	100	0.07	2270986
+EHA01875_bin.16	d__Bacteria	p__Desulfobacterota	c__Desulfovibrionia	o__Desulfovibrionales	f__Desulfovibrionaceae	g__Mailhella	s__Mailhella sp020024815	97.37	0.32	2224113
+EHA01908_bin.41	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	56.77	3.13	1229951
+EHA01899_bin.21	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	76.13	5.03	1192037
+EHA01894_bin.17	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	59.54	2.45	1348104
+EHA01921_bin.29	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Romboutsia	s__	80.3	8.49	3151434
+EHA01922_bin.4	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Muribaculaceae	g__Limisoma	s__Limisoma sp900541935	99.98	0.01	2408491
+EHA01923_bin.7	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	100	6.95	2344364
+EHA01908_bin.19	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Anaerovoracaceae	g__Gallibacter	s__	96.32	0.26	1842815
+EHA01904_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ruminococcus_B	s__Ruminococcus_B gnavus	93.62	0.2	2300454
+EHA01928_bin.31	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	75.74	8.11	2544124
+EHA01925_bin.12	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Alloprevotella	s__Alloprevotella sp000437675	98.48	0.54	2751241
+EHA01916_bin.21	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	64.73	5.35	865173
+EHA01886_bin.14	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	100	2.17	2440048
+EHA01895_bin.2	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola sp900544075	98.33	0.97	2836122
+EHA01887_bin.29	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	81.18	3.77	1473471
+EHA01889_bin.12	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	88.8	3.98	1458197
+EHA01893_bin.26	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	80.72	0.05	2434691
+EHA01904_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__	63.89	4.4	1672444
+EHA01893_bin.23	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	51.37	9.17	1585763
+EHA01897_bin.20	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	73.56	8.8	1749663
+EHA01890_bin.6	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__	96.5	0.38	1973302
+EHA01908_bin.43	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella sp900555585	52.87	3.82	728133
+EHA01914_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__CAG-274	g__Gallispira	s__Gallispira sp900543365	50.56	0.61	926334
+EHA01919_bin.22	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	92.3	0.19	1991485
+EHA01879_bin.28	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	66.49	2.18	1000332
+EHA01894_bin.5	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola_A	s__	87.99	1.3	2479620
+EHA01917_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	83.14	3.83	2565639
+EHA01879_bin.17	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella wadsworthensis_A	98.24	0.18	2377362
+EHA01874_bin.14	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	64.42	6.51	1004272
+EHA01918_bin.24	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	57.68	5.98	1533777
+EHA01922_bin.31	d__Bacteria	p__Bacillota_B	c__Peptococcia	o__Peptococcales	f__Peptococcaceae	g__UMGS1590	s__	53.12	0.05	1173303
+EHA01886_bin.5	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__Faecalimonas umbilicata	92.8	0	2506144
+EHA01873_bin.16	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella sp905186105	83.95	0.92	2308143
+EHA01916_bin.12	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Clostridium_Q	s__	85.2	0.75	2207707
+EHA01891_bin.21	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__Sutterella sp905186105	60.22	3.48	1912820
+EHA01871_bin.23	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum sp900543125	58.07	5.19	2541134
+EHA01917_bin.9	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella sp008014645	66.94	3.02	1096846
+EHA01920_bin.23	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	61.14	4.24	1179490
+EHA01879_bin.9	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Allobaculum	s__Allobaculum stercoricanis	83.73	0.15	1945166
+EHA01880_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	66.92	8.61	1636720
+EHA01913_bin.7	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Alloprevotella	s__Alloprevotella sp000437675	97.32	0.74	2731069
+EHA01895_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	62.19	3.36	1394566
+EHA01916_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	81.65	1.72	1193498
+EHA01925_bin.18	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Copromonas	s__Copromonas sp000435795	59.99	2.81	1456787
+EHA01873_bin.21	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554355	56	8.5	1422253
+EHA01885_bin.6	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	99.89	1.16	2970649
+EHA01922_bin.35	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__	51.91	9.75	2097244
+EHA01871_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	53.22	4.98	2077594
+EHA01877_bin.26	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__	s__	50.67	8.36	1201646
+EHA01924_bin.29	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__	50.45	1.02	1438166
+EHA01921_bin.32	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__	65.69	5.46	2273387
+EHA01897_bin.6	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	60.12	1.86	1232426
+EHA01918_bin.26	d__Bacteria	p__Actinomycetota	c__Actinomycetia	o__Actinomycetales	f__Bifidobacteriaceae	g__Bifidobacterium	s__Bifidobacterium adolescentis	94.85	0.81	1939802
+EHA01906_bin.29	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	55.19	8.34	1574306
+EHA01906_bin.12	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Mediterraneibacter	s__	99.56	0.03	1990760
+EHA01887_bin.43	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	54.54	6.76	1771736
+EHA01924_bin.13	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	76.87	2.31	3070710
+EHA01895_bin.29	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	62.86	6.5	699947
+EHA01880_bin.11	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	58.06	0.06	2400200
+EHA01901_bin.11	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_A	s__	99.85	0.22	2249364
+EHA01916_bin.4	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	90.57	2.77	1700301
+EHA01889_bin.21	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__	s__	50.73	8.91	1525742
+EHA01925_bin.24	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	88.69	3.89	1753753
+EHA01898_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	87.26	0.32	1725295
+EHA01906_bin.2	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	65.36	1.33	870299
+EHA01890_bin.28	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__CAJMNU01	s__CAJMNU01 sp905214855	92.93	0.21	2676486
+EHA01918_bin.6	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Cellulosilyticaceae	g__Cellulosilyticum	s__	88.4	1.1	2536108
+EHA01892_bin.15	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	71.51	1.19	1629441
+EHA01890_bin.31	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__CAG-274	g__Gallispira	s__Gallispira sp900543365	98.64	0.19	1941499
+EHA01896_bin.6	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Coprobacillaceae	g__Thomasclavelia	s__Thomasclavelia spiroformis_A	52.65	4.24	1764423
+EHA01914_bin.20	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Bacteroides	s__Bacteroides stercoris	87.89	1.22	3827195
+EHA01915_bin.7	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia_A	s__	86.58	0.87	2717072
+EHA01913_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900556555	93.74	0.1	2697222
+EHA01911_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__	s__	65.71	7	1954729
+EHA01928_bin.5	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554355	78.29	1.04	1718082
+EHA01915_bin.6	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__CALVGN01	s__	65.66	0.99	1194359
+EHA01904_bin.16	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	54.5	0.52	1871321
+EHA01892_bin.17	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	51.09	2.36	2432822
+EHA01901_bin.9	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Faecalibacterium	s__Faecalibacterium sp900540455	99.92	0.07	2196344
+EHA01900_bin.6	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__CALVGN01	s__	89.11	1.17	1484062
+EHA01926_bin.12	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	89.42	0.95	1595122
+EHA01905_bin.9	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_C	g__Paenalcaligenes	s__	54.29	6.77	1531262
+EHA01884_bin.7	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum sp900543125	96.09	0.49	3753499
+EHA01896_bin.29	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	81.03	2.55	1100445
+EHA01903_bin.28	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__Anaerobiospirillum succiniciproducens	66.55	8.85	2340951
+EHA01906_bin.24	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	80.66	5.22	1426421
+EHA01923_bin.9	d__Bacteria	p__Spirochaetota	c__Brachyspirae	o__Brachyspirales	f__Brachyspiraceae	g__Brachyspira	s__	99.98	0.83	3108154
+EHA01886_bin.6	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ventrimonas	s__Ventrimonas sp900538475	54.34	7.21	1826787
+EHA01922_bin.28	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter hiranonis	63.39	4.16	544632
+EHA01876_bin.19	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	62.13	9.47	2040185
+EHA01918_bin.15	d__Bacteria	p__Deferribacterota	c__Deferribacteres	o__Deferribacterales	f__Mucispirillaceae	g__Mucispirillum	s__	96.68	0.66	2271183
+EHA01922_bin.13	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Alloprevotella	s__	98.55	0.06	2407815
+EHA01921_bin.7	d__Bacteria	p__Bacillota_C	c__Negativicutes	o__Acidaminococcales	f__Acidaminococcaceae	g__Phascolarctobacterium_A	s__Phascolarctobacterium_A sp900552855	100	0.03	1778205
+EHA01905_bin.8	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	65.59	1.91	1427603
+EHA01896_bin.26	d__Bacteria	p__Bacillota	c__Bacilli	o__Haloplasmatales	f__Turicibacteraceae	g__Turicibacter	s__	79.66	4.22	2533380
+EHA01910_bin.4	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Campylobacteraceae	g__Campylobacter_D	s__Campylobacter_D concheus	100	0.02	1581531
+EHA01875_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	86.68	6.38	1758652
+EHA01896_bin.36	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	60.44	0.64	1490677
+EHA01928_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__	60.15	8.93	1483328
+EHA01913_bin.23	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__	54.01	9.85	1401061
+EHA01916_bin.29	d__Bacteria	p__Bacillota	c__Bacilli	o__Haloplasmatales	f__Turicibacteraceae	g__Turicibacter	s__Turicibacter bilis	89.63	2.42	2643238
+EHA01910_bin.13	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	55.34	1.12	942774
+EHA01901_bin.19	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium	s__Clostridium sp900766315	80.88	1.47	2010131
+EHA01897_bin.23	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	50.98	9.07	1483849
+EHA01914_bin.12	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	87.88	2.04	1382828
+EHA01926_bin.17	d__Bacteria	p__Bacillota_C	c__Negativicutes	o__Selenomonadales	f__Selenomonadaceae	g__Megamonas	s__	99.91	0.23	2054057
+EHA01891_bin.14	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum_A	s__Anaerobiospirillum_A thomasii	96.33	0.16	2338656
+EHA01894_bin.8	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__Collinsella intestinalis	88.01	1.31	1341937
+EHA01881_bin.23	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__	57.11	7.11	1168104
+EHA01891_bin.13	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	69.1	6.1	1253193
+EHA01892_bin.27	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	71.22	9.63	1873085
+EHA01872_bin.30	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	81.26	0.36	2782596
+EHA01927_bin.26	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Clostridium_J	s__	91.48	0.03	2512236
+EHA01911_bin.15	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	53.29	4.51	1406454
+EHA01890_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Avimicrobium	s__Avimicrobium sp934845495	99.8	0.21	1871086
+EHA01883_bin.14	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Burkholderiales	f__Burkholderiaceae_A	g__Sutterella	s__	53.38	2.83	822417
+EHA01896_bin.27	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900541465	69.48	1.84	1089226
+EHA01920_bin.28	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	51.43	6.08	1706732
+EHA01886_bin.7	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900556555	51.27	1.67	1454388
+EHA01887_bin.28	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Fournierella	s__Fournierella massiliensis	62.17	1.21	1486305
+EHA01924_bin.14	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Butyricicoccaceae	g__Butyricicoccus	s__Butyricicoccus pullicaecorum	60.66	3.31	1377703
+EHA01916_bin.5	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Copromonas	s__Copromonas sp000435795	92.76	0.36	2512800
+EHA01928_bin.32	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	67.62	5.7	1545459
+EHA01926_bin.9	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales_A	f__Succinivibrionaceae	g__Anaerobiospirillum	s__	94.42	0.29	2855030
+EHA01918_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Clostridiales	f__Clostridiaceae	g__Sarcina	s__Sarcina perfringens	60.98	4.96	2417083
+EHA01902_bin.17	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	85.18	0.22	1646399
+EHA01923_bin.17	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia	s__Escherichia coli	99.96	0.01	4446031
+EHA01924_bin.21	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Cetobacterium_A	s__Cetobacterium_A sp934085975	99.23	4.6	2442831
+EHA01908_bin.2	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__JAHHTG01	s__	96.74	0.11	1508693
+EHA01894_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Ruminococcaceae	g__Faecalibacterium	s__	99.32	0.13	2132076
+EHA01928_bin.33	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A varium_C	68.75	1.08	671597
+EHA01883_bin.11	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	64.6	1.15	1513559
+EHA01915_bin.21	d__Bacteria	p__Deferribacterota	c__Deferribacteres	o__Deferribacterales	f__Mucispirillaceae	g__	s__	95.91	0.45	2086917
+EHA01880_bin.19	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__	64.76	4.74	1263026
+EHA01897_bin.10	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Lachnospira	s__Lachnospira sp900552795	99.41	0.12	2142671
+EHA01916_bin.25	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Paraprevotella	s__	99.66	1.21	2732145
+EHA01908_bin.24	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Muribaculaceae	g__Limisoma	s__Limisoma sp900556245	98.6	0.27	2427285
+EHA01900_bin.46	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola plebeius	81.96	1.81	2925387
+EHA01908_bin.23	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Campylobacteraceae	g__Campylobacter_D	s__Campylobacter_D upsaliensis	99.99	0.06	1561743
+EHA01902_bin.25	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Schaedlerella	s__	82.17	0.03	1621497
+EHA01921_bin.9	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Lactobacillaceae	g__Limosilactobacillus	s__Limosilactobacillus reuteri	95.41	0.77	1827129
+EHA01890_bin.56	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	83.58	8.39	1696521
+EHA01909_bin.18	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__	54.17	8.77	1810029
+EHA01903_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Ventrimonas	s__	98.18	0.09	2460784
+EHA01920_bin.4	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_A	s__	99.98	0.15	2208828
+EHA01911_bin.1	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptostreptococcus	s__Peptostreptococcus russellii_A	100	0.13	2143907
+EHA01896_bin.2	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	52.68	0.53	1426579
+EHA01885_bin.16	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Blautia	s__Blautia sp900556555	60.78	8.66	2167328
+EHA01876_bin.6	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_B	s__Fusobacterium_B sp900554885	61.83	0.96	1242552
+EHA01887_bin.17	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Eisenbergiella	s__Eisenbergiella sp900539715	99.6	0.09	2344953
+EHA01886_bin.3	d__Bacteria	p__Pseudomonadota	c__Gammaproteobacteria	o__Enterobacterales	f__Enterobacteriaceae	g__Escherichia	s__Escherichia coli	100	0.2	5089079
+EHA01896_bin.38	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Peptostreptococcales	f__Peptostreptococcaceae	g__Peptacetobacter	s__Peptacetobacter sp900550335	50.67	1.79	674200
+EHA01925_bin.3	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Butyricicoccaceae	g__Butyricicoccus	s__Butyricicoccus pullicaecorum_C	94.77	0.09	2156744
+EHA01915_bin.16	d__Bacteria	p__Spirochaetota	c__Brachyspirae	o__Brachyspirales	f__Brachyspiraceae	g__Brachyspira	s__	99.68	0.9	2428490
+EHA01919_bin.4	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	86.77	0.58	1784529
+EHA01919_bin.3	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	90.47	2.8	1667615
+EHA01890_bin.36	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Oscillospirales	f__Oscillospiraceae	g__Faecousia	s__	55.05	0.42	1034930
+EHA01886_bin.10	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Amedibacillus	s__Amedibacillus dolichus	91.44	2.29	1912350
+EHA01924_bin.8	d__Bacteria	p__Pseudomonadota	c__Alphaproteobacteria	o__Rhizobiales	f__Beijerinckiaceae	g__Rhodoblastus	s__	100	4.67	3904808
+EHA01885_bin.4	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Phocaeicola	s__Phocaeicola sp900556845	93.38	0.71	3195739
+EHA01908_bin.22	d__Bacteria	p__Bacillota_B	c__Peptococcia	o__Peptococcales	f__Peptococcaceae	g__UMGS1590	s__	100	0.4	1863292
+EHA01908_bin.42	d__Bacteria	p__Actinomycetota	c__Coriobacteriia	o__Coriobacteriales	f__Coriobacteriaceae	g__Collinsella	s__	72.37	7.66	1424095
+EHA01881_bin.13	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Alloprevotella	s__Alloprevotella sp900541335	98.31	0.02	2577365
+EHA01915_bin.25	d__Bacteria	p__Bacteroidota	c__Bacteroidia	o__Bacteroidales	f__Bacteroidaceae	g__Mediterranea	s__	53.64	5.5	1535592
+EHA01926_bin.24	d__Bacteria	p__Bacillota	c__Bacilli	o__Lactobacillales	f__Lactobacillaceae	g__Lactobacillus	s__Lactobacillus acidophilus	99.98	2.26	2083243
+EHA01887_bin.5	d__Bacteria	p__Campylobacterota	c__Campylobacteria	o__Campylobacterales	f__Helicobacteraceae	g__Helicobacter_C	s__	99.96	0	1832487
+EHA01896_bin.30	d__Bacteria	p__Fusobacteriota	c__Fusobacteriia	o__Fusobacteriales	f__Fusobacteriaceae	g__Fusobacterium_A	s__Fusobacterium_A sp900555845	54.21	3.19	1205203
+EHA01913_bin.19	d__Bacteria	p__Bacillota_A	c__Clostridia	o__Lachnospirales	f__Lachnospiraceae	g__Faecalimonas	s__Faecalimonas umbilicata	53.43	8.87	1334530
+EHA01893_bin.9	d__Bacteria	p__Bacillota	c__Bacilli	o__Erysipelotrichales	f__Erysipelotrichaceae	g__Allobaculum	s__Allobaculum stercoricanis	50.56	4.92	1353266
