@@ -718,26 +718,23 @@ ggplot(beta_div_neutral_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 
 Adonis
 ```{r Adonis, comment="", echo=TRUE}
-# adonis_result <- adonis(beta_div_neutral_dist ~ region, data = beta_div_neutral_nmds)
-
-# Print the Adonis test result
-# print(adonis_result)
-
-# Extract and print the p-value
-# p_value <- adonis_result$aov.tab$`Pr(>F)`
-# print(p_value)
-
 #### Adonis 
 ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
 permutest(ps.disper.neutral, pairwise = TRUE) 
+# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
+## results: P = 0.537
 
 # Order the tables correctly
 meta_order <- metadata[order(metadata$sample),] 
 m1 <- as.matrix(beta_div_neutral_dist) 
 metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
+# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
 
 # Run test
 adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
+# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
+## results: P = 0.001. R2 = 0.12257
+## thus, the results ARE statistically significant, and 12% of variation is based on the region
 
 ```
 ```
