@@ -714,22 +714,30 @@ ggplot(beta_div_neutral_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
   theme_classic()+
   labs( x = "NMDS1", y = "NMDS2")
 ```
+
+
+Adonis
 ```{r Adonis, comment="", echo=TRUE}
-adonis_result <- adonis(beta_div_neutral_dist ~ region, data = beta_div_neutral_nmds)
+# adonis_result <- adonis(beta_div_neutral_dist ~ region, data = beta_div_neutral_nmds)
 
 # Print the Adonis test result
 # print(adonis_result)
 
 # Extract and print the p-value
-p_value <- adonis_result$aov.tab$`Pr(>F)`
-print(p_value)
+# p_value <- adonis_result$aov.tab$`Pr(>F)`
+# print(p_value)
 
+#### Adonis 
+ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
+permutest(ps.disper.neutral, pairwise = TRUE) 
 
+# Order the tables correctly
+meta_order <- metadata[order(metadata$sample),] 
+m1 <- as.matrix(beta_div_neutral_dist) 
+metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
 
+# Run test
+adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
 
-
-
-
-# TEST TEST TEST
 ```
 ```
