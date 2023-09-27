@@ -666,7 +666,7 @@ metadata_unified_clean <- metadata_unified %>%
   filter(sample != "")  # Filter rows where "sample" is not an empty string
 
 selected_columns <- metadata_unified_clean %>%
-  select(sample, Pack, PR_results_short)
+  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
 
 # Merge the selected columns with "metadata" based on the "sample" column
 all_metadata <- left_join(metadata, selected_columns, by = "sample")
@@ -920,4 +920,306 @@ permutest(ps.disper.neutral, pairwise = TRUE)
 # adonis2(beta_div_neutral_dist_ittoq ~ Pack, data =metadata_ord_4, permutations = 999)
 # this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the packs.  
 ```
+#########################################################################################################
+
+Looking for if individual parasites impact results:
+
+T. leonina
+```{r Individual_Parasites_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+#### NMDS
+beta_div_neutral_nmds_tleo <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_tleo <- beta_div_neutral_nmds_tleo %>%
+  filter(toxocaris_leonina != "excluded")
+
+#### Create centroids
+NMDS.centroids_5=aggregate(beta_div_neutral_nmds_tleo[,c(2:3)],by=list(beta_div_neutral_nmds_tleo$toxocaris_leonina),FUN=mean)
+colnames(NMDS.centroids_5) <- c("toxocaris_leonina","NMDS1","NMDS2")
+beta_div_neutral_nmds_tleo=merge(beta_div_neutral_nmds_tleo,NMDS.centroids_5,by="toxocaris_leonina")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_tleo  %>%
+  group_by(toxocaris_leonina)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_tleo, aes(x=NMDS1.x,y=NMDS2.x,colour=toxocaris_leonina)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+
+```
+
+sarcocystis_spp
+```{r}
+#### NMDS
+beta_div_neutral_nmds_sarcocystis <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_sarcocystis <- beta_div_neutral_nmds_sarcocystis %>%
+  filter(sarcocystis_spp != "excluded")
+
+#### Create centroids
+NMDS.centroids_6=aggregate(beta_div_neutral_nmds_sarcocystis[,c(2:3)],by=list(beta_div_neutral_nmds_sarcocystis$sarcocystis_spp),FUN=mean)
+colnames(NMDS.centroids_6) <- c("sarcocystis_spp","NMDS1","NMDS2")
+beta_div_neutral_nmds_sarcocystis=merge(beta_div_neutral_nmds_sarcocystis,NMDS.centroids_6,by="sarcocystis_spp")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_sarcocystis  %>%
+  group_by(sarcocystis_spp)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_sarcocystis, aes(x=NMDS1.x,y=NMDS2.x,colour=sarcocystis_spp)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+Tania_serialis
+```{r}
+#### NMDS
+beta_div_neutral_nmds_tser <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_tser <- beta_div_neutral_nmds_tser %>%
+  filter(Tania_serialis != "excluded")
+
+#### Create centroids
+NMDS.centroids_7=aggregate(beta_div_neutral_nmds_tser[,c(2:3)],by=list(beta_div_neutral_nmds_tser$Tania_serialis),FUN=mean)
+colnames(NMDS.centroids_7) <- c("Tania_serialis","NMDS1","NMDS2")
+beta_div_neutral_nmds_tser=merge(beta_div_neutral_nmds_tser,NMDS.centroids_7,by="Tania_serialis")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_tser  %>%
+  group_by(Tania_serialis)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_tser, aes(x=NMDS1.x,y=NMDS2.x,colour=Tania_serialis)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+cryptosporidium
+```{r}
+#### NMDS
+beta_div_neutral_nmds_crypto <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_crypto <- beta_div_neutral_nmds_crypto %>%
+  filter(cryptosporidium != "excluded")
+
+#### Create centroids
+NMDS.centroids_8=aggregate(beta_div_neutral_nmds_crypto[,c(2:3)],by=list(beta_div_neutral_nmds_crypto$cryptosporidium),FUN=mean)
+colnames(NMDS.centroids_8) <- c("cryptosporidium","NMDS1","NMDS2")
+beta_div_neutral_nmds_crypto=merge(beta_div_neutral_nmds_crypto,NMDS.centroids_8,by="cryptosporidium")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_crypto  %>%
+  group_by(cryptosporidium)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_crypto, aes(x=NMDS1.x,y=NMDS2.x,colour=cryptosporidium)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+giardia
+```{r}
+#### NMDS
+beta_div_neutral_nmds_giardia <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_giardia <- beta_div_neutral_nmds_giardia %>%
+  filter(giardia != "excluded")
+
+#### Create centroids
+NMDS.centroids_9=aggregate(beta_div_neutral_nmds_giardia[,c(2:3)],by=list(beta_div_neutral_nmds_giardia$giardia),FUN=mean)
+colnames(NMDS.centroids_9) <- c("giardia","NMDS1","NMDS2")
+beta_div_neutral_nmds_giardia=merge(beta_div_neutral_nmds_giardia,NMDS.centroids_9,by="giardia")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_giardia  %>%
+  group_by(giardia)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_giardia, aes(x=NMDS1.x,y=NMDS2.x,colour=giardia)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+toxoplasma_gondii
+```{r}
+#### NMDS
+beta_div_neutral_nmds_toxoplasma_gondii <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_toxoplasma_gondii <- beta_div_neutral_nmds_toxoplasma_gondii %>%
+  filter(toxoplasma_gondii != "excluded")
+
+#### Create centroids
+NMDS.centroids_10=aggregate(beta_div_neutral_nmds_toxoplasma_gondii[,c(2:3)],by=list(beta_div_neutral_nmds_toxoplasma_gondii$toxoplasma_gondii),FUN=mean)
+colnames(NMDS.centroids_10) <- c("toxoplasma_gondii","NMDS1","NMDS2")
+beta_div_neutral_nmds_toxoplasma_gondii=merge(beta_div_neutral_nmds_toxoplasma_gondii,NMDS.centroids_10,by="toxoplasma_gondii")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_toxoplasma_gondii  %>%
+  group_by(toxoplasma_gondii)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_toxoplasma_gondii, aes(x=NMDS1.x,y=NMDS2.x,colour=toxoplasma_gondii)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+trichincella_spp
+```{r}
+#### NMDS
+beta_div_neutral_nmds_trichincella_spp <- beta_div_neutral_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., all_metadata, by="sample")
+
+beta_div_neutral_nmds_trichincella_spp <- beta_div_neutral_nmds_trichincella_spp %>%
+  filter(trichincella_spp != "excluded")
+
+#### Create centroids
+NMDS.centroids_11=aggregate(beta_div_neutral_nmds_trichincella_spp[,c(2:3)],by=list(beta_div_neutral_nmds_trichincella_spp$trichincella_spp),FUN=mean)
+colnames(NMDS.centroids_11) <- c("trichincella_spp","NMDS1","NMDS2")
+beta_div_neutral_nmds_trichincella_spp=merge(beta_div_neutral_nmds_trichincella_spp,NMDS.centroids_11,by="trichincella_spp")
+
+#### Plot the centroids and the samples. 
+centroids <- beta_div_neutral_nmds_trichincella_spp  %>%
+  group_by(trichincella_spp)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_trichincella_spp, aes(x=NMDS1.x,y=NMDS2.x,colour=trichincella_spp)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+
+Huldscore
+```{r}
+# Filter the data for Ittoqqortoormiit
+filtered_data_3 <- all_metadata %>%
+  filter(region == "Ittoqqortoormii")
+
+# NMDS analysis for Huldscores in Daneborg
+beta_div_neutral_nmds_huldscore <- beta_div_neutral_dist %>%
+  metaMDS(., trymax = 200, k = 2, verbosity = FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., filtered_data_3, by = "sample")
+
+# Convert Huldscore to a factor variable
+beta_div_neutral_nmds_huldscore$Huldscore <- factor(beta_div_neutral_nmds_huldscore$Huldscore)
+
+# Create centroids
+NMDS.centroids_12 <- aggregate(beta_div_neutral_nmds_huldscore[, c(2:3)], by = list(Huldscore = beta_div_neutral_nmds_huldscore$Huldscore), FUN = mean)
+colnames(NMDS.centroids_12) <- c("Huldscore", "NMDS1", "NMDS2")
+beta_div_neutral_nmds_huldscore <- merge(beta_div_neutral_nmds_huldscore, NMDS.centroids_12, by = "Huldscore")
+
+custom_colors <- c("1" = "red", "2" = "blue", "3" = "green", "4" = "purple")
+
+# Plot the centroids and the samples
+centroids <- beta_div_neutral_nmds_huldscore %>%
+  group_by(Huldscore) %>%
+  summarize(NM1 = mean(NMDS1.y), NM2 = mean(NMDS2.y))
+
+ggplot(beta_div_neutral_nmds_huldscore, aes(x = NMDS1.x, y = NMDS2.x, colour = Huldscore)) +
+  geom_point(aes(x = NMDS1.x, y = NMDS2.x), size = 2) +
+  geom_segment(aes(x = NMDS1.y, y = NMDS2.y, xend = NMDS1.x, yend = NMDS2.x)) +
+  scale_color_manual(values = custom_colors) +  # Set custom colors
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title = element_blank(),
+        legend.text = element_text(size = 14)) +
+  theme_classic() +
+  labs(x = "NMDS1", y = "NMDS2")
+```
+
 
