@@ -324,7 +324,7 @@ When performing genome-resolved metagenomic analyses on host-associated microbia
 In order to have representative results, the number of reads mapped to the MAG catalogue should be similar across samples. However, multiple reasons can create large imbalances, including uneven sequencing depth, different microbiome complexity across samples, different amount of host or non-microbial reads in the dataset, etc. The following plot shows the distribution of reads across samples.
 
 
-```{r data_fraction, warning=FALSE, fig.height=5}
+```{r data_fraction, warning=FALSE, echo=FALSE, fig.height=5}
 # Calculate sequence fractions
 sequence_fractions <- counts_table %>%
   rownames_to_column("Genome") %>%
@@ -352,7 +352,7 @@ sequence_fractions_meta <- merge(sequence_fractions_pivot, metadata, by="sample"
 
 ```
 
-```{r data_fraction_barplot, warning=FALSE}
+```{r data_fraction_barplot, echo=FALSE, warning=FALSE}
 ggplot(sequence_fractions_meta, aes(x = sample, y = value, fill=fraction)) +
   geom_bar(position="stack", stat = "identity") +
   scale_fill_manual(name=NULL,
@@ -379,7 +379,7 @@ ggplot(sequence_fractions_meta, aes(x = sample, y = value, fill=fraction)) +
 ## 1.4 Minimum genome-coverage filtering
 Mapping of sequencing reads against the reference genome catalogue is not perfect, and in consequence, all MAGs tend to get a few reads assigned. Implementing a minimum genome coverage filter aims at minimising artificial inflation of diversity due to this artifact of genome-resolved metagenomic analysis. However, if the sequencing depth is low and uneven across samples, this filtering can also introduce more distorsion.
 
-```{r coverage, warning=FALSE}
+```{r coverage, echo=FALSE, warning=FALSE}
 #Apply coverage filtering filtering
 min_coverage=0.3
 count_table_cov <- coverage_table %>%
@@ -392,7 +392,7 @@ rownames(count_table_cov) <- rownames(coverage_table)
 ## 1.5 Genome-size normalisation
 Bacterial genomes can vary between 1 and 8 MB, which make relative representation of each genome dependent on its size. To account for genome size biases, read-counts can be normalised by applying a normalisation factor that modifies the read numbers according to the size of each genome compared to the average genome size in the dataset.
 
-```{r genome_norm, warning=FALSE}
+```{r genome_norm, echo=FALSE, warning=FALSE}
 #Transform by mean MAG-size
 mags_table1 <- column_to_rownames(mags_table, "genome")
 genome_read_sizes <- mags_table1[rownames(count_table_cov),] %>%
@@ -437,7 +437,7 @@ This appears to match the figure in the PDF report, though I am working now to c
 # 2. Taxonomic composition
 Note that TSS normalisation simply divides each count value for the total count for the sample, thus transforming the data to 0-1 scale.
 
-```{r taxo_comp, warning=FALSE}
+```{r taxo_comp, echo=FALSE, warning=FALSE}
 count_table_cov_size_pivot <- count_table_cov_size %>%
   rownames_to_column("Genome") %>%
   mutate_at(vars(-Genome),~./sum(.)) %>% #apply TSS nornalisation
@@ -485,7 +485,7 @@ ggplot(count_table_cov_size_pivot_meta, aes(x=sample,y=count,fill=phylum, group=
 ```
 
 
-```{r phyloseq, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r phyloseq, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 
 ## Making phyloseq object
 # Coerce it into a phylseq
@@ -522,7 +522,7 @@ physeq <- phyloseq(MAGotu, treephylo, sample_tab,taxtable)
 
 ### Phylum percentages
 
-```{r phylum1, comment="", echo=TRUE}
+```{r phylum1, comment="", echo=FALSE}
 
 physeq_phylum <- microbiome::aggregate_taxa(physeq, 'phylum')
 physeq_phylum_rel <-  microbiome::transform(physeq_phylum, "compositional")
@@ -659,7 +659,7 @@ alpha_div_phylo %>%
 
 ## Beta diversity calculations
 
-```{r}
+```{r beta_div_metadata, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified.csv")
 
 metadata_unified_clean <- metadata_unified %>%
@@ -681,7 +681,7 @@ beta_div_neutral <- count_filtered %>%
     hill_taxa_parti_pairwise(., q = 1, pairs = "full") #calculate neutral beta diversities
 ```
 
-```{r beta_div_neutral_dist, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r beta_div_neutral_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #### Calculate the distances
 beta_div_neutral_dist <- beta_div_neutral %>%
   select(site1,site2,TD_beta) %>%
@@ -689,7 +689,7 @@ beta_div_neutral_dist <- beta_div_neutral %>%
   list2dist()
 ```
 
-```{r beta_div_neutral_nmds_Status, comment="", echo=TRUE, results='hide'}
+```{r beta_div_neutral_nmds_Status, comment="", echo=FALSE, results='hide'}
 #### NMDS
 beta_div_neutral_nmds <- beta_div_neutral_dist %>%
   metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
@@ -698,7 +698,7 @@ beta_div_neutral_nmds <- beta_div_neutral_dist %>%
   inner_join(., metadata, by="sample")
 ```
 
-```{r beta_div_neutral_centroids_region,comment="", echo=TRUE}
+```{r beta_div_neutral_centroids_region,comment="", echo=FALSE}
 #### Create centroids
 NMDS.centroids_1=aggregate(beta_div_neutral_nmds[,c(2:3)],by=list(beta_div_neutral_nmds$region),FUN=mean)
 colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
@@ -706,7 +706,7 @@ beta_div_neutral_nmds=merge(beta_div_neutral_nmds,NMDS.centroids_1,by="region")
 ```
 
 #### NMDS:
-```{r beta_div_neutral_plot_region,comment="", echo=TRUE}
+```{r beta_div_neutral_plot_region,comment="", echo=FALSE}
 #### Plot the centroids and the samples. 
 centroids <- beta_div_neutral_nmds  %>%
   group_by(region)  %>%
@@ -728,7 +728,7 @@ ggplot(beta_div_neutral_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 ```
 
 Adonis
-```{r Adonis, comment="", echo=TRUE}
+```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
 ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
 permutest(ps.disper.neutral, pairwise = TRUE) 
@@ -751,7 +751,7 @@ adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
 ```
 
 Looking at the 6 different sled teams in Daneborg:
-```{r}
+```{r Daneborg_packs_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 # Filter the data for Daneborg
 filtered_data <- all_metadata %>%
   filter(region == "Daneborg")
@@ -789,7 +789,7 @@ ggplot(beta_div_neutral_nmds_pack, aes(x = NMDS1.x, y = NMDS2.x, colour = Pack))
 ```
 
 Adonis for the Pack analysis in Daneborg:
-```{r}
+```{r Daneborg_packs_adonis, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 ps.disper.neutral <- betadisper(beta_div_neutral_dist, all_metadata$Pack) 
 permutest(ps.disper.neutral, pairwise = TRUE) 
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
@@ -804,14 +804,14 @@ permutest(ps.disper.neutral, pairwise = TRUE)
 
 # Run test
 # adonis2(beta_div_neutral_dist ~ Pack, data =metadata_ord_2, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
+# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the packs. 
 ```
 
 #################################
 
 Now Analysis for presence / absence of parasites: 
 
-```{r}
+```{r Parasites_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 #### NMDS
 beta_div_neutral_nmds_PR <- beta_div_neutral_dist %>%
   metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
@@ -847,7 +847,7 @@ ggplot(beta_div_neutral_nmds_PR, aes(x=NMDS1.x,y=NMDS2.x,colour=PR_results_short
   labs( x = "NMDS1", y = "NMDS2")
 
 ```
-```{r}
+```{r Parasites_adonis, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 ps.disper.neutral <- betadisper(beta_div_neutral_dist, all_metadata$PR_results_short) 
 permutest(ps.disper.neutral, pairwise = TRUE) 
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
@@ -862,12 +862,12 @@ permutest(ps.disper.neutral, pairwise = TRUE)
 
 # Run test
 # adonis2(beta_div_neutral_dist_PR ~ PR_results_short, data =metadata_ord_3, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region.  
+# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the parasitic infection.  
 ```
 
 Now, just for fun, we look at the Ittoq dogs, by their packs: 
 
-```{r}
+```{r Ittoq_packs_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 # Filter the data for Ittoqqortoormiit
 filtered_data_2 <- all_metadata %>%
   filter(region == "Ittoqqortoormii")
@@ -903,7 +903,7 @@ ggplot(beta_div_neutral_nmds_ittoq, aes(x = NMDS1.x, y = NMDS2.x, colour = Pack)
   labs(x = "NMDS1", y = "NMDS2")
 ```
 Adonis for Ittoqqortoormiit packs
-```{r}
+```{r Ittoq_packs_adonis, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 ps.disper.neutral <- betadisper(beta_div_neutral_dist, all_metadata$Pack) 
 permutest(ps.disper.neutral, pairwise = TRUE) 
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
@@ -918,6 +918,6 @@ permutest(ps.disper.neutral, pairwise = TRUE)
 
 # Run test
 # adonis2(beta_div_neutral_dist_ittoq ~ Pack, data =metadata_ord_4, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region.  
+# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the packs.  
 ```
 
