@@ -1222,4 +1222,103 @@ ggplot(beta_div_neutral_nmds_huldscore, aes(x = NMDS1.x, y = NMDS2.x, colour = H
   labs(x = "NMDS1", y = "NMDS2")
 ```
 
+Now I want to look at the ratio of host DNA to prokaryotic DNA
+
+```{r}
+
+# Here we filter data to only show quantities of host DNA for each sample 
+filtered_data_host <- sequence_fractions_meta %>%
+  filter(fraction == "host_bases")
+
+# Merge the selected columns with "all_metadata" based on the "sample" column
+filtered_data_host_meta <- left_join(filtered_data_host, all_metadata, by = "sample")
+
+# Create the plot, sorted by dogs with parasites v. dogs without
+ggplot(filtered_data_host_meta, aes(x = sample, y = value, fill = fraction)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual(
+    name = NULL,
+    breaks = "host_bases",
+    labels = "Host",
+    values = "#178a94"
+  ) +
+  facet_grid(~PR_results_short, scale="free", space="free") + # grouped the samples by region
+  labs(x = "Samples", y = "Amount of host DNA (GB)") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 6),
+    strip.text.x = element_text(size = 7, face = "bold"),
+    strip.background = element_rect(colour = NA, fill = NA),
+    panel.background = element_rect(fill = NA, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
+    legend.position = "bottom",
+    legend.title = element_blank()
+  )
+
+
+# Filter the dataset to keep only "host_bases" and "mags_bases" fractions
+filtered_data_host_ratio <- sequence_fractions_meta %>%
+  filter(fraction %in% c("host_bases", "mags_bases"))
+
+# Summarize the data for "host_bases" and "mags_bases"
+summarized_data <- filtered_data_host_ratio %>%
+  group_by(sample, fraction) %>%
+  summarize(total_value = sum(value)) %>%
+  pivot_wider(names_from = fraction, values_from = total_value)
+
+# Calculate the ratio of host DNA to MAGs
+summarized_data <- summarized_data %>%
+  mutate(ratio_host_to_mags = host_bases / mags_bases)
+
+# from this, now we know that greater host DNA : MAGs values mean that the sample had more host DNA. 
+```
+
+```{r}
+
+# Is there a significant difference between amounts of host DNA between dogs with parasites and dogs without?
+Parasites_host <- filtered_data_host_meta %>%
+  filter( PR_results_short== "parasites")
+NO_Parasites_host <- filtered_data_host_meta %>%
+  filter(PR_results_short== "no parasites")
+
+Parasites_host_dna <- Parasites_host$value
+NO_Parasites_host_dna <- NO_Parasites_host$value
+
+# Mann-Whitney U test
+wilcox_test_result <- wilcox.test(Parasites_host_dna, NO_Parasites_host_dna)
+# p-value = 0.5367, therefore no significant difference between host DNA amounts between REGIONS (Ittoq and Dane). 
+# p-value = 0.8217, therefore no significant difference between host DNA amounts between dogs WITH and WITHOUT parasites (code above)
+```
+
+now relook at relative abundance graph, this time grouped by Pernille and Rosalina's results
+```{r}
+# Merge the selected columns with "metadata" based on the "sample" column
+count_table_cov_size_pivot_meta_all <- left_join(count_table_cov_size_pivot_meta, all_metadata, by = "sample")
+
+# Plot stacked barplot
+ggplot(count_table_cov_size_pivot_meta_all, aes(x=sample,y=count,fill=phylum, group=phylum))+ #grouping enables keeping the same sorting of taxonomic units
+    geom_bar(stat="identity")+ 
+    scale_fill_manual(values=phylum_colors) +
+    facet_grid(~PR_results_short, scale="free", space="free") + # grouped the samples by region
+    labs(x = "Samples", y = "Relative abundance") +
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6),
+        strip.text.x = element_text(size = 6, face = "bold"),
+        strip.background = element_rect(colour=NA, fill=NA),
+        panel.background = element_rect(fill = NA, color = "black"),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
+        legend.position="bottom",
+        legend.title=element_blank(),
+        legend.text = element_text(size=6),
+        legend.key.size = unit(0.3, 'cm'))
+```
+
+
+
 
