@@ -8,11 +8,101 @@ date: "2023-10-02"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
+## Load required libraries
+library(ggnewscale) 
+library(ggtree)
+library(R.utils) 
+library(tidyverse) 
+library(ape)
+library(devtools) 
+library(ggplot2) 
+library(hillR) 
+library(spaa) 
+library(vegan)
+library(hilldiv)
+library(Rhdf5lib)
+library(phyloseq)
+library(phytools) 
+library(microbiome) 
+library(matrixStats)
+library(microbiomeutilities) 
+library(lme4) 
+library(MuMIn) 
+library(nlme) 
+library(knitr) 
+library(kableExtra)
+library(pairwiseAdonis)
+library(sjPlot)
+library(distillR) 
+library(RColorBrewer) 
+library(reshape2) 
+library(ggpubr) 
+library(ggdendro) 
+library(grid)
+library(gplots)
+library(dendextend)
+library(stringr) 
+library(Rtsne)
+library(glue)
+library(webshot2)
+library(dplyr)
+```
+
+
+```{r directories, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+## Declare directories and files
+
+workingdir="/Users/elsa/Desktop/THESIS/Thesis"
+counts_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_counts.tsv"
+tree_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032.tree"
+taxonomy_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_mag_info.tsv"
+metadata_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_metadata.tsv"
+coverage_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_coverage.tsv"
+```
+
+```{r loaddata, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+## Load data 
+setwd(workingdir) 
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+coverage_table <- read.table(coverage_file, sep="\t",row.names=1,header=T)
+metadata <- read.table(metadata_file,sep="\t",header=T)%>%
+	rename(sample=EHI_plaintext)
+mags_table <- read.table(taxonomy_file,sep="\t",header=T)
+tree <- read.tree(tree_file)
+
+ehi_phylum_colors <- read.table("~/Desktop/Thesis/R-analysis1/ehi_phylum_colors.tsv",sep="\t",header=T,comment.char = "")
+#Delete *__ from the taxonomy names
+ehi_phylum_colors1 <- ehi_phylum_colors %>%
+  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))
+
+taxonomyclean <- mags_table%>%
+  mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ str_replace(., "[dpcofgs]__", ""))
+
+metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified.csv")
+metadata_unified_clean <- metadata_unified %>%
+  filter(sample != "")  # Filter rows where "sample" is not an empty string
+selected_columns <- metadata_unified_clean %>%
+  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
+# Merge the selected columns with "metadata" based on the "sample" column
+all_metadata <- left_join(metadata, selected_columns, by = "sample")
+```
+
 ## Functional analysis
 
 ```{r filter_annotations, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #### read table ####
 filtered_df <- read.table("all_annotations.csv", sep="")
+```
+
+```{r}
+count_table_cov_size <- sweep(count_table_cov, 1, genome_read_sizes, "/")
+
+count_table_cov_size_rel <- count_table_cov_size %>%
+  rownames_to_column("Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.)) #TSS normalisation
+
+count_filtered <- column_to_rownames(count_table_cov_size_rel, "Genome")
 ```
 
 
@@ -53,7 +143,7 @@ alpha_div_func <- count_filtered_rel %>%
     traits = GIFTs_elements,
     traits_as_is = FALSE,
     q = 1,
-    check_data = FALSE  # Disable data checking
+    check_data = TRUE  # Disable data checking
   )
 
 #Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
@@ -179,16 +269,16 @@ heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
         keysize=0.75, key.par = list(cex=0.9),srtCol = 45)
 ```
 
-###### ISSUE WITH THIS SECTION, WHERE DO I FIND TAXONOMY?? 
 ```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
 # Split name column into first name and last name
-taxonomy <- taxonomy_raw %>%
-  select(user_genome, classification) %>%
-  rename(Genome = user_genome) %>%
-  separate(classification, c('Domain', 'Phylum','Class','Order','Family','Genus','Species'),sep=";") %>%
-  mutate_at(vars(Domain,Phylum,Class,Order,Family,Genus,Species), ~ str_replace(., "[dpcofgs]__", "")) %>%
-  mutate_at(vars(Genome), ~ str_replace(., ".fa", ""))
+taxonomy <- taxonomyclean # %>%
+#  select(user_genome, classification) %>%
+#  rename(Genome = user_genome) %>%
+#  separate(classification, c('Domain', 'Phylum','Class','Order','Family','Genus','Species'),sep=";") %>%
+#  mutate_at(vars(Domain,Phylum,Class,Order,Family,Genus,Species), ~ str_replace(., "[dpcofgs]__", "")) %>%
+#  mutate_at(vars(Genome), ~ str_replace(., ".fa", ""))
 ```
+I used my taxonomy file from the last script, as I could not find a file that had the variable “user_genome” is that OK?
 
 ```{r tsne, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 set.seed(100)
@@ -216,68 +306,51 @@ count_t <- count_filtered_rel %>%
 
 ```
 
-```{r tsne_groupA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-mergetable <- count_t %>%
+Create Merge table and GIFT elements for Ittoq dogs
+```{r tsne_Ittoq, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_Ittoq <- count_t %>%
   mutate_if(is.character, as.numeric) %>%
   rownames_to_column("sample") %>%
-  merge(., metadata[ , c("sample", "species")], by="sample", all.x = TRUE) %>%
-  filter(species=="Timon lepidus") %>%
+  merge(., all_metadata[ , c("sample", "region")], by="sample", all.x = TRUE) %>%
+  filter(region=="Ittoqqortoormii") %>%
   column_to_rownames(., "sample")
 
-mergetable <- mergetable [1: ncol(mergetable)-1 ]
+mergetable_Ittoq <- mergetable_Ittoq [1: ncol(mergetable_Ittoq)-1 ]
 
-GIFTs_elements_tSNE_rel_means <- colMeans(mergetable) %>%
+GIFTs_elements_tSNE_rel_means_I <- colMeans(mergetable_Ittoq) %>%
   as.data.frame() %>%
   rename( "Relative_value" = ".")  %>%
   rownames_to_column(., "genome") %>%
   merge(., GIFTs_elements_tSNE, by= "genome")
 
-GIFTs_elements_tSNE_rel_means_GroupA <- GIFTs_elements_tSNE_rel_means[GIFTs_elements_tSNE_rel_means$Relative_value != 0, ]
+GIFTs_elements_tSNE_rel_means_Ittoq <- GIFTs_elements_tSNE_rel_means_I[GIFTs_elements_tSNE_rel_means_I$Relative_value != 0, ]
 
 ```
 
-```{r tsne_groupB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-mergetable_B <- count_t %>%
+Create Merge table and GIFT elements for Daneborg dogs
+```{r tsne_Daneborg, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_Daneborg <- count_t %>%
   mutate_if(is.character, as.numeric) %>%
   rownames_to_column("sample") %>%
-  merge(., metadata[ , c("sample", "species")], by="sample", all.x = TRUE) %>%
-  filter(species=="Chalcides striatus") %>%
+  merge(., all_metadata[ , c("sample", "region")], by="sample", all.x = TRUE) %>%
+  filter(region=="Daneborg") %>%
   column_to_rownames(., "sample")
 
-mergetable_B <- mergetable_B [1: ncol(mergetable_B)-1 ]
+mergetable_Daneborg <- mergetable_Daneborg [1: ncol(mergetable_Daneborg)-1 ]
 
-GIFTs_elements_tSNE_rel_means_B <- colMeans(mergetable_B) %>%
+GIFTs_elements_tSNE_rel_means_D <- colMeans(mergetable_Daneborg) %>%
   as.data.frame() %>%
   rename( "Relative_value" = ".")  %>%
   rownames_to_column(., "genome") %>%
   merge(., GIFTs_elements_tSNE, by= "genome")
 
-GIFTs_elements_tSNE_rel_means_GroupB <- GIFTs_elements_tSNE_rel_means_B[GIFTs_elements_tSNE_rel_means_B$Relative_value != 0, ]
+GIFTs_elements_tSNE_rel_means_Daneborg <- GIFTs_elements_tSNE_rel_means_D[GIFTs_elements_tSNE_rel_means_D$Relative_value != 0, ]
 ```
 
-```{r tsne_groupC, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-mergetable_C <- count_t %>%
-  mutate_if(is.character, as.numeric) %>%
-  rownames_to_column("sample") %>%
-  merge(., metadata[ , c("sample", "species")], by="sample", all.x = TRUE) %>%
-  filter(species=="Podarcis sp.") %>%
-  column_to_rownames(., "sample")
+### Region Daneborg: tSNE Phylum
 
-mergetable_C <- mergetable_C [1: ncol(mergetable_C)-1 ]
-
-GIFTs_elements_tSNE_rel_means_C <- colMeans(mergetable_C) %>%
-  as.data.frame() %>%
-  rename( "Relative_value" = ".")  %>%
-  rownames_to_column(., "genome") %>%
-  merge(., GIFTs_elements_tSNE, by= "genome")
-
-GIFTs_elements_tSNE_rel_means_GroupC <- GIFTs_elements_tSNE_rel_means_C[GIFTs_elements_tSNE_rel_means_C$Relative_value != 0, ]
-```
-
-### Group A: tSNE Phylum
-
-```{r tsneA_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-GIFTs_elements_tSNE_rel_means_GroupA %>%
+```{r tsneIttoq_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Ittoq %>%
   ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
   geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
 #  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
@@ -285,10 +358,10 @@ GIFTs_elements_tSNE_rel_means_GroupA %>%
   theme()
 ```
 
-### Group B: tSNE Phylum
+### Region Daneborg: tSNE Phylum
 
-```{r tsneB_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-GIFTs_elements_tSNE_rel_means_GroupB %>%
+```{r tsneDaneborg_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Daneborg %>%
   ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
   geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
   #scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
@@ -296,21 +369,10 @@ GIFTs_elements_tSNE_rel_means_GroupB %>%
   theme()
 ```
 
-### Group C: tSNE Phylum
+### Region Ittoq: tSNE gifts
 
-```{r tsneC_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-GIFTs_elements_tSNE_rel_means_GroupC %>%
-  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
-  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
-  #scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
-  theme_minimal() +
-  theme()
-```
-
-### Group A: tSNE gifts
-
-```{r tsneA_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-GIFTs_elements_tSNE_rel_means_GroupA %>%
+```{r tsneIttoq_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Ittoq %>%
   ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ #coloured by GIFT
   geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
   scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
@@ -318,21 +380,10 @@ GIFTs_elements_tSNE_rel_means_GroupA %>%
   theme()
 ```
 
-### Group B: tSNE gifts
+### Region Daneborg: tSNE gifts
 
-```{r tsneB_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-GIFTs_elements_tSNE_rel_means_GroupB %>%
-  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ 
-  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
-  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
-  theme_minimal() +
-  theme()
-```
-
-### Group C: tSNE gifts
-
-```{r tsneC_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-GIFTs_elements_tSNE_rel_means_GroupC %>%
+```{r tsneDaneborg_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Daneborg %>%
   ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ 
   geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
   scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
