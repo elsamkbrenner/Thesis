@@ -1,0 +1,341 @@
+---
+title: "Functional Elsa"
+output: html_document
+date: "2023-10-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Functional analysis
+
+```{r filter_annotations, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### read table ####
+filtered_df <- read.table("all_annotations.csv", sep="")
+```
+
+
+```{r gifts, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
+count_filtered_rel <- count_filtered %>%
+  rownames_to_column(., "Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.))  %>%
+  column_to_rownames(., "Genome")
+
+#Run distillation
+GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
+#GIFTs <- GIFTs[-c(9,10),]
+
+# GIFTs_filtered <- GIFTs[rownames(GIFTs) %in% rownames(count_filtered_rel),]
+
+#Aggregate bundle-level GIFTs into the compound level
+GIFTs_elements <- to.elements(GIFTs,GIFT_db)
+
+#Aggregate element-level GIFTs into the function level
+GIFTs_functions <- to.functions(GIFTs_elements,GIFT_db)
+
+#Aggregate function-level GIFTs into overall Biosynthesis, Degradation and Structural GIFTs
+GIFTs_domains <- to.domains(GIFTs_functions,GIFT_db)
+
+#Get community-weighed average GIFTs per sample
+GIFTs_elements_community <- to.community(GIFTs_elements,count_filtered_rel,GIFT_db)
+GIFTs_functions_community <- to.community(GIFTs_functions,count_filtered_rel,GIFT_db)
+GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_rel,GIFT_db)
+```
+
+```{r alpha_div_funct, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+
+alpha_div_func <- count_filtered_rel %>%
+  t() %>%
+  as.data.frame() %>%
+  hill_func(
+    comm = .,  # Use the current data frame as the community data
+    traits = GIFTs_elements,
+    traits_as_is = FALSE,
+    q = 1,
+    check_data = FALSE  # Disable data checking
+  )
+
+#Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
+```
+
+#### Average functional diversities
+
+```{r div_F_mean, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+alpha_div_F <-  as.data.frame(alpha_div_func) %>%
+  t() %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample") %>%
+  merge(., metadata, by="sample")
+
+table_mean_alpha_func <- alpha_div_F %>%
+  group_by(region) %>% 
+  summarise_at(.vars = names(.)[4],.funs = c(mean="mean", sd="sd"))
+
+knitr::kable(table_mean_alpha_func, format = "html", full_width = F,col.names = c('Region', 'Mean', 'SD'), digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+
+```
+
+#### Functional diversity plots
+
+```{r alpha_div_func_plot1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+alpha_div_F %>%
+#  enframe() %>% #convert vector to tibble
+#  rename(Files=1,div=2) %>% #rename columns
+#  inner_join(., metadata, by="Files") %>% #merge with metadata
+#  unite("treatment_date", treatment:date, remove = FALSE) %>%
+  ggplot(aes(x=region,y=D_q,group=region,color=region))+
+    geom_boxplot(alpha=0.1,outlier.shape = NA, width = 0.2, show.legend=FALSE, coef=0)+
+    geom_jitter(width = 0.1)+# shape=21, color="black"
+    theme(panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")
+          )+
+  xlab("Species") + ylab("Functional diversity")
+```
+
+## Functional beta diversity calculations
+
+```{r beta_div_func, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+beta_div_func <- count_filtered_rel %>%
+#  column_to_rownames("Genome") %>%
+  t() %>%
+  as.data.frame() %>%
+  hill_taxa_parti_pairwise(., q = 1, pairs = "full")
+```
+
+```{r beta_div_func_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### Calculate the distances
+beta_div_func_dist <- beta_div_func %>%
+  select(site1,site2,TD_beta) %>%
+  as.data.frame() %>%
+  list2dist()
+```
+
+```{r beta_div_func_nmds_Status, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### NMDS
+beta_div_func_nmds <- beta_div_func_dist %>%
+  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  vegan::scores() %>%
+  as_tibble(., rownames = "sample") %>%
+  inner_join(., metadata, by="sample")
+```
+
+```{r beta_div_func_centroids_Status, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#### Create centroids
+NMDS.centroids_13=aggregate(beta_div_func_nmds[,c(2:3)],by=list(beta_div_func_nmds$region),FUN=mean)
+colnames(NMDS.centroids_13) <- c("region","NMDS1","NMDS2")
+beta_div_func_nmds=merge(beta_div_func_nmds,NMDS.centroids_13,by="region")
+```
+
+#### NMDS:
+
+```{r beta_div_func_plot, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#### Plot the centroids and the samples
+centroids <- beta_div_func_nmds  %>%
+  group_by(region)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(beta_div_func_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+#  facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+
+## Functional capacity of the MAGs
+
+```{r GIFTs_elements, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+GIFTs_elements %>%
+  reshape2::melt() %>%
+  rename(Genome = Var1, Code_element = Var2, GIFT = value) %>%
+  inner_join(GIFT_db,by="Code_element") %>%
+  ggplot(., aes(x=Code_element, y=Genome, fill=GIFT, group=Code_function))+
+  geom_tile()+
+  scale_y_discrete(guide = guide_axis(check.overlap = TRUE))+
+  scale_x_discrete(guide = guide_axis(check.overlap = TRUE))+
+  scale_fill_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  facet_grid(. ~ Code_function, scales = "free", space = "free")+
+  theme_grey(base_size=8)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),strip.text.x = element_text(angle = 90))
+```
+
+```{r hierachical_clustering, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+col <- colorRampPalette(brewer.pal(7, "YlGnBu"))(256)
+heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
+        trace = "none", density.info = "none", ylab="Samples", 
+        xlab="Gifts", cexRow=0.7, margins = c(8,8), lhei=c(2,4), lwid=c(2,5), 
+        keysize=0.75, key.par = list(cex=0.9),srtCol = 45)
+```
+
+###### ISSUE WITH THIS SECTION, WHERE DO I FIND TAXONOMY?? 
+```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+# Split name column into first name and last name
+taxonomy <- taxonomy_raw %>%
+  select(user_genome, classification) %>%
+  rename(Genome = user_genome) %>%
+  separate(classification, c('Domain', 'Phylum','Class','Order','Family','Genus','Species'),sep=";") %>%
+  mutate_at(vars(Domain,Phylum,Class,Order,Family,Genus,Species), ~ str_replace(., "[dpcofgs]__", "")) %>%
+  mutate_at(vars(Genome), ~ str_replace(., ".fa", ""))
+```
+
+```{r tsne, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+set.seed(100)
+
+GIFTs_elements_tSNE <- Rtsne(X=GIFTs_elements, dims = 2, perplexity = floor((nrow(GIFTs_elements) - 1) / 3), check_duplicates = FALSE)
+
+GIFTs_domains <- as.data.frame(GIFTs_domains)
+GIFTs_domains$genome <- rownames(GIFTs_domains)
+
+GIFTs_elements_tSNE <- GIFTs_elements_tSNE$Y %>%
+  as.data.frame() %>%
+  mutate(genome=rownames(GIFTs_elements)) %>%
+  inner_join(GIFTs_domains, by="genome") %>%
+  inner_join(taxonomyclean, by="genome") %>%
+  mutate_at(vars(phylum, class, order, family, genus), factor) %>%
+  #mutate(cyl = factor(Phylum, levels = phylum_colors$Phylum)) %>%
+  rename(tSNE1="V1", tSNE2="V2")
+
+count_t <- count_filtered_rel %>%
+  t() %>%
+  as.data.frame()
+
+#colnames(count_t) <- count_t[1,]
+#count_t <- count_t[-1, ]
+
+```
+
+```{r tsne_groupA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., metadata[ , c("sample", "species")], by="sample", all.x = TRUE) %>%
+  filter(species=="Timon lepidus") %>%
+  column_to_rownames(., "sample")
+
+mergetable <- mergetable [1: ncol(mergetable)-1 ]
+
+GIFTs_elements_tSNE_rel_means <- colMeans(mergetable) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_GroupA <- GIFTs_elements_tSNE_rel_means[GIFTs_elements_tSNE_rel_means$Relative_value != 0, ]
+
+```
+
+```{r tsne_groupB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_B <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., metadata[ , c("sample", "species")], by="sample", all.x = TRUE) %>%
+  filter(species=="Chalcides striatus") %>%
+  column_to_rownames(., "sample")
+
+mergetable_B <- mergetable_B [1: ncol(mergetable_B)-1 ]
+
+GIFTs_elements_tSNE_rel_means_B <- colMeans(mergetable_B) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_GroupB <- GIFTs_elements_tSNE_rel_means_B[GIFTs_elements_tSNE_rel_means_B$Relative_value != 0, ]
+```
+
+```{r tsne_groupC, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_C <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., metadata[ , c("sample", "species")], by="sample", all.x = TRUE) %>%
+  filter(species=="Podarcis sp.") %>%
+  column_to_rownames(., "sample")
+
+mergetable_C <- mergetable_C [1: ncol(mergetable_C)-1 ]
+
+GIFTs_elements_tSNE_rel_means_C <- colMeans(mergetable_C) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_GroupC <- GIFTs_elements_tSNE_rel_means_C[GIFTs_elements_tSNE_rel_means_C$Relative_value != 0, ]
+```
+
+### Group A: tSNE Phylum
+
+```{r tsneA_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_GroupA %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+#  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Group B: tSNE Phylum
+
+```{r tsneB_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_GroupB %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  #scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Group C: tSNE Phylum
+
+```{r tsneC_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_GroupC %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  #scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Group A: tSNE gifts
+
+```{r tsneA_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_GroupA %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ #coloured by GIFT
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Group B: tSNE gifts
+
+```{r tsneB_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_GroupB %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ 
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Group C: tSNE gifts
+
+```{r tsneC_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_GroupC %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ 
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
