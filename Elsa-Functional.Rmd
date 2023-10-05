@@ -281,7 +281,7 @@ heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
 
 
 Heat map for Daneborg and Ittoq dogs, seperated out
-```{r hierachical_clustering, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+```{r hierachical_clustering by region, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
 
 ittoq_samples <- all_metadata$sample[all_metadata$region == "Ittoqqortoormii"]
 ittoq_samples <- c(
@@ -301,7 +301,7 @@ Daneborg_samples <- c(
 Ittoq_GIFTs_functions_community <- GIFTs_functions_community[ittoq_samples, ]
 Daneborg_GIFTs_functions_community <- GIFTs_functions_community[Daneborg_samples, ]
 
-
+# create 2 heatmaps, 1 for each region
 col_Ittoq <- colorRampPalette(brewer.pal(7, "YlGnBu"))(256)
 heatmap(Ittoq_GIFTs_functions_community, scale = "none", col=col, Colv=NA,
         trace = "none", density.info = "none", ylab="Samples", 
