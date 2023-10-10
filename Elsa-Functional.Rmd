@@ -198,13 +198,13 @@ alpha_div_F %>%
 ```
 
 ## Functional beta diversity calculations
-
+#### NEED TO CHECK #####
 ```{r beta_div_func, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 beta_div_func <- count_filtered_rel %>%
 #  column_to_rownames("Genome") %>%
   t() %>%
   as.data.frame() %>%
-  hill_taxa_parti_pairwise(., q = 1, pairs = "full")
+  hill_taxa_parti_pairwise(., q = 1, pairs = "full") #Need to include a functional part
 ```
 
 ```{r beta_div_func_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -280,8 +280,8 @@ heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
 ```
 
 
-Heat map for Daneborg and Ittoq dogs, seperated out
-```{r hierachical_clustering by region, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+Data preparation for heatmaps for each region
+```{r regional data prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
 
 ittoq_samples <- all_metadata$sample[all_metadata$region == "Ittoqqortoormii"]
 ittoq_samples <- c(
@@ -314,6 +314,7 @@ heatmap(Daneborg_GIFTs_functions_community, scale = "none", col=col, Colv=NA,
         xlab="Gifts", cexRow=0.7, margins = c(8,8), lhei=c(2,4), lwid=c(2,5), 
         keysize=0.75, key.par = list(cex=0.9),srtCol = 45)
 ```
+
 
 ```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
 # Split name column into first name and last name
@@ -436,3 +437,10 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
   theme_minimal() +
   theme()
 ```
+
+
+
+NOTES:
+HOSC
+search for more simple stat analysis (read and check test types)
+clr transformation
