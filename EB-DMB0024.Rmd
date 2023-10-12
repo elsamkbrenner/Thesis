@@ -20,8 +20,8 @@ library(ggplot2) # ggplot2 is a helpful package for making graphs in R.
 library(hillR) # this package is used to calculate Hill numbers, a metric for 'combined' diversity 
 library(spaa) # this package holds tools used for the analysis of species associations, and niche overlap
 library(vegan) # Vegan is a common package used for the analysis of ecology data. Here, we apply it for its tools on diversity analysis. 
-library(hilldiv) # this package is used for the calculation of Hill numbers (see also hillR)
-
+#library(hilldiv) # this package is used for the calculation of Hill numbers (see also hillR)
+library(hilldiv2) # this package is an updated package for calculating Hill numbers
 library(Rhdf5lib)
 library(phyloseq)
 
@@ -134,7 +134,7 @@ cat(nsamples) # this tells you the number of samples included in analysis = 58
 The number of metagenome-assembled genomes (MAG) or draft bacterial genomes reconstructed from the metagenomic data.
 
 ```{r nmags, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-cat(nmags) # this tells you the number of metagenome-assembled genomes (MAGs) included in analysis = 472
+cat(nmags) # this tells you the number of metagenome-assembled genomes (MAGs) included in analysis = 555
 ```
 
 **Amount of total data (GB):**
@@ -218,20 +218,20 @@ cat(totalreads) # = 1833.71 million reads
 
 ```{r mappedGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 mappedGB <- round(sequencing_depth_sum / 1000000000 * 143,2)
-cat(mappedGB) # total mapped sequencing depth = 262.22 gigabases
+cat(mappedGB) # total mapped sequencing depth = 266.02 gigabases
 ```
 
 **Average mapped sequencing depth (million reads):** 
 This is the average number of reads (and nucleotide bases) mapped to each sample. Note that the amount of bases is only an approximation estimated by multiplying the exact number of mapped reads by 250 bp.
 ```{r meanreads, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 meanreads <- round(sequencing_depth_mean / 1000000,2)
-cat(meanreads) # average mapped sequencing depth = 31.62 million reads
+cat(meanreads) # average mapped sequencing depth = 32.07 million reads
 ```
 
 **Average mapped sequencing depth (GB):** 
 ```{r meanGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 meanGB <- round(sequencing_depth_mean / 1000000000 * 143,2)
-cat(meanGB) # average mapped sequencing depth = 4.52 gigabases 
+cat(meanGB) # average mapped sequencing depth = 4.59 gigabases 
 ```
 
 ## 1.2 MAG catalogue
@@ -314,9 +314,6 @@ ggscatter(comp_cont, x = "comp", y = "cont", color="phylum",
          size=guide_legend("MAG size"))
 ```
 
-
-ELSA NOTE: this table appears to be clustered differently than the one in the DMB0024 file you sent me (see cluster here in Q4, rather than cluster in Q2 on the PDF). Though if I remember correctly, this figure matches the one you showed me in our meeting Monday morning. 
-
 ## 1.3 Sequencing depth assessment
 When performing genome-resolved metagenomic analyses on host-associated microbial communities, the data usually contains a mixture of origins.
   One fraction is low-quality data that is discarded in the bioinformatic preprocessing due to lack of informativeness. These data include low-quality bases, adaptors, low-complexity reads and alike, which do not contribute to the study. Another fraction belongs to the host genome against which the data are mapped. The host fraction can be very variable depending on the species and the sample type, and while it is not informative for metagenomic analyses, it can be used for genomic analyses. The rest is what we call the metagenomic fraction. Part of the metagenomic fraction is built into draft bacterial genomes or MAGs, against which metagenomic reads are mapped later on to quantify relative representation of genomes. The fraction that is not built into MAGs is what is also unmapped against the MAG catalogue. This last fraction includes DNA dietary items, viruses and other organisms, but can values_to include prokaryotic DNA of bacteria and archaea that were unable to be reconstructed.
@@ -349,7 +346,6 @@ sequence_fractions_pivot <- sequence_fractions %>%
 	mutate(fraction = factor(fraction, levels = c("lowqual_bases","host_bases","unmapped_bases","mags_bases")))
 
 sequence_fractions_meta <- merge(sequence_fractions_pivot, metadata, by="sample")
-
 ```
 
 ```{r data_fraction_barplot, echo=FALSE, warning=FALSE}
@@ -430,9 +426,6 @@ vertical_tree <- gheatmap(vertical_tree, log10(count_table_cov_size), offset=0.0
 vertical_tree +
 	theme(legend.position='bottom',legend.key.size = unit(0.3, 'cm')) + labs(fill='Counts')
 ```
-
-
-This appears to match the figure in the PDF report, though I am working now to correct the legand. 
 
 # 2. Taxonomic composition
 Note that TSS normalisation simply divides each count value for the total count for the sample, thus transforming the data to 0-1 scale.
@@ -552,7 +545,7 @@ count_filtered <- column_to_rownames(count_table_cov_size_rel, "Genome")
 ```{r alpha_div_neutral, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 alpha_div_neutral <- count_filtered %>%
     t() %>%
-    hill_taxa(., q = 1) #calculate neutral alpha diversities
+    hill_taxa(., q = 1) #calculate neutral alpha diversities using hillR
 ```
 
 #### Average neutral alpha diversities (q1)
@@ -679,6 +672,8 @@ beta_div_neutral <- count_filtered %>%
 #    select(-1) %>% 
     t() %>% #transpose
     hill_taxa_parti_pairwise(., q = 1, pairs = "full") #calculate neutral beta diversities
+
+# hill_taxa_parti_pairwise is also part of hillR, not hilldiv
 ```
 
 ```{r beta_div_neutral_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -733,7 +728,7 @@ Adonis
 ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
 permutest(ps.disper.neutral, pairwise = TRUE) 
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P = 0.537
+## results: P = 0.514
 
 meta_order <- metadata[order(metadata$sample),] 
 m1 <- as.matrix(beta_div_neutral_dist) 
@@ -744,7 +739,7 @@ metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),]
 adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
 # this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
 
-## results: P = 0.001. R2 = 0.12257
+## results: P = 0.001. R2 = 0.12272
 
 ## thus, the results ARE statistically significant, and 12% of variation is based on the region
 

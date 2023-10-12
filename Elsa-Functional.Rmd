@@ -20,7 +20,8 @@ library(ggplot2)
 library(hillR) 
 library(spaa) 
 library(vegan)
-library(hilldiv)
+#library(hilldiv)
+library(hilldiv2)
 library(Rhdf5lib)
 library(phyloseq)
 library(phytools) 
@@ -157,6 +158,8 @@ alpha_div_func <- count_filtered_rel %>%
   )
 
 #Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
+
+# hill_func is also using hillR not hilldiv
 ```
 
 #### Average functional diversities
@@ -205,6 +208,8 @@ beta_div_func <- count_filtered_rel %>%
   t() %>%
   as.data.frame() %>%
   hill_taxa_parti_pairwise(., q = 1, pairs = "full") #Need to include a functional part
+
+# hill_taxa_parti_pairwise uses hillR not hilldiv
 ```
 
 ```{r beta_div_func_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -443,4 +448,108 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
 NOTES:
 HOSC
 search for more simple stat analysis (read and check test types)
-clr transformation
+clr transformation is the one we use based on established EHI standard
+
+
+############################################################
+
+Attempting hilldiv2 calculations
+
+```{r}
+#Load data
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+tree <- read.tree(tree_file)
+traits <- to.elements(GIFTs,GIFT_db)
+
+# counts_table and dist had unmatched row numbers, so the analysis was not possible. In order to perform the analysis, I removed the 2 rows not present in dist from counts_table. I have left this section in, in case this presents an issue for the analysis. 
+counts_table_row_names <- rownames(counts_table)
+dist_row_names <- rownames(dist)
+rows_not_in_dist <- setdiff(counts_table_row_names, dist_row_names)
+rows_to_remove <- c("EHA01909_bin.13", "EHA01928_bin.9") # these are the 2 bins not in dist
+counts_table <- counts_table[!(rownames(counts_table) %in% rows_to_remove), ]
+
+#Convert traits into distance matrix
+dist <- traits2dist(traits, method="gower")
+```
+
+```{r}
+hilldiv(data=counts_table)
+# hilldiv(data=counts_table,tree=tree)
+hilldiv(data=counts_table,dist=dist)
+```
+
+```{r}
+hillpart(data=counts_table)
+hillpart(data=counts_table,tree=tree)
+hillpart(data=counts_table,dist=dist)
+
+hillpart(data=counts_table,q=0)
+hillpart(data=counts_table,q=c(0,0.5,1),tree=tree)
+hillpart(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+hillsim(data=counts_table)
+hillsim(data=counts_table,tree=tree)
+hillsim(data=counts_table,dist=dist)
+
+hillsim(data=counts_table,q=0)
+hillsim(data=counts_table,metric=c("C","U"),q=c(0,0.5,1),tree=tree)
+hillsim(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+hilldiss(data=counts_table)
+hilldiss(data=counts_table,tree=tree)
+hilldiss(data=counts_table,dist=dist)
+
+hilldiss(data=counts_table,q=0)
+hilldiss(data=counts_table,metric=c("C","U"),q=c(0,0.5,1),tree=tree)
+hilldiss(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+hillpair(data=counts_table)
+hillpair(data=counts_table,tree=tree)
+hillpair(data=counts_table,dist=dist)
+
+hillpair(data=counts_table,q=0)
+hillpair(data=counts_table,q=1,tree=tree)
+hillpair(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+library(spaa)
+library(vegan)
+library(ggplot2)
+
+#Remove outliers to avoid distorting ordination
+hill_pair_dis <- hillpair(data=counts_table,q=1)
+
+#Other Hill numbers can also be used, e.g.:
+#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=0)
+#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=1,tree=tree)
+#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=1,dist=dist)
+
+# Generate NMDS ordination
+hill_pair_dis_nmds <- hill_pair_dis %>%
+				select(first,second,C) %>% #based on dissimilarity metric C
+				as.data.frame() %>%
+				list2dist() %>%
+				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+				scores() %>%
+				as_tibble(., rownames = "sample")
+
+#Add metadata
+metadata <- all_metadata
+hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
+      left_join(metadata, by = join_by(sample == sample))
+
+#Plot ordination
+ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=population)) +
+        geom_point(size=3) +
+        scale_color_manual(values = c("#E3D97B","#46edc8","#374d7c")) +
+        theme_classic() +
+        theme(legend.position="bottom", legend.box="vertical")
+```
+
