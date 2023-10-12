@@ -536,24 +536,33 @@ Diversity estimations for each sample.\
 **Phylogenetic diversity:** Phylogenetic Hill number of q=1, a diversity metric that accounts for richness and eveness (relative abundances), as well as phylogenetic relationships among MAGs.\
 **Functional diversity:** Functional Hill number of q=1, a diversity metric that accounts for richness and eveness (relative abundances), as well as functional dissimilarities among MAGs.\
 
-```{r nofilter_samples, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r nofilter_samples, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 count_filtered <- column_to_rownames(count_table_cov_size_rel, "Genome")
-#metadata_filtered <- metadata[metadata$Sample %in% rownames(count_filtered)]
+
+metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified.csv")
+metadata_unified_clean <- metadata_unified %>%
+  filter(sample != "")  # Filter rows where "sample" is not an empty string
+selected_columns <- metadata_unified_clean %>%
+  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
+
+# This metadata object includes the selected additional columns, above
+all_metadata <- left_join(metadata, selected_columns, by = "sample")
 ```
 
 ### Neutral
-```{r alpha_div_neutral, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r alpha_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
 # Calculate neutral alpha diversities using hilldiv2
-alpha_div_neutral <- count_filtered %>%
-    hilldiv(., q = 1) #calculate neutral alpha diversities using hillR
+alpha_div_neutral <- hilldiv(count_filtered, q=1)
 ```
 
-
 #### Average neutral alpha diversities (q1)
-```{r div_mean, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-alpha_div_N <-  as.data.frame(alpha_div_neutral) %>%
+```{r div_mean, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div_N <- t(alpha_div_neutral) %>%
+  as.data.frame() %>%
   tibble::rownames_to_column("sample") %>%
-  merge(., metadata, by="sample")
+  merge(., all_metadata, by="sample")
 
 table_mean_alpha <- alpha_div_N %>% 
   group_by(region) %>% 
@@ -562,10 +571,11 @@ knitr::kable(table_mean_alpha, format = "html", full_width = F,col.names = c('Gr
   kable_styling(latex_options="scale_down")
 ```
 
-```{r alpha_table, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-alpha_div <- alpha_div_neutral %>%
+```{r alpha_table, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div <- t(alpha_div_neutral) %>%
   as.data.frame() %>%
-  rename( "Diversity" = ".")  %>%
+  rename( "Diversity" = "q1")  %>%
   rownames_to_column("sample") %>%
   left_join(sequence_fractions, by = join_by(sample == sample)) %>% #add sequencing depth information
   mutate(depth=round(mags_bases/1000000,3))
@@ -573,7 +583,8 @@ alpha_div <- alpha_div_neutral %>%
 
 #### Correlations
 
-```{r correlation2_plot2, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r correlation2_plot2, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
 ggscatter(alpha_div, x = "mags_bases", y = "unmapped_bases", color="depth", 
           add = "reg.line", conf.int = TRUE,  add.params = list(color = "gray", fill = "lightgray"),
           cor.coef = TRUE, cor.method = "kendall", size = "Diversity",
@@ -586,732 +597,156 @@ ggscatter(alpha_div, x = "mags_bases", y = "unmapped_bases", color="depth",
 
 #### Alpha diversity plots
 
-```{r alpha_div_neutral_plot1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-alpha_div_neutral %>%
-  enframe() %>% #convert vector to tibble
-  rename(sample=1,div=2) %>% #rename columns
-  inner_join(., metadata, by="sample") %>% #merge with metadata
-  ggplot(aes(x=region,y=div,group=region,color=region))+
-    geom_boxplot(alpha=0.2,outlier.shape = NA, width = 0.3, show.legend=FALSE, coef=0)+
-    geom_jitter(width = 0.1, show.legend=TRUE)+# shape=21, color="black"
-    theme(panel.background = element_blank(),
-          panel.border = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")
-          )+
+```{r alpha_div_neutral_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+# Create the plot for alpha_div_N
+alpha_div_N %>%
+  ggplot(aes(x = region, y = q1, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
   ylab("Alpha diversity")
+
 ```
 
 
 ### Phylogenetic
-```{r alpha_div_phylo, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-alpha_div_phylo <- count_filtered %>%
-#    column_to_rownames("Genome") %>%
-    t() %>% #transpose
-    hill_phylo(., tree,q = 1) #calculate neutral phylogenetic diversities
+```{r alpha_div_phylo, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div_phylo <- hilldiv(data=count_filtered,tree=tree, q=1)
 ```
 
 #### Average phylogenetic alpha diversities
 
-```{r div_P_mean, comment="", echo=FALSE}
-alpha_div_P <-  as.data.frame(alpha_div_phylo) %>%
+```{r div_P_mean, comment="", echo=TRUE}
+
+alpha_div_P <-  t(alpha_div_phylo) %>%
+  as.data.frame() %>%
   tibble::rownames_to_column("sample") %>%
-  merge(., metadata, by="sample")
+  merge(., all_metadata, by="sample")
 
 table_mean_alpha_phylo <- alpha_div_P %>%
   group_by(region) %>% 
   summarise_at(.vars = names(.)[2],.funs = c(mean="mean", sd="sd"))
 
-#table_mean_alpha_phylo$Type <- c("Aggressive 2015", "Aggressive 2017","Tame 2015","Tame 2017")
-
 knitr::kable(table_mean_alpha_phylo, format = "html", full_width = F,col.names = c('Groups', 'Mean', 'SD'), digits = 3) %>%
   kable_styling(latex_options="scale_down")
-
 ```
 
 #### Alpha diversity plots
 
-```{r alpha_div_phylo_plot1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-alpha_div_phylo %>%
-  enframe() %>% #convert vector to tibble
-  rename(sample=1,div=2) %>% #rename columns
-  inner_join(., metadata, by="sample") %>% #merge with metadata
-  ggplot(aes(x=region,y=div,group=region,color=region))+
-    geom_boxplot(alpha=0.2,outlier.shape = NA, width = 0.3, show.legend=FALSE, coef=0)+
-    geom_jitter(width = 0.1, show.legend=TRUE)+# shape=21, color="black"
-    theme(panel.background = element_blank(),
-          panel.border = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")
-          )+
+```{r alpha_div_phylo_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div_P %>%
+  ggplot(aes(x = region, y = q1, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Phylogenetic diversity")
+  ylab("Alpha diversity")
 ```
-
-## Beta diversity calculations
-
-```{r beta_div_metadata, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified.csv")
-
-metadata_unified_clean <- metadata_unified %>%
-  filter(sample != "")  # Filter rows where "sample" is not an empty string
-
-selected_columns <- metadata_unified_clean %>%
-  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
-
-# Merge the selected columns with "metadata" based on the "sample" column
-all_metadata <- left_join(metadata, selected_columns, by = "sample")
-```
-
 
 ### Neutral
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-beta_div_neutral <- count_filtered %>%
-#    select(-1) %>% 
-    t() %>% #transpose
-    hill_taxa_parti_pairwise(., q = 1, pairs = "full") #calculate neutral beta diversities
 
-# hill_taxa_parti_pairwise is also part of hillR, not hilldiv
+beta_div_neutral <- count_filtered %>%
+    hillpair(., q = 1) #calculate neutral beta diversities
 ```
 
-```{r beta_div_neutral_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r beta_div_neutral_dist dataframe, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+
+# Calculate distances
+beta_div_neutral_dist <- beta_div_neutral %>%
+  select(first,second,C) %>%
+  as.data.frame()  #%>% 
+  # list2dist()
+```
+
+Showcasing the NA issue in list2dist
+```{r head distances dataframe, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+head(beta_div_neutral_dist)
+```
+I have printed this to display that the dataframe in beta_div_neutral_dist correctly selects values, before list2dist has lots of NAs. 
+
+```{r beta_div_neutral_dist, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 #### Calculate the distances
 beta_div_neutral_dist <- beta_div_neutral %>%
-  select(site1,site2,TD_beta) %>%
+  select(first,second,C) %>%
   as.data.frame()  %>% 
   list2dist()
 ```
 
+Then, the list2dist step yields lots of NAs:
+```{r print list2dist, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+print(beta_div_neutral_dist)
+```
+
+
+
 ```{r beta_div_neutral_nmds_Status, comment="", echo=FALSE, results='hide'}
 #### NMDS
-beta_div_neutral_nmds <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., metadata, by="sample")
+#beta_div_neutral_nmds <- beta_div_neutral_dist %>%
+  #metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
+  #vegan::scores() %>%
+  #as_tibble(., rownames = "sample") %>%
+  #inner_join(., all_metadata, by="sample")
 ```
 
 ```{r beta_div_neutral_centroids_region,comment="", echo=FALSE}
 #### Create centroids
-NMDS.centroids_1=aggregate(beta_div_neutral_nmds[,c(2:3)],by=list(beta_div_neutral_nmds$region),FUN=mean)
-colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
-beta_div_neutral_nmds=merge(beta_div_neutral_nmds,NMDS.centroids_1,by="region")
+#NMDS.centroids_1=aggregate(beta_div_neutral_nmds[,c(2:3)],by=list(beta_div_neutral_nmds$region),FUN=mean)
+#colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
+#beta_div_neutral_nmds=merge(beta_div_neutral_nmds,NMDS.centroids_1,by="region")
 ```
 
 #### NMDS:
 ```{r beta_div_neutral_plot_region,comment="", echo=FALSE}
 #### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds  %>%
-  group_by(region)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+#centroids <- beta_div_neutral_nmds  %>%
+  #group_by(region)  %>%
+  #summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
 
-ggplot(beta_div_neutral_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
+#ggplot(beta_div_neutral_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
+  #geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  #geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  #theme(axis.line = element_line(colour = "grey"),
+  #     panel.grid.major = element_blank(),
+  #      panel.grid.minor = element_blank(),
+  #      panel.border = element_blank(),
+  #      panel.background = element_blank(),
+  #      axis.title=element_blank(),
+  #      legend.text=element_text(size=14))+
   # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
+  #theme_classic()+
+  #labs( x = "NMDS1", y = "NMDS2")
 ```
 
 Adonis
-```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+```{r Adonis_Region, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 
-ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
-permutest(ps.disper.neutral, pairwise = TRUE) 
+#ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
+#permutest(ps.disper.neutral, pairwise = TRUE) 
+
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P = 0.514
+## results: P 
 
-meta_order <- metadata[order(metadata$sample),] 
-m1 <- as.matrix(beta_div_neutral_dist) 
-metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
+#meta_order <- metadata[order(metadata$sample),] 
+#m1 <- as.matrix(beta_div_neutral_dist) 
+#metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
 # this section correctly orders the metadata so that it matches to the beta diversity distance matrix
 
 # Run test
-adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
+#adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
 # this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
 
-## results: P = 0.001. R2 = 0.12272
-
-## thus, the results ARE statistically significant, and 12% of variation is based on the region
-
+## results: 
 ```
-
-Looking at the 6 different sled teams in Daneborg:
-```{r Daneborg_packs_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-# Filter the data for Daneborg
-filtered_data <- all_metadata %>%
-  filter(region == "Daneborg")
-
-# NMDS analysis for Packs in Daneborg
-beta_div_neutral_nmds_pack <- beta_div_neutral_dist %>%
-  metaMDS(., trymax = 200, k = 2, verbosity = FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., filtered_data, by = "sample")
-
-# Create centroids
-NMDS.centroids_2 <- aggregate(beta_div_neutral_nmds_pack[, c(2:3)], by = list(Pack = beta_div_neutral_nmds_pack$Pack), FUN = mean)
-colnames(NMDS.centroids_2) <- c("Pack", "NMDS1", "NMDS2")
-beta_div_neutral_nmds_pack <- merge(beta_div_neutral_nmds_pack, NMDS.centroids_2, by = "Pack")
-
-# Plot the centroids and the samples
-centroids <- beta_div_neutral_nmds_pack %>%
-  group_by(Pack) %>%
-  summarize(NM1 = mean(NMDS1.y), NM2 = mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_pack, aes(x = NMDS1.x, y = NMDS2.x, colour = Pack)) +
-  geom_point(aes(x = NMDS1.x, y = NMDS2.x), size = 2) +
-  geom_segment(aes(x = NMDS1.y, y = NMDS2.y, xend = NMDS1.x, yend = NMDS2.x)) +
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        legend.text = element_text(size = 14)) +
-  theme_classic() +
-  labs(x = "NMDS1", y = "NMDS2")
-
-```
-
-Adonis for the Pack analysis in Daneborg:
-```{r Daneborg_packs_adonis, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-ps.disper.neutral <- betadisper(beta_div_neutral_dist, all_metadata$Pack) 
-permutest(ps.disper.neutral, pairwise = TRUE) 
-# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P = 0.001, therefore NOT appropriate for adonis
-################### ALL BELOW NOT RELEVENT #############################
-
-
-# meta_order_2 <- all_metadata[order(all_metadata$sample),] 
-# m2 <- as.matrix(beta_div_neutral_dist) 
-# metadata_ord_2<- all_metadata[order(match(all_metadata$sample,rownames(m2))),] 
-# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
-
-# Run test
-# adonis2(beta_div_neutral_dist ~ Pack, data =metadata_ord_2, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the packs. 
-```
-
-#################################
-
-Now Analysis for presence / absence of parasites: 
-
-```{r Parasites_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-#### NMDS
-beta_div_neutral_nmds_PR <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_PR <- beta_div_neutral_nmds_PR %>%
-  filter(PR_results_short != "excluded")
-
-#### Create centroids
-NMDS.centroids_3=aggregate(beta_div_neutral_nmds_PR[,c(2:3)],by=list(beta_div_neutral_nmds_PR$PR_results_short),FUN=mean)
-colnames(NMDS.centroids_3) <- c("PR_results_short","NMDS1","NMDS2")
-beta_div_neutral_nmds_PR=merge(beta_div_neutral_nmds_PR,NMDS.centroids_3,by="PR_results_short")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_PR  %>%
-  group_by(PR_results_short)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_PR, aes(x=NMDS1.x,y=NMDS2.x,colour=PR_results_short)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-
-```
-```{r Parasites_adonis, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-ps.disper.neutral <- betadisper(beta_div_neutral_dist, all_metadata$PR_results_short) 
-permutest(ps.disper.neutral, pairwise = TRUE) 
-# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P = 0.04, therefore NOT appropriate for adonis
-################### ALL BELOW NOT RELEVENT #############################
-
-
-# meta_order_3 <- all_metadata[order(all_metadata$sample),] 
-# m3 <- as.matrix(beta_div_neutral_dist) 
-# metadata_ord_3<- all_metadata[order(match(all_metadata$sample,rownames(m3))),] 
-# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
-
-# Run test
-# adonis2(beta_div_neutral_dist_PR ~ PR_results_short, data =metadata_ord_3, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the parasitic infection.  
-```
-
-Now, just for fun, we look at the Ittoq dogs, by their packs: 
-
-```{r Ittoq_packs_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-# Filter the data for Ittoqqortoormiit
-filtered_data_2 <- all_metadata %>%
-  filter(region == "Ittoqqortoormii")
-
-# NMDS analysis for Packs in Daneborg
-beta_div_neutral_nmds_ittoq <- beta_div_neutral_dist %>%
-  metaMDS(., trymax = 200, k = 2, verbosity = FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., filtered_data_2, by = "sample")
-
-# Create centroids
-NMDS.centroids_4 <- aggregate(beta_div_neutral_nmds_ittoq[, c(2:3)], by = list(Pack = beta_div_neutral_nmds_ittoq$Pack), FUN = mean)
-colnames(NMDS.centroids_4) <- c("Pack", "NMDS1", "NMDS2")
-beta_div_neutral_nmds_ittoq <- merge(beta_div_neutral_nmds_ittoq, NMDS.centroids_4, by = "Pack")
-
-# Plot the centroids and the samples
-centroids <- beta_div_neutral_nmds_ittoq %>%
-  group_by(Pack) %>%
-  summarize(NM1 = mean(NMDS1.y), NM2 = mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_ittoq, aes(x = NMDS1.x, y = NMDS2.x, colour = Pack)) +
-  geom_point(aes(x = NMDS1.x, y = NMDS2.x), size = 2) +
-  geom_segment(aes(x = NMDS1.y, y = NMDS2.y, xend = NMDS1.x, yend = NMDS2.x)) +
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        legend.text = element_text(size = 14)) +
-  theme_classic() +
-  labs(x = "NMDS1", y = "NMDS2")
-```
-Adonis for Ittoqqortoormiit packs
-```{r Ittoq_packs_adonis, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-ps.disper.neutral <- betadisper(beta_div_neutral_dist, all_metadata$Pack) 
-permutest(ps.disper.neutral, pairwise = TRUE) 
-# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P = 0.001, therefore NOT appropriate for adonis
-################### ALL BELOW NOT RELEVENT #############################
-
-
-# meta_order_4 <- all_metadata[order(all_metadata$sample),] 
-# m4 <- as.matrix(beta_div_neutral_dist) 
-# metadata_ord_4<- all_metadata[order(match(all_metadata$sample,rownames(m4))),] 
-# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
-
-# Run test
-# adonis2(beta_div_neutral_dist_ittoq ~ Pack, data =metadata_ord_4, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the packs.  
-```
-#########################################################################################################
-
-Looking for if individual parasites impact results:
-
-T. leonina
-```{r Individual_Parasites_nmds, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-#### NMDS
-beta_div_neutral_nmds_tleo <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_tleo <- beta_div_neutral_nmds_tleo %>%
-  filter(toxocaris_leonina != "excluded")
-
-#### Create centroids
-NMDS.centroids_5=aggregate(beta_div_neutral_nmds_tleo[,c(2:3)],by=list(beta_div_neutral_nmds_tleo$toxocaris_leonina),FUN=mean)
-colnames(NMDS.centroids_5) <- c("toxocaris_leonina","NMDS1","NMDS2")
-beta_div_neutral_nmds_tleo=merge(beta_div_neutral_nmds_tleo,NMDS.centroids_5,by="toxocaris_leonina")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_tleo  %>%
-  group_by(toxocaris_leonina)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_tleo, aes(x=NMDS1.x,y=NMDS2.x,colour=toxocaris_leonina)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-
-```
-
-sarcocystis_spp
-```{r}
-#### NMDS
-beta_div_neutral_nmds_sarcocystis <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_sarcocystis <- beta_div_neutral_nmds_sarcocystis %>%
-  filter(sarcocystis_spp != "excluded")
-
-#### Create centroids
-NMDS.centroids_6=aggregate(beta_div_neutral_nmds_sarcocystis[,c(2:3)],by=list(beta_div_neutral_nmds_sarcocystis$sarcocystis_spp),FUN=mean)
-colnames(NMDS.centroids_6) <- c("sarcocystis_spp","NMDS1","NMDS2")
-beta_div_neutral_nmds_sarcocystis=merge(beta_div_neutral_nmds_sarcocystis,NMDS.centroids_6,by="sarcocystis_spp")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_sarcocystis  %>%
-  group_by(sarcocystis_spp)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_sarcocystis, aes(x=NMDS1.x,y=NMDS2.x,colour=sarcocystis_spp)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-```
-Tania_serialis
-```{r}
-#### NMDS
-beta_div_neutral_nmds_tser <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_tser <- beta_div_neutral_nmds_tser %>%
-  filter(Tania_serialis != "excluded")
-
-#### Create centroids
-NMDS.centroids_7=aggregate(beta_div_neutral_nmds_tser[,c(2:3)],by=list(beta_div_neutral_nmds_tser$Tania_serialis),FUN=mean)
-colnames(NMDS.centroids_7) <- c("Tania_serialis","NMDS1","NMDS2")
-beta_div_neutral_nmds_tser=merge(beta_div_neutral_nmds_tser,NMDS.centroids_7,by="Tania_serialis")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_tser  %>%
-  group_by(Tania_serialis)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_tser, aes(x=NMDS1.x,y=NMDS2.x,colour=Tania_serialis)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-```
-cryptosporidium
-```{r}
-#### NMDS
-beta_div_neutral_nmds_crypto <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_crypto <- beta_div_neutral_nmds_crypto %>%
-  filter(cryptosporidium != "excluded")
-
-#### Create centroids
-NMDS.centroids_8=aggregate(beta_div_neutral_nmds_crypto[,c(2:3)],by=list(beta_div_neutral_nmds_crypto$cryptosporidium),FUN=mean)
-colnames(NMDS.centroids_8) <- c("cryptosporidium","NMDS1","NMDS2")
-beta_div_neutral_nmds_crypto=merge(beta_div_neutral_nmds_crypto,NMDS.centroids_8,by="cryptosporidium")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_crypto  %>%
-  group_by(cryptosporidium)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_crypto, aes(x=NMDS1.x,y=NMDS2.x,colour=cryptosporidium)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-```
-giardia
-```{r}
-#### NMDS
-beta_div_neutral_nmds_giardia <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_giardia <- beta_div_neutral_nmds_giardia %>%
-  filter(giardia != "excluded")
-
-#### Create centroids
-NMDS.centroids_9=aggregate(beta_div_neutral_nmds_giardia[,c(2:3)],by=list(beta_div_neutral_nmds_giardia$giardia),FUN=mean)
-colnames(NMDS.centroids_9) <- c("giardia","NMDS1","NMDS2")
-beta_div_neutral_nmds_giardia=merge(beta_div_neutral_nmds_giardia,NMDS.centroids_9,by="giardia")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_giardia  %>%
-  group_by(giardia)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_giardia, aes(x=NMDS1.x,y=NMDS2.x,colour=giardia)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-```
-toxoplasma_gondii
-```{r}
-#### NMDS
-beta_div_neutral_nmds_toxoplasma_gondii <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_toxoplasma_gondii <- beta_div_neutral_nmds_toxoplasma_gondii %>%
-  filter(toxoplasma_gondii != "excluded")
-
-#### Create centroids
-NMDS.centroids_10=aggregate(beta_div_neutral_nmds_toxoplasma_gondii[,c(2:3)],by=list(beta_div_neutral_nmds_toxoplasma_gondii$toxoplasma_gondii),FUN=mean)
-colnames(NMDS.centroids_10) <- c("toxoplasma_gondii","NMDS1","NMDS2")
-beta_div_neutral_nmds_toxoplasma_gondii=merge(beta_div_neutral_nmds_toxoplasma_gondii,NMDS.centroids_10,by="toxoplasma_gondii")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_toxoplasma_gondii  %>%
-  group_by(toxoplasma_gondii)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_toxoplasma_gondii, aes(x=NMDS1.x,y=NMDS2.x,colour=toxoplasma_gondii)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-```
-trichincella_spp
-```{r}
-#### NMDS
-beta_div_neutral_nmds_trichincella_spp <- beta_div_neutral_dist %>%
-  metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., all_metadata, by="sample")
-
-beta_div_neutral_nmds_trichincella_spp <- beta_div_neutral_nmds_trichincella_spp %>%
-  filter(trichincella_spp != "excluded")
-
-#### Create centroids
-NMDS.centroids_11=aggregate(beta_div_neutral_nmds_trichincella_spp[,c(2:3)],by=list(beta_div_neutral_nmds_trichincella_spp$trichincella_spp),FUN=mean)
-colnames(NMDS.centroids_11) <- c("trichincella_spp","NMDS1","NMDS2")
-beta_div_neutral_nmds_trichincella_spp=merge(beta_div_neutral_nmds_trichincella_spp,NMDS.centroids_11,by="trichincella_spp")
-
-#### Plot the centroids and the samples. 
-centroids <- beta_div_neutral_nmds_trichincella_spp  %>%
-  group_by(trichincella_spp)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_trichincella_spp, aes(x=NMDS1.x,y=NMDS2.x,colour=trichincella_spp)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
-```
-
-Huldscore
-```{r}
-# Filter the data for Ittoqqortoormiit
-filtered_data_3 <- all_metadata %>%
-  filter(region == "Ittoqqortoormii")
-
-# NMDS analysis for Huldscores in Daneborg
-beta_div_neutral_nmds_huldscore <- beta_div_neutral_dist %>%
-  metaMDS(., trymax = 200, k = 2, verbosity = FALSE) %>%
-  vegan::scores() %>%
-  as_tibble(., rownames = "sample") %>%
-  inner_join(., filtered_data_3, by = "sample")
-
-# Convert Huldscore to a factor variable
-beta_div_neutral_nmds_huldscore$Huldscore <- factor(beta_div_neutral_nmds_huldscore$Huldscore)
-
-# Create centroids
-NMDS.centroids_12 <- aggregate(beta_div_neutral_nmds_huldscore[, c(2:3)], by = list(Huldscore = beta_div_neutral_nmds_huldscore$Huldscore), FUN = mean)
-colnames(NMDS.centroids_12) <- c("Huldscore", "NMDS1", "NMDS2")
-beta_div_neutral_nmds_huldscore <- merge(beta_div_neutral_nmds_huldscore, NMDS.centroids_12, by = "Huldscore")
-
-custom_colors <- c("1" = "red", "2" = "blue", "3" = "green", "4" = "purple")
-
-# Plot the centroids and the samples
-centroids <- beta_div_neutral_nmds_huldscore %>%
-  group_by(Huldscore) %>%
-  summarize(NM1 = mean(NMDS1.y), NM2 = mean(NMDS2.y))
-
-ggplot(beta_div_neutral_nmds_huldscore, aes(x = NMDS1.x, y = NMDS2.x, colour = Huldscore)) +
-  geom_point(aes(x = NMDS1.x, y = NMDS2.x), size = 2) +
-  geom_segment(aes(x = NMDS1.y, y = NMDS2.y, xend = NMDS1.x, yend = NMDS2.x)) +
-  scale_color_manual(values = custom_colors) +  # Set custom colors
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        legend.text = element_text(size = 14)) +
-  theme_classic() +
-  labs(x = "NMDS1", y = "NMDS2")
-```
-
-Now I want to look at the ratio of host DNA to prokaryotic DNA
-
-```{r}
-
-# Here we filter data to only show quantities of host DNA for each sample 
-filtered_data_host <- sequence_fractions_meta %>%
-  filter(fraction == "host_bases")
-
-# Merge the selected columns with "all_metadata" based on the "sample" column
-filtered_data_host_meta <- left_join(filtered_data_host, all_metadata, by = "sample")
-
-# Create the plot, sorted by dogs with parasites v. dogs without
-ggplot(filtered_data_host_meta, aes(x = sample, y = value, fill = fraction)) +
-  geom_bar(position = "stack", stat = "identity") +
-  scale_fill_manual(
-    name = NULL,
-    breaks = "host_bases",
-    labels = "Host",
-    values = "#178a94"
-  ) +
-  facet_grid(~PR_results_short, scale="free", space="free") + # grouped the samples by region
-  labs(x = "Samples", y = "Amount of host DNA (GB)") +
-  theme_classic() +
-  theme(
-    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 6),
-    strip.text.x = element_text(size = 7, face = "bold"),
-    strip.background = element_rect(colour = NA, fill = NA),
-    panel.background = element_rect(fill = NA, color = "black"),
-    panel.border = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
-    legend.position = "bottom",
-    legend.title = element_blank()
-  )
-
-
-# Filter the dataset to keep only "host_bases" and "mags_bases" fractions
-filtered_data_host_ratio <- sequence_fractions_meta %>%
-  filter(fraction %in% c("host_bases", "mags_bases"))
-
-# Summarize the data for "host_bases" and "mags_bases"
-summarized_data <- filtered_data_host_ratio %>%
-  group_by(sample, fraction) %>%
-  summarize(total_value = sum(value)) %>%
-  pivot_wider(names_from = fraction, values_from = total_value)
-
-# Calculate the ratio of host DNA to MAGs
-summarized_data <- summarized_data %>%
-  mutate(ratio_host_to_mags = host_bases / mags_bases)
-
-# from this, now we know that greater host DNA : MAGs values mean that the sample had more host DNA. 
-```
-
-```{r}
-
-# Is there a significant difference between amounts of host DNA between dogs with parasites and dogs without?
-Parasites_host <- filtered_data_host_meta %>%
-  filter( PR_results_short== "parasites")
-NO_Parasites_host <- filtered_data_host_meta %>%
-  filter(PR_results_short== "no parasites")
-
-Parasites_host_dna <- Parasites_host$value
-NO_Parasites_host_dna <- NO_Parasites_host$value
-
-# Mann-Whitney U test
-wilcox_test_result <- wilcox.test(Parasites_host_dna, NO_Parasites_host_dna)
-# p-value = 0.5367, therefore no significant difference between host DNA amounts between REGIONS (Ittoq and Dane). 
-# p-value = 0.8217, therefore no significant difference between host DNA amounts between dogs WITH and WITHOUT parasites (code above)
-```
-
-now relook at relative abundance graph, this time grouped by Pernille and Rosalina's results
-```{r}
-# Merge the selected columns with "metadata" based on the "sample" column
-count_table_cov_size_pivot_meta_all <- left_join(count_table_cov_size_pivot_meta, all_metadata, by = "sample")
-
-# Plot stacked barplot
-ggplot(count_table_cov_size_pivot_meta_all, aes(x=sample,y=count,fill=phylum, group=phylum))+ #grouping enables keeping the same sorting of taxonomic units
-    geom_bar(stat="identity")+ 
-    scale_fill_manual(values=phylum_colors) +
-    facet_grid(~PR_results_short, scale="free", space="free") + # grouped the samples by region
-    labs(x = "Samples", y = "Relative abundance") +
-    guides(fill = guide_legend(ncol = 4)) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6),
-        strip.text.x = element_text(size = 6, face = "bold"),
-        strip.background = element_rect(colour=NA, fill=NA),
-        panel.background = element_rect(fill = NA, color = "black"),
-        panel.border = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
-        legend.position="bottom",
-        legend.title=element_blank(),
-        legend.text = element_text(size=6),
-        legend.key.size = unit(0.3, 'cm'))
-```
-
