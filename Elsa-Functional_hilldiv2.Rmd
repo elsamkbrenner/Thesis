@@ -1,0 +1,525 @@
+---
+title: "Functional Elsa"
+output: html_document
+date: "2023-10-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
+## Load required libraries
+library(ggnewscale) 
+library(ggtree)
+library(R.utils) 
+library(tidyverse) 
+library(ape)
+library(devtools) 
+library(ggplot2) 
+library(hillR) 
+library(spaa) 
+library(vegan)
+#library(hilldiv)
+library(hilldiv2)
+library(Rhdf5lib)
+library(phyloseq)
+library(phytools) 
+library(microbiome) 
+library(matrixStats)
+library(microbiomeutilities) 
+library(lme4) 
+library(MuMIn) 
+library(nlme) 
+library(knitr) 
+library(kableExtra)
+library(pairwiseAdonis)
+library(sjPlot)
+library(distillR) 
+library(RColorBrewer) 
+library(reshape2) 
+library(ggpubr) 
+library(ggdendro) 
+library(grid)
+library(gplots)
+library(dendextend)
+library(stringr) 
+library(Rtsne)
+library(glue)
+library(webshot2)
+library(dplyr)
+```
+
+
+```{r directories, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+## Declare directories and files
+
+workingdir="/Users/elsa/Desktop/THESIS/Thesis"
+counts_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_counts.tsv"
+tree_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032.tree"
+taxonomy_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_mag_info.tsv"
+metadata_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_metadata.tsv"
+coverage_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_coverage.tsv"
+```
+
+```{r loaddata, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+## Load data 
+setwd(workingdir) 
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+coverage_table <- read.table(coverage_file, sep="\t",row.names=1,header=T)
+metadata <- read.table(metadata_file,sep="\t",header=T)%>%
+	rename(sample=EHI_plaintext)
+mags_table <- read.table(taxonomy_file,sep="\t",header=T)
+tree <- read.tree(tree_file)
+
+ehi_phylum_colors <- read.table("~/Desktop/Thesis/R-analysis1/ehi_phylum_colors.tsv",sep="\t",header=T,comment.char = "")
+#Delete *__ from the taxonomy names
+ehi_phylum_colors1 <- ehi_phylum_colors %>%
+  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))
+
+taxonomyclean <- mags_table%>%
+  mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ str_replace(., "[dpcofgs]__", ""))
+
+metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified.csv")
+metadata_unified_clean <- metadata_unified %>%
+  filter(sample != "")  # Filter rows where "sample" is not an empty string
+selected_columns <- metadata_unified_clean %>%
+  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
+# Merge the selected columns with "metadata" based on the "sample" column
+all_metadata <- left_join(metadata, selected_columns, by = "sample")
+
+min_coverage=0.3
+count_table_cov <- coverage_table %>%
+  mutate(across(everything(), ~ ifelse(. > min_coverage, 1, 0))) %>%
+  map2_df(., counts_table, ~ .x * .y) %>%
+  as.data.frame()
+rownames(count_table_cov) <- rownames(coverage_table)
+
+mags_table1 <- column_to_rownames(mags_table, "genome")
+genome_read_sizes <- mags_table1[rownames(count_table_cov),] %>%
+    select(mag_size) %>%
+    mutate(mag_size = mag_size / 143) %>% #143 nt is the average read-length after quality filtering in EHI data
+    pull()
+count_table_cov_size <- sweep(count_table_cov, 1, genome_read_sizes, "/")
+
+count_table_cov_size_rel <- count_table_cov_size %>%
+  rownames_to_column("Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.)) #TSS normalisation
+
+count_filtered <- column_to_rownames(count_table_cov_size_rel, "Genome")
+```
+
+## Functional analysis
+
+```{r filter_annotations, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### read table ####
+filtered_df <- read.table("all_annotations.csv", sep="")
+```
+
+
+```{r gifts, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
+count_filtered_rel <- count_filtered %>%
+  rownames_to_column(., "Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.))  %>%
+  column_to_rownames(., "Genome")
+
+#Run distillation
+GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
+#GIFTs <- GIFTs[-c(9,10),]
+
+# GIFTs_filtered <- GIFTs[rownames(GIFTs) %in% rownames(count_filtered_rel),]
+
+#Aggregate bundle-level GIFTs into the compound level
+GIFTs_elements <- to.elements(GIFTs,GIFT_db)
+
+#Aggregate element-level GIFTs into the function level
+GIFTs_functions <- to.functions(GIFTs_elements,GIFT_db)
+
+#Aggregate function-level GIFTs into overall Biosynthesis, Degradation and Structural GIFTs
+GIFTs_domains <- to.domains(GIFTs_functions,GIFT_db)
+
+#Get community-weighed average GIFTs per sample
+GIFTs_elements_community <- to.community(GIFTs_elements,count_filtered_rel,GIFT_db)
+GIFTs_functions_community <- to.community(GIFTs_functions,count_filtered_rel,GIFT_db)
+GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_rel,GIFT_db)
+```
+
+```{r alpha_div_funct, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+
+not_shared_rows <- setdiff(rownames(count_filtered_rel), rownames(GIFTs_elements)) #"EHA01909_bin.13" "EHA01928_bin.9" 
+rows_to_remove <- c("EHA01909_bin.13", "EHA01928_bin.9")
+count_filtered_rel <- count_filtered_rel[!rownames(count_filtered_rel) %in% rows_to_remove, ]
+# There are 2 bins that are present in count_filtered_rel (555) but not GIFTs elements (553). I removed them for analysis, but I am questioning why they are not there, and if removing them is valid for analysis. 
+
+#Convert traits into distance matrix
+dist <- traits2dist(GIFTs_elements, method="gower")
+
+functional_div_A <- hilldiv(data=count_filtered_rel,dist=dist)
+
+# is the GIFTs elements the distance matrix from this documentation: hilldiv(data=counts,dist=dist)
+
+#Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
+
+```
+
+#### Average functional diversities
+
+```{r div_F_mean, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+alpha_div_func <-  t(functional_div_A) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample") %>%
+  merge(., all_metadata, by="sample")
+
+table_mean_alpha_func <- alpha_div_func %>%
+  group_by(region) %>% 
+  summarise_at(.vars = names(.)[2],.funs = c(mean="mean", sd="sd"))
+
+knitr::kable(table_mean_alpha_func, format = "html", full_width = F,col.names = c('Groups', 'Mean', 'SD'), digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+
+```
+
+#### Functional diversity plots
+
+```{r alpha_div_func_plot1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+alpha_div_func %>%
+  ggplot(aes(x = region, y = q1, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Functional diversity")
+```
+
+## Functional beta diversity calculations
+```{r beta_div_func, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+beta_div_func <- hillpair(data=count_filtered_rel,dist=dist, q=1)
+```
+
+```{r beta_div_func_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### Calculate the distances
+#beta_div_func_dist <- beta_div_func %>%
+ # select(site1,site2,TD_beta) %>%
+ # as.data.frame() %>%
+ # list2dist()
+```
+
+```{r beta_div_func_nmds_Status, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### NMDS
+hill_pair_dis_func <- hillpair(data=count_filtered_rel, dist=dist, q=1)
+
+# Generate NMDS ordination
+hill_pair_dis_func_nmds <- hill_pair_dis_func %>%
+				select(first,second,C) %>% #based on dissimilarity metric C
+				as.data.frame() %>%
+        pivot_wider(names_from = first, values_from = C) %>%
+				column_to_rownames(var = "second") %>%
+				as.matrix() %>%
+				as.dist() %>%
+				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+				vegan::scores() %>%
+				as_tibble(., rownames = "sample")
+
+#Add metadata
+hill_pair_dis_func_nmds <- hill_pair_dis_func_nmds %>%
+      left_join(all_metadata, by = join_by(sample == sample))
+```
+
+#### NMDS:
+using script from https://github.com/anttonalberdi/hilldiv2
+```{r beta_div_func_plot, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
+#Plot ordination
+ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
+        geom_point(size=3) +
+        scale_color_manual(values = c("#46edc8","#374d7c")) +
+        theme_classic() +
+        theme(legend.position="bottom", legend.box="vertical")
+```
+Using adapted original script
+```{r beta_div_func_plot 2, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
+NMDS.centroids_13=aggregate(hill_pair_dis_func_nmds[,c(2:3)],by=list(hill_pair_dis_func_nmds$region),FUN=mean)
+colnames(NMDS.centroids_13) <- c("region","NMDS1","NMDS2")
+hill_pair_dis_func_nmds=merge(hill_pair_dis_func_nmds,NMDS.centroids_13,by="region")
+
+centroids_13 <- hill_pair_dis_func_nmds  %>%
+  group_by(region)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
+  # facet_wrap(~ factor(type))+
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
+```
+
+## Functional capacity of the MAGs
+
+```{r GIFTs_elements, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+GIFTs_elements %>%
+  reshape2::melt() %>%
+  rename(Genome = Var1, Code_element = Var2, GIFT = value) %>%
+  inner_join(GIFT_db,by="Code_element") %>%
+  ggplot(., aes(x=Code_element, y=Genome, fill=GIFT, group=Code_function))+
+  geom_tile()+
+  scale_y_discrete(guide = guide_axis(check.overlap = TRUE))+
+  scale_x_discrete(guide = guide_axis(check.overlap = TRUE))+
+  scale_fill_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  facet_grid(. ~ Code_function, scales = "free", space = "free")+
+  theme_grey(base_size=8)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),strip.text.x = element_text(angle = 90))
+```
+
+```{r hierachical_clustering, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+col <- colorRampPalette(brewer.pal(7, "YlGnBu"))(256)
+heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
+        trace = "none", density.info = "none", ylab="Samples", 
+        xlab="Gifts", cexRow=0.7, margins = c(8,8), lhei=c(2,4), lwid=c(2,5), 
+        keysize=0.75, key.par = list(cex=0.9),srtCol = 45)
+```
+
+
+```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+# Split name column into first name and last name
+taxonomy <- taxonomyclean # %>%
+#  select(user_genome, classification) %>%
+#  rename(Genome = user_genome) %>%
+#  separate(classification, c('Domain', 'Phylum','Class','Order','Family','Genus','Species'),sep=";") %>%
+#  mutate_at(vars(Domain,Phylum,Class,Order,Family,Genus,Species), ~ str_replace(., "[dpcofgs]__", "")) %>%
+#  mutate_at(vars(Genome), ~ str_replace(., ".fa", ""))
+```
+
+```{r tsne, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+set.seed(100)
+
+GIFTs_elements_tSNE <- Rtsne(X=GIFTs_elements, dims = 2, perplexity = floor((nrow(GIFTs_elements) - 1) / 3), check_duplicates = FALSE)
+
+GIFTs_domains <- as.data.frame(GIFTs_domains)
+GIFTs_domains$genome <- rownames(GIFTs_domains)
+
+GIFTs_elements_tSNE <- GIFTs_elements_tSNE$Y %>%
+  as.data.frame() %>%
+  mutate(genome=rownames(GIFTs_elements)) %>%
+  inner_join(GIFTs_domains, by="genome") %>%
+  inner_join(taxonomyclean, by="genome") %>%
+  mutate_at(vars(phylum, class, order, family, genus), factor) %>%
+  #mutate(cyl = factor(Phylum, levels = phylum_colors$Phylum)) %>%
+  rename(tSNE1="V1", tSNE2="V2")
+
+count_t <- count_filtered_rel %>%
+  t() %>%
+  as.data.frame()
+
+#colnames(count_t) <- count_t[1,]
+#count_t <- count_t[-1, ]
+
+```
+
+Create Merge table and GIFT elements for Ittoq dogs
+```{r tsne_Ittoq, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_Ittoq <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., all_metadata[ , c("sample", "region")], by="sample", all.x = TRUE) %>%
+  filter(region=="Ittoqqortoormii") %>%
+  column_to_rownames(., "sample")
+
+mergetable_Ittoq <- mergetable_Ittoq [1: ncol(mergetable_Ittoq)-1 ]
+
+GIFTs_elements_tSNE_rel_means_I <- colMeans(mergetable_Ittoq) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_Ittoq <- GIFTs_elements_tSNE_rel_means_I[GIFTs_elements_tSNE_rel_means_I$Relative_value != 0, ]
+
+```
+
+Create Merge table and GIFT elements for Daneborg dogs
+```{r tsne_Daneborg, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_Daneborg <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., all_metadata[ , c("sample", "region")], by="sample", all.x = TRUE) %>%
+  filter(region=="Daneborg") %>%
+  column_to_rownames(., "sample")
+
+mergetable_Daneborg <- mergetable_Daneborg [1: ncol(mergetable_Daneborg)-1 ]
+
+GIFTs_elements_tSNE_rel_means_D <- colMeans(mergetable_Daneborg) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_Daneborg <- GIFTs_elements_tSNE_rel_means_D[GIFTs_elements_tSNE_rel_means_D$Relative_value != 0, ]
+```
+
+### Region Daneborg: tSNE Phylum
+
+```{r tsneIttoq_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Ittoq %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+#  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Region Daneborg: tSNE Phylum
+
+```{r tsneDaneborg_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Daneborg %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  #scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Region Ittoq: tSNE gifts
+
+```{r tsneIttoq_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Ittoq %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ #coloured by GIFT
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Region Daneborg: tSNE gifts
+
+```{r tsneDaneborg_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Daneborg %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ 
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+
+
+NOTES:
+HOSC
+search for more simple stat analysis (read and check test types)
+clr transformation is the one we use based on established EHI standard
+
+
+############################################################
+
+Attempting hilldiv2 calculations
+
+```{r}
+#Load data
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+tree <- read.tree(tree_file)
+traits <- to.elements(GIFTs,GIFT_db)
+
+# counts_table and dist had unmatched row numbers, so the analysis was not possible. In order to perform the analysis, I removed the 2 rows not present in dist from counts_table. I have left this section in, in case this presents an issue for the analysis. 
+counts_table_row_names <- rownames(counts_table)
+dist_row_names <- rownames(dist)
+rows_not_in_dist <- setdiff(counts_table_row_names, dist_row_names)
+rows_to_remove <- c("EHA01909_bin.13", "EHA01928_bin.9") # these are the 2 bins not in dist
+counts_table <- counts_table[!(rownames(counts_table) %in% rows_to_remove), ]
+
+#Convert traits into distance matrix
+dist <- traits2dist(traits, method="gower")
+```
+
+```{r}
+hilldiv(data=counts_table)
+# hilldiv(data=counts_table,tree=tree)
+hilldiv(data=counts_table,dist=dist)
+```
+
+```{r}
+hillpart(data=counts_table)
+hillpart(data=counts_table,tree=tree)
+hillpart(data=counts_table,dist=dist)
+
+hillpart(data=counts_table,q=0)
+hillpart(data=counts_table,q=c(0,0.5,1),tree=tree)
+hillpart(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+hillsim(data=counts_table)
+hillsim(data=counts_table,tree=tree)
+hillsim(data=counts_table,dist=dist)
+
+hillsim(data=counts_table,q=0)
+hillsim(data=counts_table,metric=c("C","U"),q=c(0,0.5,1),tree=tree)
+hillsim(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+hilldiss(data=counts_table)
+hilldiss(data=counts_table,tree=tree)
+hilldiss(data=counts_table,dist=dist)
+
+hilldiss(data=counts_table,q=0)
+hilldiss(data=counts_table,metric=c("C","U"),q=c(0,0.5,1),tree=tree)
+hilldiss(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+hillpair(data=counts_table)
+hillpair(data=counts_table,tree=tree)
+hillpair(data=counts_table,dist=dist)
+
+hillpair(data=counts_table,q=0)
+hillpair(data=counts_table,q=1,tree=tree)
+hillpair(data=counts_table,q=2,dist=dist)
+```
+
+```{r}
+library(spaa)
+library(vegan)
+library(ggplot2)
+
+#Remove outliers to avoid distorting ordination
+hill_pair_dis <- hillpair(data=counts_table,q=1)
+
+#Other Hill numbers can also be used, e.g.:
+#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=0)
+#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=1,tree=tree)
+#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=1,dist=dist)
+
+# Generate NMDS ordination
+hill_pair_dis_nmds <- hill_pair_dis %>%
+				select(first,second,C) %>% #based on dissimilarity metric C
+				as.data.frame() %>%
+				list2dist() %>%
+				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+				scores() %>%
+				as_tibble(., rownames = "sample")
+
+#Add metadata
+metadata <- all_metadata
+hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
+      left_join(metadata, by = join_by(sample == sample))
+
+#Plot ordination
+ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=population)) +
+        geom_point(size=3) +
+        scale_color_manual(values = c("#E3D97B","#46edc8","#374d7c")) +
+        theme_classic() +
+        theme(legend.position="bottom", legend.box="vertical")
+```
+

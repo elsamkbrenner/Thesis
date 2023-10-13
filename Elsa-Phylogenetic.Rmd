@@ -685,6 +685,20 @@ hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
 ```
 
 #### NMDS:
+
+#### NMDS:
+using script from https://github.com/anttonalberdi/hilldiv2
+```{r beta_div_plot, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
+#Plot ordination
+ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
+        geom_point(size=3) +
+        scale_color_manual(values = c("#46edc8","#374d7c")) +
+        theme_classic() +
+        theme(legend.position="bottom", legend.box="vertical")
+```
+
+using adapted original script
 ```{r beta_div_neutral_plot_region,comment="", echo=FALSE}
 
 NMDS.centroids_1=aggregate(hill_pair_dis_nmds[,c(2:3)],by=list(hill_pair_dis_nmds$region),FUN=mean)
