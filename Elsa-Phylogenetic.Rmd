@@ -662,7 +662,7 @@ beta_div_neutral <- count_filtered %>%
     hillpair(., q = 1) #calculate neutral beta diversities and distance matrix
 ```
 
-```{r beta_div_neutral_nmds_Status, comment="", echo=FALSE, results='hide'}
+```{r beta_div_neutral_nmds_Status, comment="", echo=TRUE, results='hide'}
 #### NMDS
 
 hill_pair_dis <- hillpair(data=count_filtered,q=1)
@@ -686,7 +686,7 @@ hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
 
 #### NMDS:
 using script from https://github.com/anttonalberdi/hilldiv2
-```{r beta_div_plot, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r beta_div_plot, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
 #Plot ordination
 ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
@@ -697,7 +697,7 @@ ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
 ```
 
 using adapted original script
-```{r beta_div_neutral_plot_region,comment="", echo=FALSE}
+```{r beta_div_neutral_plot_region,comment="", echo=TRUE}
 
 NMDS.centroids_1=aggregate(hill_pair_dis_nmds[,c(2:3)],by=list(hill_pair_dis_nmds$region),FUN=mean)
 colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
@@ -723,14 +723,14 @@ ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 ```
 
 Adonis
-```{r Adonis_Region, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
 # Permutation test
 # ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region, type = c("median"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
 
 # Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
 
-permutest(ps.disper.neutral, pairwise = TRUE, permutations = 999) # cannot run due to error in ps.disper.neutral 
+# permutest(ps.disper.neutral, pairwise = TRUE, permutations = 999) # cannot run due to error in ps.disper.neutral 
 
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
 ## results: 
@@ -748,4 +748,3 @@ metadata_ord<- all_metadata[order(match(all_metadata$sample,rownames(m1))),]
 
 ```
 Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
-

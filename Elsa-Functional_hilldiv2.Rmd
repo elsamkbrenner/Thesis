@@ -117,7 +117,7 @@ filtered_df <- read.table("all_annotations.csv", sep="")
 ```
 
 
-```{r gifts, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
+```{r gifts, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
 count_filtered_rel <- count_filtered %>%
   rownames_to_column(., "Genome") %>%
   mutate_at(vars(-Genome),~./sum(.))  %>%
@@ -144,7 +144,7 @@ GIFTs_functions_community <- to.community(GIFTs_functions,count_filtered_rel,GIF
 GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_rel,GIFT_db)
 ```
 
-```{r alpha_div_funct, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r alpha_div_funct, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 
 not_shared_rows <- setdiff(rownames(count_filtered_rel), rownames(GIFTs_elements)) #"EHA01909_bin.13" "EHA01928_bin.9" 
 rows_to_remove <- c("EHA01909_bin.13", "EHA01928_bin.9")
@@ -161,10 +161,11 @@ functional_div_A <- hilldiv(data=count_filtered_rel,dist=dist)
 #Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
 
 ```
+ELSA QUESTION: There are 2 bins that are present in count_filtered_rel (555) but not GIFTs elements (553). I removed them for analysis, but I am questioning why they are not there, and if removing them is valid for analysis
 
 #### Average functional diversities
 
-```{r div_F_mean, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r div_F_mean, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 alpha_div_func <-  t(functional_div_A) %>%
   as.data.frame() %>%
   tibble::rownames_to_column("sample") %>%
@@ -181,7 +182,7 @@ knitr::kable(table_mean_alpha_func, format = "html", full_width = F,col.names = 
 
 #### Functional diversity plots
 
-```{r alpha_div_func_plot1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r alpha_div_func_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 alpha_div_func %>%
   ggplot(aes(x = region, y = q1, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
@@ -196,19 +197,11 @@ alpha_div_func %>%
 ```
 
 ## Functional beta diversity calculations
-```{r beta_div_func, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r beta_div_func, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 beta_div_func <- hillpair(data=count_filtered_rel,dist=dist, q=1)
 ```
 
-```{r beta_div_func_dist, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
-#### Calculate the distances
-#beta_div_func_dist <- beta_div_func %>%
- # select(site1,site2,TD_beta) %>%
- # as.data.frame() %>%
- # list2dist()
-```
-
-```{r beta_div_func_nmds_Status, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r beta_div_func_nmds_Status, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 #### NMDS
 hill_pair_dis_func <- hillpair(data=count_filtered_rel, dist=dist, q=1)
 
@@ -231,7 +224,7 @@ hill_pair_dis_func_nmds <- hill_pair_dis_func_nmds %>%
 
 #### NMDS:
 using script from https://github.com/anttonalberdi/hilldiv2
-```{r beta_div_func_plot, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r beta_div_func_plot, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
 #Plot ordination
 ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
@@ -241,7 +234,7 @@ ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
         theme(legend.position="bottom", legend.box="vertical")
 ```
 Using adapted original script
-```{r beta_div_func_plot 2, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r beta_div_func_plot 2, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
 NMDS.centroids_13=aggregate(hill_pair_dis_func_nmds[,c(2:3)],by=list(hill_pair_dis_func_nmds$region),FUN=mean)
 colnames(NMDS.centroids_13) <- c("region","NMDS1","NMDS2")
@@ -412,114 +405,3 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
   theme_minimal() +
   theme()
 ```
-
-
-
-NOTES:
-HOSC
-search for more simple stat analysis (read and check test types)
-clr transformation is the one we use based on established EHI standard
-
-
-############################################################
-
-Attempting hilldiv2 calculations
-
-```{r}
-#Load data
-counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
-tree <- read.tree(tree_file)
-traits <- to.elements(GIFTs,GIFT_db)
-
-# counts_table and dist had unmatched row numbers, so the analysis was not possible. In order to perform the analysis, I removed the 2 rows not present in dist from counts_table. I have left this section in, in case this presents an issue for the analysis. 
-counts_table_row_names <- rownames(counts_table)
-dist_row_names <- rownames(dist)
-rows_not_in_dist <- setdiff(counts_table_row_names, dist_row_names)
-rows_to_remove <- c("EHA01909_bin.13", "EHA01928_bin.9") # these are the 2 bins not in dist
-counts_table <- counts_table[!(rownames(counts_table) %in% rows_to_remove), ]
-
-#Convert traits into distance matrix
-dist <- traits2dist(traits, method="gower")
-```
-
-```{r}
-hilldiv(data=counts_table)
-# hilldiv(data=counts_table,tree=tree)
-hilldiv(data=counts_table,dist=dist)
-```
-
-```{r}
-hillpart(data=counts_table)
-hillpart(data=counts_table,tree=tree)
-hillpart(data=counts_table,dist=dist)
-
-hillpart(data=counts_table,q=0)
-hillpart(data=counts_table,q=c(0,0.5,1),tree=tree)
-hillpart(data=counts_table,q=2,dist=dist)
-```
-
-```{r}
-hillsim(data=counts_table)
-hillsim(data=counts_table,tree=tree)
-hillsim(data=counts_table,dist=dist)
-
-hillsim(data=counts_table,q=0)
-hillsim(data=counts_table,metric=c("C","U"),q=c(0,0.5,1),tree=tree)
-hillsim(data=counts_table,q=2,dist=dist)
-```
-
-```{r}
-hilldiss(data=counts_table)
-hilldiss(data=counts_table,tree=tree)
-hilldiss(data=counts_table,dist=dist)
-
-hilldiss(data=counts_table,q=0)
-hilldiss(data=counts_table,metric=c("C","U"),q=c(0,0.5,1),tree=tree)
-hilldiss(data=counts_table,q=2,dist=dist)
-```
-
-```{r}
-hillpair(data=counts_table)
-hillpair(data=counts_table,tree=tree)
-hillpair(data=counts_table,dist=dist)
-
-hillpair(data=counts_table,q=0)
-hillpair(data=counts_table,q=1,tree=tree)
-hillpair(data=counts_table,q=2,dist=dist)
-```
-
-```{r}
-library(spaa)
-library(vegan)
-library(ggplot2)
-
-#Remove outliers to avoid distorting ordination
-hill_pair_dis <- hillpair(data=counts_table,q=1)
-
-#Other Hill numbers can also be used, e.g.:
-#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=0)
-#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=1,tree=tree)
-#hill_pair_dis <- hillpair(data=counts[,-c(12,16,19)],q=1,dist=dist)
-
-# Generate NMDS ordination
-hill_pair_dis_nmds <- hill_pair_dis %>%
-				select(first,second,C) %>% #based on dissimilarity metric C
-				as.data.frame() %>%
-				list2dist() %>%
-				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
-				scores() %>%
-				as_tibble(., rownames = "sample")
-
-#Add metadata
-metadata <- all_metadata
-hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
-      left_join(metadata, by = join_by(sample == sample))
-
-#Plot ordination
-ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=population)) +
-        geom_point(size=3) +
-        scale_color_manual(values = c("#E3D97B","#46edc8","#374d7c")) +
-        theme_classic() +
-        theme(legend.position="bottom", legend.box="vertical")
-```
-
