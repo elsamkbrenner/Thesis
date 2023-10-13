@@ -668,14 +668,14 @@ beta_div_neutral <- count_filtered %>%
 hill_pair_dis <- hillpair(data=count_filtered,q=1)
 
 # Generate NMDS ordination
-hill_pair_dis_nmds <- hill_pair_dis %>%
+hill_pair_dis_dist <- hill_pair_dis %>%
 				select(first,second,C) %>% #based on dissimilarity metric C
 				as.data.frame() %>%
         pivot_wider(names_from = first, values_from = C) %>%
 				column_to_rownames(var = "second") %>%
 				as.matrix() %>%
-				as.dist() %>%
-				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+				as.dist()
+hill_pair_dis_nmds <- metaMDS(hill_pair_dis_dist,trymax = 500, k=2, verbosity=FALSE) %>%
 				vegan::scores() %>%
 				as_tibble(., rownames = "sample")
 
@@ -683,8 +683,6 @@ hill_pair_dis_nmds <- hill_pair_dis %>%
 hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
       left_join(all_metadata, by = join_by(sample == sample))
 ```
-
-#### NMDS:
 
 #### NMDS:
 using script from https://github.com/anttonalberdi/hilldiv2
@@ -727,24 +725,27 @@ ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 Adonis
 ```{r Adonis_Region, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 
-#hill_pair_dis_dist <- dist(hill_pair_dis_nmds)
+# Permutation test
+# ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region, type = c("median"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
 
-#ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region) 
-#permutest(ps.disper.neutral, pairwise = TRUE) 
+# Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
+
+permutest(ps.disper.neutral, pairwise = TRUE, permutations = 999) # cannot run due to error in ps.disper.neutral 
+
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P = 0.514
+## results: 
 
 meta_order <- all_metadata[order(all_metadata$sample),] 
-m1 <- as.matrix(hill_pair_dis_nmds) 
+m1 <- as.matrix(hill_pair_dis_dist) 
 metadata_ord<- all_metadata[order(match(all_metadata$sample,rownames(m1))),] 
 # this section correctly orders the metadata so that it matches to the beta diversity distance matrix
 
 # Run test
-adonis2(hill_pair_dis_nmds ~ region, data =metadata_ord, permutations = 999)
+# adonis2(hill_pair_dis_dist ~ region, data =metadata_ord, permutations = 999)
 # this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
 
-## results: P = 0.001. R2 = 0.12272
-
-## thus, the results ARE statistically significant, and 12% of variation is based on the region
+## results: 
 
 ```
+Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
+
