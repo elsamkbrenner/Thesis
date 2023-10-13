@@ -659,94 +659,78 @@ alpha_div_P %>%
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 
 beta_div_neutral <- count_filtered %>%
-    hillpair(., q = 1) #calculate neutral beta diversities
+    hillpair(., q = 1) #calculate neutral beta diversities and distance matrix
 ```
-
-```{r beta_div_neutral_dist dataframe, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-
-# Calculate distances
-beta_div_neutral_dist <- beta_div_neutral %>%
-  select(first,second,C) %>%
-  as.data.frame()  #%>% 
-  # list2dist()
-```
-
-Showcasing the NA issue in list2dist
-```{r head distances dataframe, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-head(beta_div_neutral_dist)
-```
-I have printed this to display that the dataframe in beta_div_neutral_dist correctly selects values, before list2dist has lots of NAs. 
-
-```{r beta_div_neutral_dist, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-#### Calculate the distances
-beta_div_neutral_dist <- beta_div_neutral %>%
-  select(first,second,C) %>%
-  as.data.frame()  %>% 
-  list2dist()
-```
-
-Then, the list2dist step yields lots of NAs:
-```{r print list2dist, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-print(beta_div_neutral_dist)
-```
-
-
 
 ```{r beta_div_neutral_nmds_Status, comment="", echo=FALSE, results='hide'}
 #### NMDS
-#beta_div_neutral_nmds <- beta_div_neutral_dist %>%
-  #metaMDS(.,trymax = 200, k=2, verbosity=FALSE) %>%
-  #vegan::scores() %>%
-  #as_tibble(., rownames = "sample") %>%
-  #inner_join(., all_metadata, by="sample")
-```
 
-```{r beta_div_neutral_centroids_region,comment="", echo=FALSE}
-#### Create centroids
-#NMDS.centroids_1=aggregate(beta_div_neutral_nmds[,c(2:3)],by=list(beta_div_neutral_nmds$region),FUN=mean)
-#colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
-#beta_div_neutral_nmds=merge(beta_div_neutral_nmds,NMDS.centroids_1,by="region")
+hill_pair_dis <- hillpair(data=count_filtered,q=1)
+
+# Generate NMDS ordination
+hill_pair_dis_nmds <- hill_pair_dis %>%
+				select(first,second,C) %>% #based on dissimilarity metric C
+				as.data.frame() %>%
+        pivot_wider(names_from = first, values_from = C) %>%
+				column_to_rownames(var = "second") %>%
+				as.matrix() %>%
+				as.dist() %>%
+				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+				vegan::scores() %>%
+				as_tibble(., rownames = "sample")
+
+#Add metadata
+hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
+      left_join(all_metadata, by = join_by(sample == sample))
 ```
 
 #### NMDS:
 ```{r beta_div_neutral_plot_region,comment="", echo=FALSE}
-#### Plot the centroids and the samples. 
-#centroids <- beta_div_neutral_nmds  %>%
-  #group_by(region)  %>%
-  #summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
 
-#ggplot(beta_div_neutral_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
-  #geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  #geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  #theme(axis.line = element_line(colour = "grey"),
-  #     panel.grid.major = element_blank(),
-  #      panel.grid.minor = element_blank(),
-  #      panel.border = element_blank(),
-  #      panel.background = element_blank(),
-  #      axis.title=element_blank(),
-  #      legend.text=element_text(size=14))+
+NMDS.centroids_1=aggregate(hill_pair_dis_nmds[,c(2:3)],by=list(hill_pair_dis_nmds$region),FUN=mean)
+colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
+hill_pair_dis_nmds=merge(hill_pair_dis_nmds,NMDS.centroids_1,by="region")
+
+centroids <- hill_pair_dis_nmds  %>%
+  group_by(region)  %>%
+  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
+
+ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
+  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
+  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
+  theme(axis.line = element_line(colour = "grey"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title=element_blank(),
+        legend.text=element_text(size=14))+
   # facet_wrap(~ factor(type))+
-  #theme_classic()+
-  #labs( x = "NMDS1", y = "NMDS2")
+  theme_classic()+
+  labs( x = "NMDS1", y = "NMDS2")
 ```
 
 Adonis
 ```{r Adonis_Region, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 
-#ps.disper.neutral <- betadisper(beta_div_neutral_dist, metadata$region) 
+#hill_pair_dis_dist <- dist(hill_pair_dis_nmds)
+
+#ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region) 
 #permutest(ps.disper.neutral, pairwise = TRUE) 
-
 # a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: P 
+## results: P = 0.514
 
-#meta_order <- metadata[order(metadata$sample),] 
-#m1 <- as.matrix(beta_div_neutral_dist) 
-#metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
+meta_order <- all_metadata[order(all_metadata$sample),] 
+m1 <- as.matrix(hill_pair_dis_nmds) 
+metadata_ord<- all_metadata[order(match(all_metadata$sample,rownames(m1))),] 
 # this section correctly orders the metadata so that it matches to the beta diversity distance matrix
 
 # Run test
-#adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
+adonis2(hill_pair_dis_nmds ~ region, data =metadata_ord, permutations = 999)
 # this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
 
-## results: 
+## results: P = 0.001. R2 = 0.12272
+
+## thus, the results ARE statistically significant, and 12% of variation is based on the region
+
 ```
