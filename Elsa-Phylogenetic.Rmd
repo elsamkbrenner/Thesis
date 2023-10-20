@@ -613,6 +613,37 @@ alpha_div_N %>%
   ylab("Alpha diversity")
 
 ```
+```{r}
+
+```
+
+```{r alpha_div_N STATS}
+
+# Shapiro-Wilk test for normality
+alpha_div_N %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(shapiro_p = shapiro.test(q1)$p.value) -> shapiro_results
+
+# Results: p = 0.01942486	(Daneborg), p = 0.61532713	Ittoqqortoormiit
+# THEREFORE Daneborg data is not normally distributed, though Ittoq is. THUS a non-parametric test is applied
+
+# Non-normally distributed data test for equal variance
+leveneTest(q1 ~ region, alpha_div_N)
+
+# Results: p = 0.0008284
+# THEREFORE data does not exhibit equal variance. 
+
+# Wilcoxon signed rank test for statistical significance
+alpha_div_N %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(wilcox_p = wilcox.test(q1 ~ region, data = .)$p.value) -> wilcox_results
+
+print(wilcox_results)
+# Results: p = 0.4869263	
+# THEREFORE Neutral alpha diversity is NOT have statistically significant differences between Ittoq and Daneborg
+```
 
 
 ### Phylogenetic
@@ -654,17 +685,40 @@ alpha_div_P %>%
   xlab("Region") + 
   ylab("Alpha diversity")
 ```
+```{r alpha_div_P STATS}
+# Shapiro-Wilk test for normality
+alpha_div_P %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(shapiro_p = shapiro.test(q1)$p.value) -> shapiro_results_P
+
+# Results: p = 0.4556244 (Daneborg), p = 0.4019311 Ittoqqortoormiit
+# THEREFORE both regions exhibit NORMALLY distributed alpha_div_P values, and a PARAMETRIC test can be applied
+
+# Using leveneTest()
+bartlett.test(q1 ~ region, alpha_div_P)
+# Results: p-value = 0.0004803
+# THEREFORE therefore equal variance cannot be assumed
+
+# T-test not assuming equal variance
+alpha_div_P %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(t_test_p = t.test(q1 ~ region, data = ., var.equal = FALSE)$p.value) -> t_test_results_P
+
+print(t_test_results_P)
+# Results: p = 0.3423079	
+# THEREFORE Phylogenetic alpha diversity is NOT have statistically significant differences between Ittoq and Daneborg
+```
 
 ### Neutral
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-
 beta_div_neutral <- count_filtered %>%
     hillpair(., q = 1) #calculate neutral beta diversities and distance matrix
 ```
 
 ```{r beta_div_neutral_nmds_Status, comment="", echo=TRUE, results='hide'}
 #### NMDS
-
 hill_pair_dis <- hillpair(data=count_filtered,q=1)
 
 # Generate NMDS ordination
@@ -724,27 +778,11 @@ ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 
 Adonis
 ```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-
-# Permutation test
-# ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region, type = c("median"), bias.adjust = FALSE, sqrt.dist = FALSE, add = FALSE)
-
-# Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
-
-# permutest(ps.disper.neutral, pairwise = TRUE, permutations = 999) # cannot run due to error in ps.disper.neutral 
-
-# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: 
-
-meta_order <- all_metadata[order(all_metadata$sample),] 
-m1 <- as.matrix(hill_pair_dis_dist) 
-metadata_ord<- all_metadata[order(match(all_metadata$sample,rownames(m1))),] 
-# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
-
-# Run test
-# adonis2(hill_pair_dis_dist ~ region, data =metadata_ord, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
-
-## results: 
-
+hill_pair_dis_dist <- as.dist(hill_pair_dis_dist)
+ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region)
 ```
 Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
+
+
+
+

@@ -156,10 +156,7 @@ dist <- traits2dist(GIFTs_elements, method="gower")
 
 functional_div_A <- hilldiv(data=count_filtered_rel,dist=dist)
 
-# is the GIFTs elements the distance matrix from this documentation: hilldiv(data=counts,dist=dist)
-
 #Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
-
 ```
 ELSA QUESTION: There are 2 bins that are present in count_filtered_rel (555) but not GIFTs elements (553). I removed them for analysis, but I am questioning why they are not there, and if removing them is valid for analysis
 
@@ -195,6 +192,33 @@ alpha_div_func %>%
   xlab("Region") + 
   ylab("Functional diversity")
 ```
+
+```{r}
+# Shapiro-Wilk test for normality
+alpha_div_func %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(shapiro_p = shapiro.test(q1)$p.value) -> shapiro_results_F
+
+# Results: p =  7.498381e-09	(Daneborg), p = 2.627117e-03	 Ittoqqortoormiit
+# THEREFORE the data is NOT NORMALLY distributed
+
+# Using leveneTest()
+leveneTest(q1 ~ region, alpha_div_func)
+# Results: p-value = 0.03988
+# THEREFORE therefore equal variance cannot be assumed
+
+# Wilcoxon signed rank test for statistical significance
+alpha_div_func %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(wilcox_p = wilcox.test(q1 ~ region, data = .)$p.value) -> wilcox_results_F
+
+print(wilcox_results_F)
+# Results: p = 0.0001328166	
+# THEREFORE the difference in alpha diversity between Ittoq and Daneborg IS considered statistically significant. 
+```
+
 
 ## Functional beta diversity calculations
 ```{r beta_div_func, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
@@ -258,6 +282,10 @@ ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
   theme_classic()+
   labs( x = "NMDS1", y = "NMDS2")
 ```
+```{r}
+
+```
+
 
 ## Functional capacity of the MAGs
 
