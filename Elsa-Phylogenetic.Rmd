@@ -714,7 +714,7 @@ print(t_test_results_P)
 ### Neutral
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 beta_div_neutral <- count_filtered %>%
-    hillpair(., q = 1) #calculate neutral beta diversities and distance matrix
+    hillpair(., q = 1) #calculate neutral beta diversities
 ```
 
 ```{r beta_div_neutral_nmds_Status, comment="", echo=TRUE, results='hide'}
@@ -727,7 +727,7 @@ hill_pair_dis_dist <- hill_pair_dis %>%
 				as.data.frame() %>%
         pivot_wider(names_from = first, values_from = C) %>%
 				column_to_rownames(var = "second") %>%
-				as.matrix() %>%
+				as.matrix()  %>%
 				as.dist()
 hill_pair_dis_nmds <- metaMDS(hill_pair_dis_dist,trymax = 500, k=2, verbosity=FALSE) %>%
 				vegan::scores() %>%
@@ -778,8 +778,25 @@ ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 
 Adonis
 ```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-hill_pair_dis_dist <- as.dist(hill_pair_dis_dist)
-ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region)
+#PROBLEM: EHI01293 is missing from hill_pair_dis_dist, and hill_pair_dis_nmds, but IS present in hill_pair_dis 
+hill_pair_dis_selected <- hill_pair_dis %>% 
+  select(first, second, C)
+#EHI01293 is the first 57 entries in "first" and never appears in "second"
+
+hill_pair_dis_df <- as.data.frame(hill_pair_dis_selected) 
+#EHI01293 is the first 57 entries in "first"
+
+hill_pair_dis_pivoted <- pivot_wider(hill_pair_dis_df, names_from = first, values_from = C)
+# EHI01293 is the first column name, but is not in "second"
+
+hill_pair_dis_rownames <- column_to_rownames(hill_pair_dis_pivoted, var = "second")
+# in between these two steps EHI01293 goes missing. EHI01293 is the first column name of hill_pair_dis_rowname, but then is not included as a row or column name for hill_pair_dis_dist_matrix
+hill_pair_dis_dist_matrix <- as.matrix(hill_pair_dis_dist)
+
+hill_pair_dist_dist <- as.dist(hill_pair_dis_dist_matrix)
+
+# ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region)
+
 ```
 Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
 
