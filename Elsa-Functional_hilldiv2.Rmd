@@ -48,6 +48,7 @@ library(Rtsne)
 library(glue)
 library(webshot2)
 library(dplyr)
+library(POMS)
 ```
 
 
@@ -433,3 +434,32 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
   theme_minimal() +
   theme()
 ```
+
+
+POMS:
+
+```{r}
+taxa_abun <- count_filtered_rel
+func <- GIFTs_elements_community %>%
+  as.data.frame() %>%
+  t()
+func <- as.data.frame(func)
+tree <- as.phylo(tree) # something is wrong with the structure of the tree, otherwise the rest should run
+Ittoq_samples <- all_metadata %>%
+  filter(region == "Ittoqqortoormii") %>%
+  pull(sample)
+Daneborg_samples <- all_metadata %>%
+  filter(region == "Daneborg") %>%
+  pull(sample)
+
+# Example of how to run main POMS function. 
+POMS_out <- POMS_pipeline(abun = taxa_abun,
+                          func = func,
+                          tree = tree,
+                          group1_samples = Ittoq_samples,
+                          group2_samples = Daneborg_samples,
+                          ncores = 1,
+                        # pseudocount = 0.000001,
+                          verbose = TRUE)
+```
+
