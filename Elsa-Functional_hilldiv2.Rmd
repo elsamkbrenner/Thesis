@@ -205,7 +205,7 @@ alpha_div_func %>%
 # THEREFORE the data is NOT NORMALLY distributed
 
 # Using leveneTest()
-leveneTest(q1 ~ region, alpha_div_func)
+car:: leveneTest(q1 ~ region, alpha_div_func)
 # Results: p-value = 0.03988
 # THEREFORE therefore equal variance cannot be assumed
 
@@ -285,6 +285,22 @@ ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 ```
 ```{r}
 
+# Same issues with the betadisper test 
+ps.disper.func <- betadisper(hill_pair_dis_func, metadata$region) 
+permutest(ps.disper.func, pairwise = TRUE) 
+# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
+## results: 
+
+meta_order <- metadata[order(metadata$sample),] 
+m1 <- as.matrix(hill_pair_dis_func) 
+metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
+# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
+
+# Run test
+adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
+# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
+
+## results: P= R2 = 
 ```
 
 
@@ -437,7 +453,7 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
 
 
 POMS:
-
+# AS FROM https://academic.oup.com/bioinformatics/article/38/22/5055/6731923?login=true (on the stats discord)
 ```{r}
 taxa_abun <- count_filtered_rel
 func <- GIFTs_elements_community %>%
@@ -459,7 +475,7 @@ POMS_out <- POMS_pipeline(abun = taxa_abun,
                           group1_samples = Ittoq_samples,
                           group2_samples = Daneborg_samples,
                           ncores = 1,
-                        # pseudocount = 0.000001,
+                          pseudocount = 0.000001,
                           verbose = TRUE)
 ```
 
