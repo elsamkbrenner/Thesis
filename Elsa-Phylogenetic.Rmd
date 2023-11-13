@@ -24,15 +24,10 @@ library(vegan) # Vegan is a common package used for the analysis of ecology data
 library(hilldiv2) # this package is an updated package for calculating Hill numbers
 library(Rhdf5lib)
 library(phyloseq)
-
 library(phytools) #phytools is a package that focuses on comparative phylogenetic analysis 
-
 library(microbiome) 
-
 library(matrixStats) # this package is used for opperations performed on matrices
-
 library(microbiomeutilities) 
-
 library(lme4) # this package is used for fitting and analyzing linear and nonlinear models/ 
 library(MuMIn) # MuMIn = Multi-model inference, and contains function for information-theoretic model selection, and model averaging 
 library(nlme) # this package contains packages related to nonlinear mixed-effects models
@@ -40,9 +35,7 @@ library(knitr) # Knitr is a package for turning R script into reports, used here
 library(kableExtra) # Kable builds on Knitr, and adds extra functions
 library(pairwiseAdonis) # this is a function of (vegan) and is used for multi-level pairwise comparison
 library(sjPlot) # this package is used for visualizing statistical analysis 
-
 library(distillR) 
-
 library(RColorBrewer) # this is a series of preset color palettes
 library(reshape2) # this package is used for reformatting and "reshaping" data to fit ideal formats 
 library(ggpubr) # this package is used for formatting ggplot2 figures to be publication ready. 
@@ -53,7 +46,11 @@ library(dendextend) # this package allows you to extend dendrograms made in R, f
 library(stringr) # this is a utility package
 library(Rtsne) # this is a utility package 
 library(glue) # this is a utility package
-library(webshot2)
+library(ggtree)
+library(ggrepel)
+library(ggpubr)
+library(ggnewscale)
+library(ggtreeExtra)
 ```
 
 
@@ -75,6 +72,8 @@ coverage_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_coverage.tsv"
 ```{r loaddata, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 ## Load data 
 setwd(workingdir) # this line sets the working directory of the script to the location established in the block above, where i defined 'workingdir'
+
+batch="DMB0032"
 
 # the lines below take the tables imported above, and turn them into readable table files we can use for the rest of our analysis.  
 counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
@@ -125,7 +124,7 @@ sequencing_depth_sd <- sd(sequencing_depth) # this line defines a variable for t
 
 **Number of samples in total**
 ```{r nsamples, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-cat(nsamples) # this tells you the number of samples included in analysis = 58
+ncol(counts_table) # this tells you the number of samples included in analysis = 58
 
 # cat() is used to concatenate strings. Thus, cat(nsamples) will tell us the number of samples in a readable integer form
 ```
@@ -708,105 +707,72 @@ print(t_test_results_P)
 # THEREFORE Phylogenetic alpha diversity is NOT have statistically significant differences between Ittoq and Daneborg
 ```
 
-### Neutral
+### Beta diversity
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-beta_div_neutral <- count_filtered %>%
-    hillpair(., q = 1) #calculate neutral beta diversities
+
+beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
+
+beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
 ```
 
-```{r beta_div_neutral_nmds_Status, comment="", echo=TRUE, results='hide'}
-#### NMDS
-hill_pair_dis <- hillpair(data=count_filtered,q=1) #Check here for issues with data matrix structure for adonis / betadispear test
-
-# Generate NMDS ordination
-hill_pair_dis_dist <- hill_pair_dis %>%
-				select(first,second,C) %>% #based on dissimilarity metric C
-				as.data.frame() %>%
-        pivot_wider(names_from = first, values_from = C) %>%
-				column_to_rownames(var = "second") %>%
-				as.matrix()  %>%
-				as.dist()
-hill_pair_dis_nmds <- metaMDS(hill_pair_dis_dist,trymax = 500, k=2, verbosity=FALSE) %>%
-				vegan::scores() %>%
-				as_tibble(., rownames = "sample")
-
-#Add metadata
-hill_pair_dis_nmds <- hill_pair_dis_nmds %>%
-      left_join(all_metadata, by = join_by(sample == sample))
+```{r}
+sample_table_adonis <- all_metadata %>%
+    filter(sample %in% labels(beta_q1n)) %>%
+    arrange(sample) %>%
+    # mutate(location=paste0(round(longitude,2),"_",round(latitude,2))) %>%
+    # select(sample,region) %>%
+    select_if(~ length(unique(.)) > 1) %>% #remove columns with all-identical values
+    column_to_rownames(var = "sample") %>%
+    as.data.frame()
 ```
-
+```{r}
+    adonis2(formula=beta_q1n ~ ., data=sample_table_adonis[labels(beta_q1n),], permutations=999) %>%
+            as.matrix() %>%
+            kable()
+```
 #### NMDS:
-using script from https://github.com/anttonalberdi/hilldiv2
-```{r beta_div_plot, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-
-#Plot ordination
-ggplot(hill_pair_dis_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
-        geom_point(size=3) +
-        scale_color_manual(values = c("#46edc8","#374d7c")) +
-        theme_classic() +
-        theme(legend.position="bottom", legend.box="vertical")
+```{r}
+beta_q1n_nmds <- beta_q1n %>%
+                metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+                vegan::scores() %>%
+                as_tibble(., rownames = "sample") %>%
+                left_join(all_metadata, by = join_by(sample == sample))
 ```
+```{r}
+group_n <- length(unique(beta_q1n_nmds$region))
 
-using adapted original script
-```{r beta_div_neutral_plot_region,comment="", echo=TRUE}
-
-NMDS.centroids_1=aggregate(hill_pair_dis_nmds[,c(2:3)],by=list(hill_pair_dis_nmds$region),FUN=mean)
-colnames(NMDS.centroids_1) <- c("region","NMDS1","NMDS2")
-hill_pair_dis_nmds=merge(hill_pair_dis_nmds,NMDS.centroids_1,by="region")
-
-centroids <- hill_pair_dis_nmds  %>%
-  group_by(region)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
+beta_q1n_nmds %>%
+            group_by(region) %>%
+            mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+            mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+            ungroup() %>%
+            ggplot(., aes(x=NMDS1,y=NMDS2, color=region)) +
+                scale_color_manual(values=beta_colors[c(1:group_n)]) +
+                geom_point(size=2) +
+                geom_segment(aes(x=x_cen, y=y_cen, xend=NMDS1, yend=NMDS2), alpha=0.2) +
+                theme_classic() +
+                theme(legend.position="right", legend.box="vertical") +
+                guides(color=guide_legend(title="Region"))
 ```
 
 Adonis
 ```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-#PROBLEM: EHI01293 is missing from hill_pair_dis_dist, and hill_pair_dis_nmds, but IS present in hill_pair_dis 
-hill_pair_dis_selected <- hill_pair_dis %>% 
-  select(first, second, C)
-#EHI01293 is the first 57 entries in "first" and never appears in "second"
+# order data
+m2 <- as.matrix(beta_q1n) 
+sample_table_adonis_row <- rownames_to_column(sample_table_adonis, "Samples")
+metadata_ord_2<- sample_table_adonis[order(match(sample_table_adonis_row$Sample,rownames(m2))),]
 
-hill_pair_dis_df <- as.data.frame(hill_pair_dis_selected) 
-#EHI01293 is the first 57 entries in "first"
-
-hill_pair_dis_pivoted <- pivot_wider(hill_pair_dis_df, names_from = first, values_from = C)
-# EHI01293 is the first column name, but is not in "second"
-
-hill_pair_dis_rownames <- column_to_rownames(hill_pair_dis_pivoted, var = "second")
-# in between these two steps EHI01293 goes missing. EHI01293 is the first column name of hill_pair_dis_rowname, but then is not included as a row or column name for hill_pair_dis_dist_matrix
-hill_pair_dis_dist_matrix <- as.matrix(hill_pair_dis_dist)
-
-hill_pair_dist_dist <- as.dist(hill_pair_dis_dist_matrix)
-
-ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region)
-# Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
-
-
-################
-# ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$Pack) 
-# permutest(ps.disper.neutral, pairwise = TRUE) 
-# meta_order_2 <- all_metadata[order(all_metadata$sample),] 
-# m2 <- as.matrix(hill_pair_dis_dist) 
-# metadata_ord_2<- all_metadata[order(match(all_metadata$sample,rownames(m2))),] 
-# Run test
-# adonis2(hill_pair_dis_dist ~ region, data =metadata_ord_2, permutations = 999)
+#Permutation test
+ps.disper.neutral <- betadisper(beta_q1n, metadata_ord_2$region) 
+permutest(ps.disper.neutral, pairwise = TRUE) 
+# F Statistic: 26.96
+# p-value: 0.001
+# THEREFORE the data does NOT have equal multivariate dispersions 
+ 
+# Adonis
+adonis2(beta_q1n ~ region, data =metadata_ord_2, permutations = 999)
+# A p-value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
+# p-value: 0.001
+# R2: 0.28818
+# THEREFORE there IS a significant difference between the beta diversity in Ittoq and Daneborg, and the location accounts for 22.6% of the difference 
 ```
-Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
-
-
-
-
