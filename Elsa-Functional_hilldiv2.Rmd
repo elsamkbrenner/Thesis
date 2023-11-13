@@ -147,9 +147,9 @@ GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_rel,GIFT_db
 
 ```{r alpha_div_funct, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 
-not_shared_rows <- setdiff(rownames(count_filtered_rel), rownames(GIFTs_elements)) #"EHA01909_bin.13" "EHA01928_bin.9" 
+not_shared_rows <- setdiff(rownames(count_table_cov_size), rownames(GIFTs_elements)) #"EHA01909_bin.13" "EHA01928_bin.9" 
 rows_to_remove <- c("EHA01909_bin.13", "EHA01928_bin.9")
-count_filtered_rel <- count_filtered_rel[!rownames(count_filtered_rel) %in% rows_to_remove, ]
+count_table_cov_size_filtered <- count_table_cov_size[!rownames(count_table_cov_size) %in% rows_to_remove, ]
 # There are 2 bins that are present in count_filtered_rel (555) but not GIFTs elements (553). I removed them for analysis, but I am questioning why they are not there, and if removing them is valid for analysis. 
 
 #Convert traits into distance matrix
@@ -223,87 +223,64 @@ print(wilcox_results_F)
 
 ## Functional beta diversity calculations
 ```{r beta_div_func, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-beta_div_func <- hillpair(data=count_filtered_rel,dist=dist, q=1)
+beta_q1f <- hilldiv2::hillpair(count_table_cov_size_filtered, dist=dist) %>%
+  list2dist()
 ```
 
-```{r beta_div_func_nmds_Status, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-#### NMDS
-hill_pair_dis_func <- hillpair(data=count_filtered_rel, dist=dist, q=1)
-
-# Generate NMDS ordination
-hill_pair_dis_func_nmds <- hill_pair_dis_func %>%
-				select(first,second,C) %>% #based on dissimilarity metric C
-				as.data.frame() %>%
-        pivot_wider(names_from = first, values_from = C) %>%
-				column_to_rownames(var = "second") %>%
-				as.matrix() %>%
-				as.dist() %>%
-				metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
-				vegan::scores() %>%
-				as_tibble(., rownames = "sample")
-
-#Add metadata
-hill_pair_dis_func_nmds <- hill_pair_dis_func_nmds %>%
-      left_join(all_metadata, by = join_by(sample == sample))
+```{r}
+sample_table_adonis_func <- all_metadata %>%
+    filter(sample %in% labels(beta_q1f)) %>%
+    arrange(sample) %>%
+    # mutate(location=paste0(round(longitude,2),"_",round(latitude,2))) %>%
+    # select(sample,region) %>%
+    select_if(~ length(unique(.)) > 1) %>% #remove columns with all-identical values
+    column_to_rownames(var = "sample") %>%
+    as.data.frame()
 ```
-
 #### NMDS:
-using script from https://github.com/anttonalberdi/hilldiv2
-```{r beta_div_func_plot, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-
-#Plot ordination
-ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1,y=NMDS2, color=region)) +
-        geom_point(size=3) +
-        scale_color_manual(values = c("#46edc8","#374d7c")) +
-        theme_classic() +
-        theme(legend.position="bottom", legend.box="vertical")
-```
-Using adapted original script
-```{r beta_div_func_plot 2, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-
-NMDS.centroids_13=aggregate(hill_pair_dis_func_nmds[,c(2:3)],by=list(hill_pair_dis_func_nmds$region),FUN=mean)
-colnames(NMDS.centroids_13) <- c("region","NMDS1","NMDS2")
-hill_pair_dis_func_nmds=merge(hill_pair_dis_func_nmds,NMDS.centroids_13,by="region")
-
-centroids_13 <- hill_pair_dis_func_nmds  %>%
-  group_by(region)  %>%
-  summarize(NM1=mean(NMDS1.y), NM2=mean(NMDS2.y))
-
-ggplot(hill_pair_dis_func_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
-  geom_point(aes(x=NMDS1.x,y=NMDS2.x),size=2) + 
-  geom_segment(aes(x=NMDS1.y, y=NMDS2.y, xend=NMDS1.x, yend=NMDS2.x))+ 
-  theme(axis.line = element_line(colour = "grey"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.title=element_blank(),
-        legend.text=element_text(size=14))+
-  # facet_wrap(~ factor(type))+
-  theme_classic()+
-  labs( x = "NMDS1", y = "NMDS2")
+```{r}
+beta_q1f_nmds <- beta_q1f %>%
+                metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+                vegan::scores() %>%
+                as_tibble(., rownames = "sample") %>%
+                left_join(all_metadata, by = join_by(sample == sample))
 ```
 ```{r}
+group_f <- length(unique(beta_q1f_nmds$region))
 
-# Same issues with the betadisper test 
-ps.disper.func <- betadisper(hill_pair_dis_func, metadata$region) 
-permutest(ps.disper.func, pairwise = TRUE) 
-# a p value of >0.05 in this case will tell you that the data is in an ok format for running an adonis
-## results: 
-
-meta_order <- metadata[order(metadata$sample),] 
-m1 <- as.matrix(hill_pair_dis_func) 
-metadata_ord<- metadata[order(match(metadata$sample,rownames(m1))),] 
-# this section correctly orders the metadata so that it matches to the beta diversity distance matrix
-
-# Run test
-adonis2(beta_div_neutral_dist ~ region, data =metadata_ord, permutations = 999)
-# this is essentially a MANOVA. a p value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
-
-## results: P= R2 = 
+beta_q1f_nmds %>%
+            group_by(region) %>%
+            mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+            mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+            ungroup() %>%
+            ggplot(., aes(x=NMDS1,y=NMDS2, color=region)) +
+                scale_color_manual(values=beta_colors[c(1:group_n)]) +
+                geom_point(size=2) +
+                geom_segment(aes(x=x_cen, y=y_cen, xend=NMDS1, yend=NMDS2), alpha=0.2) +
+                theme_classic() +
+                theme(legend.position="right", legend.box="vertical") +
+                guides(color=guide_legend(title="Region"))
 ```
 
+Adonis
+```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+# order data
+m3 <- as.matrix(beta_q1f) 
+sample_table_adonis_row_func <- rownames_to_column(sample_table_adonis_func, "Samples")
+metadata_ord_3<- sample_table_adonis_func[order(match(sample_table_adonis_row_func$Sample,rownames(m3))),]
 
+#Permutation test
+ps.disper_func <- betadisper(beta_q1f, metadata_ord_3$region) 
+permutest(ps.disper.neutral, pairwise = TRUE) 
+# F Statistic: 
+# p-value: 
+
+# Adonis
+adonis2(beta_q1f ~ region, data =metadata_ord_3, permutations = 999)
+# A p-value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
+# p-value:
+# R2: 
+```
 ## Functional capacity of the MAGs
 
 ```{r GIFTs_elements, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}

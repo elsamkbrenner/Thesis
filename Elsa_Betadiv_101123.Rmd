@@ -53,7 +53,8 @@ library(dendextend) # this package allows you to extend dendrograms made in R, f
 library(stringr) # this is a utility package
 library(Rtsne) # this is a utility package 
 library(glue) # this is a utility package
-library(webshot2)
+library(car)
+library(DESeq2)
 ```
 
 
@@ -507,7 +508,7 @@ treephylo = phyloseq::phy_tree(tree)
 physeq <- phyloseq(MAGotu, treephylo, sample_tab,taxtable)
 
 # Plot the phylogenetic tree
-# tree_plot <- ggtree(treephylo)
+tree_plot <- ggtree(treephylo)
 
 # Print the tree plot
 # print(tree_plot)
@@ -718,14 +719,24 @@ beta_div_neutral <- count_filtered %>%
 #### NMDS
 hill_pair_dis <- hillpair(data=count_filtered,q=1) #Check here for issues with data matrix structure for adonis / betadispear test
 
-# Generate NMDS ordination
 hill_pair_dis_dist <- hill_pair_dis %>%
-				select(first,second,C) %>% #based on dissimilarity metric C
-				as.data.frame() %>%
+                select(first,second,C) %>% #based on dissimilarity metric C
+                as.data.frame() %>%
         pivot_wider(names_from = first, values_from = C) %>%
-				column_to_rownames(var = "second") %>%
-				as.matrix()  %>%
-				as.dist()
+                column_to_rownames(var = "second") %>%
+                as.matrix() %>%
+                as.dist() # not supposed to use this as.dist, but the nmds doesn't work without it
+               # %>% list2dist()
+
+############## IDENTIFIED ISSUE, THERE ARE VALUES MISSING FROM HILL_PAIS_DIS_DIST##############
+
+# Missing values in hill_pair_dis_dist
+# missing_values <- which(is.na(hill_pair_dis_dist), arr.ind = TRUE)
+# print(missing_values)
+
+############## IDENTIFIED ISSUE, THERE ARE VALUES MISSING FROM HILL_PAIS_DIS_DIST##############
+
+# Generate NMDS ordination
 hill_pair_dis_nmds <- metaMDS(hill_pair_dis_dist,trymax = 500, k=2, verbosity=FALSE) %>%
 				vegan::scores() %>%
 				as_tibble(., rownames = "sample")
@@ -775,29 +786,10 @@ ggplot(hill_pair_dis_nmds, aes(x=NMDS1.x,y=NMDS2.x,colour=region)) +
 
 Adonis
 ```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-#PROBLEM: EHI01293 is missing from hill_pair_dis_dist, and hill_pair_dis_nmds, but IS present in hill_pair_dis 
-hill_pair_dis_selected <- hill_pair_dis %>% 
-  select(first, second, C)
-#EHI01293 is the first 57 entries in "first" and never appears in "second"
-
-hill_pair_dis_df <- as.data.frame(hill_pair_dis_selected) 
-#EHI01293 is the first 57 entries in "first"
-
-hill_pair_dis_pivoted <- pivot_wider(hill_pair_dis_df, names_from = first, values_from = C)
-# EHI01293 is the first column name, but is not in "second"
-
-hill_pair_dis_rownames <- column_to_rownames(hill_pair_dis_pivoted, var = "second")
-# in between these two steps EHI01293 goes missing. EHI01293 is the first column name of hill_pair_dis_rowname, but then is not included as a row or column name for hill_pair_dis_dist_matrix
-hill_pair_dis_dist_matrix <- as.matrix(hill_pair_dis_dist)
-
-hill_pair_dist_dist <- as.dist(hill_pair_dis_dist_matrix)
-
-ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region)
-# Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
-
-
 ################
-# ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$Pack) 
+hill_pair_dis_dist %>%
+  list2dist()
+ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$Pack) 
 # permutest(ps.disper.neutral, pairwise = TRUE) 
 # meta_order_2 <- all_metadata[order(all_metadata$sample),] 
 # m2 <- as.matrix(hill_pair_dis_dist) 
@@ -807,6 +799,80 @@ ps.disper.neutral <- betadisper(hill_pair_dis_dist, all_metadata$region)
 ```
 Error in pts[groups == i, , drop = FALSE] : (subscript) logical subscript too long
 
+Now we look at the differences in relative abundance:
+
+CLR transformation:
+```{r CLR transformation and summary statistics}
+# CLR transform data, for analysis of relative abundance
+physeq_clr <- microbiome::transform(physeq, 'clr')
+
+# summary of CLR transformed data
+physeq_phylum_clr <- microbiome::aggregate_taxa(physeq_clr, 'phylum')
+physeq_phylum_rel_clr <-  microbiome::transform(physeq_phylum_clr, "compositional")
+table.rel1_clr <- physeq_phylum_rel_clr@otu_table*100
+means.table.rel1_clr <- as.data.frame(rowMeans(table.rel1_clr))
+sd.table.rel1_clr <- as.data.frame(rowSds(table.rel1_clr, useNames = TRUE))
+summary.phylum1_clr <- merge(means.table.rel1_clr, sd.table.rel1_clr, by="row.names")
+colnames(summary.phylum1_clr) <- c("Phylum","Mean", "SD")
+print(summary.phylum1_clr[order(-summary.phylum1$Mean),], row.names = FALSE)
+
+```
+
+```{r}
+# Differential abundance analysis of Ittoq and Daneborg
+regions_to_compare <- c("Ittoqqortoormii", "Daneborg")
+physeq_subset <- subset_samples(physeq_clr, region %in% regions_to_compare)
+
+Ittoq_samples <- sample_data(physeq)[sample_data(physeq)$region == "Ittoqqortoormii", ]
+Daneborg_samples <- sample_data(physeq)[sample_data(physeq)$region == "Daneborg", ]
+
+# Extract abundance data for the two regions using subset_samples
+Ittoq_abundance <- otu_table(subset_samples(physeq_clr, sample_code %in% Ittoq_samples$sample_code))
+Daneborg_abundance <- otu_table(subset_samples(physeq_clr, sample_code %in% Daneborg_samples$sample_code))
+```
+
+```{r}
+# Extract the row names (taxa names) from the abundance tables
+taxa_names <- rownames(otu_table(physeq_clr))
+
+# Create an empty data frame to store results
+wilcox_results <- data.frame(Taxon = character(), W_statistic = numeric(), p_value = numeric(), stringsAsFactors = FALSE)
+
+# Loop through each taxon and perform Wilcoxon test
+for (taxon in taxa_names) {
+  # Extract abundance for the taxon in each region
+  abundance_ittoq <- as.numeric(otu_table(Ittoq_abundance)[taxon, ])
+  abundance_daneborg <- as.numeric(otu_table(Daneborg_abundance)[taxon, ])
+  
+  # Perform Wilcoxon test
+  wilcox_result <- wilcox.test(abundance_ittoq, abundance_daneborg)
+  
+  # Store results in the data frame
+  wilcox_results <- rbind(wilcox_results, data.frame(Taxon = taxon, 
+                                                     W_statistic = wilcox_result$statistic,
+                                                     p_value = wilcox_result$p.value))
+}
+
+# Adjust p-values for multiple testing if needed
+# For example, using the Benjamini-Hochberg correction
+wilcox_results$p_adjusted <- p.adjust(wilcox_results$p_value, method = "BH")
+
+# View the results
+print(wilcox_results)
+
+# Convert key column to character in wilcox_results
+wilcox_results$Taxon <- as.character(wilcox_results$Taxon)
+
+# Merge the wilcoxon results with the mags_table to match bins to actual taxonomic names
+merged_results <- merge(wilcox_results, mags_table, by.x = "Taxon", by.y = "genome", all.x = TRUE)
+```
 
 
+```{r}
+# Filter taxa with significant differential abundance at a 0.05 p-value
+significant_taxa <- wilcox_results[wilcox_results$p_adjusted < 0.05, ]
+
+# View the significant taxa
+print(significant_taxa)
+```
 
