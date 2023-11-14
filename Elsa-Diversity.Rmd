@@ -908,6 +908,7 @@ beta_div_func <- hillpair(data=count_filtered_use_this,q=1,dist=dist)
 beta_div_func_S <- beta_div_func$S
 ```
 
+Beta div analysis using EHI Workflow:
 ```{r}
 sample_table_adonis_func <- all_metadata %>%
     filter(sample %in% labels(beta_div_func_S)) %>%
@@ -919,12 +920,10 @@ sample_table_adonis_func <- all_metadata %>%
     as.data.frame()
 ```
 ```{r}
-   # adonis2(beta_div_func_S ~ ., data=sample_table_adonis_func[labels(beta_div_func_S),], permutations=999) %>%
-  #        as.matrix() %>%
-   #         kable()
+adonis2(beta_div_func_S ~ region, data=sample_table_adonis_func[labels(beta_div_func_S),], permutations=999) %>%
+            as.matrix() %>%
+            kable()
 ```
-
-#### NMDS:
 ```{r}
 beta_div_func_S_nmds <- beta_div_func_S %>%
                 metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
@@ -933,7 +932,7 @@ beta_div_func_S_nmds <- beta_div_func_S %>%
                 left_join(all_metadata, by = join_by(sample == sample))
 ```
 ```{r}
-group_f <- length(unique(beta_div_func_S_nmds$region))
+group_func <- length(unique(beta_div_func_S_nmds$region))
 
 beta_div_func_S_nmds %>%
             group_by(region) %>%
@@ -949,7 +948,7 @@ beta_div_func_S_nmds %>%
                 guides(color=guide_legend(title="Region"))
 ```
 
-Adonis
+Adonis using old code for ordering 
 ```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 # order data
 m3 <- as.matrix(beta_div_func_S) 
@@ -960,17 +959,17 @@ metadata_ord_3<- sample_table_adonis_func[order(match(sample_table_adonis_row_fu
 ps.disper.func <- betadisper(beta_div_func_S, metadata_ord_3$region) 
 permutest(ps.disper.func, pairwise = TRUE) 
 # F Statistic: 7.9074
-# p-value: 0.003
+# p-value: 0.005
 # THEREFORE the data does NOT have equal multivariate dispersions 
  
 # Adonis
 adonis2(beta_div_func_S ~ region, data =metadata_ord_3, permutations = 999)
-# A p-value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
-# p-value: 0.953
+# A p-value of <0.05 is significant.
+# p-value: 0.954
 # THEREFORE there IS NOT a significant difference between the functional beta diversity in Ittoq and Daneborg
-```
 
-# try the EHI workflow and old code to make sure the adonis results are the same
+## results match those of EHI workflow
+```
 
 ## Functional capacity of the MAGs
 ```{r GIFTs_elements, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
@@ -998,13 +997,7 @@ heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
 
 
 ```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
-# Split name column into first name and last name
-taxonomy <- taxonomyclean # %>%
-#  select(user_genome, classification) %>%
-#  rename(Genome = user_genome) %>%
-#  separate(classification, c('Domain', 'Phylum','Class','Order','Family','Genus','Species'),sep=";") %>%
-#  mutate_at(vars(Domain,Phylum,Class,Order,Family,Genus,Species), ~ str_replace(., "[dpcofgs]__", "")) %>%
-#  mutate_at(vars(Genome), ~ str_replace(., ".fa", ""))
+taxonomy <- taxonomyclean
 ```
 
 ```{r tsne, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -1030,7 +1023,6 @@ count_t <- count_filtered_use_this %>%
 
 #colnames(count_t) <- count_t[1,]
 #count_t <- count_t[-1, ]
-
 ```
 
 Create Merge table and GIFT elements for Ittoq dogs
