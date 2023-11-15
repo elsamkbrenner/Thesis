@@ -73,7 +73,7 @@ coverage_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_coverage.tsv"
 ## Load data 
 setwd(workingdir) # this line sets the working directory of the script to the location established in the block above, where i defined 'workingdir'
 
-batch="DMB0032"
+batch="DMB0032" # this specifies the batch of data within the EHI data framework
 
 # the lines below take the tables imported above, and turn them into readable table files we can use for the rest of our analysis.  
 counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
@@ -82,8 +82,6 @@ metadata <- read.table(metadata_file,sep="\t",header=T)%>%
 	rename(sample=EHI_plaintext)
 mags_table <- read.table(taxonomy_file,sep="\t",header=T)
 tree <- read.tree(tree_file)
-
-# ELSA NOTE:  here I changed the lines a bit because my files did not need to be unzipped. 
 
 # Load EHI taxonomy colours. Download it first if you have not them in your computer
 #colours_URL="https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv"
@@ -527,7 +525,7 @@ print(summary.phylum1[order(-summary.phylum1$Mean),], row.names = FALSE)
 
 ```
 
-# 3. Alpha diversity calculations
+# 3. Alpha diversity calculations - Community Level
 
 Diversity estimations for each sample.\
 **Richness:** Number of MAGs per sample (after applying coverage filter).\
@@ -594,7 +592,7 @@ ggscatter(alpha_div, x = "mags_bases", y = "unmapped_bases", color="depth",
   font("legend.title", face = "bold")
 ```
 
-#### Alpha diversity plots
+#### Alpha diversity plots - Community Level
 
 ```{r alpha_div_neutral_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
@@ -641,8 +639,7 @@ print(wilcox_results)
 # THEREFORE Neutral alpha diversity does NOT have statistically significant differences between Ittoq and Daneborg
 ```
 
-
-### Phylogenetic
+### Phylogenetic level
 ```{r alpha_div_phylo, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
 alpha_div_phylo <- hilldiv(data=count_filtered,tree=tree, q=1)
@@ -665,7 +662,7 @@ knitr::kable(table_mean_alpha_phylo, format = "html", full_width = F,col.names =
   kable_styling(latex_options="scale_down")
 ```
 
-#### Alpha diversity plots
+#### Alpha diversity plots - Phylogenetic level
 
 ```{r alpha_div_phylo_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 
@@ -707,7 +704,7 @@ print(t_test_results_P)
 # THEREFORE Phylogenetic alpha diversity is NOT have statistically significant differences between Ittoq and Daneborg
 ```
 
-### Beta diversity
+### Beta diversity - Community level
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 
 beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
@@ -715,6 +712,7 @@ beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3
 beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
 ```
 
+Using EHI workflow
 ```{r}
 sample_table_adonis <- all_metadata %>%
     filter(sample %in% labels(beta_q1n)) %>%
@@ -725,6 +723,12 @@ sample_table_adonis <- all_metadata %>%
     column_to_rownames(var = "sample") %>%
     as.data.frame()
 ```
+```{r}
+    adonis2(formula=beta_q1n ~ region, data=sample_table_adonis[labels(beta_q1n),], permutations=999) %>%
+            as.matrix() %>%
+            kable()
+```
+
 #### NMDS:
 ```{r}
 beta_q1n_nmds <- beta_q1n %>%
@@ -750,7 +754,7 @@ beta_q1n_nmds %>%
                 guides(color=guide_legend(title="Region"))
 ```
 
-Adonis
+Adonis using old ordering system
 ```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 # order data
 m2 <- as.matrix(beta_q1n) 
@@ -772,17 +776,14 @@ adonis2(beta_q1n ~ region, data =metadata_ord_2, permutations = 999)
 # THEREFORE there IS a significant difference between the beta diversity in Ittoq and Daneborg, and the location accounts for 22.6% of the difference 
 ```
 
-_____________________________________________________________________________________
-Functional analysis:
-
-
+# Functional diversity analysis analysis
 ```{r filter_annotations, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #### read table ####
 filtered_df <- read.table("all_annotations.csv", sep="")
 ```
 
-Data Prep from EHI workflow
-# FIX THIS
+## Data Prep from EHI workflow
+# FIX THIS SECTION ELSA
 ```{r}
 #Get list of present MAGs
 present_MAGs <- count_table_cov_size %>%
@@ -803,7 +804,7 @@ filtered_df_filt <- filtered_df[present_MAGs,] %>%
 count_table_cov_size_filt <- count_table_cov_size[present_MAGs,]
 ```
 
-
+## Data prep from old code:
 ```{r gifts, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
 count_filtered_rel <- count_filtered %>%
   rownames_to_column(., "Genome") %>%
@@ -814,10 +815,11 @@ count_filtered_rel <- count_filtered %>%
 GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
 #GIFTs <- GIFTs[-c(9,10),]
 
+# counts filtered correctly to the GIFTs distillation. Use this for counts from here on out. 
 count_filtered_use_this <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(GIFTs),]
-# use this one from here on out
 
-#Aggregate bundle-level GIFTs into the compound level USE THIS ONE!!!!!!
+#Aggregate bundle-level GIFTs into the compound level 
+# this is the level we will use for analysis
 GIFTs_elements <- to.elements(GIFTs,GIFT_db)
 
 #Aggregate element-level GIFTs into the function level
@@ -835,14 +837,13 @@ GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_use_this,GI
 dist <- traits2dist(GIFTs_elements, method="gower")
 ```
 
-Alpha diversity
+#### Average functional diversities
 ```{r alpha_div_funct, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 alpha_div_func <- hilldiv(data=count_filtered_use_this,q=1,dist=dist)
 
 #Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
 ```
 
-#### Average functional diversities
 ```{r div_F_mean, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 alpha_div_F <-  t(alpha_div_func) %>%
   as.data.frame() %>%
@@ -860,8 +861,8 @@ knitr::kable(table_mean_alpha_func, format = "html", full_width = F,col.names = 
 #Ittoq Mean 1.453 SD 0.058
 
 ```
-#### Functional diversity plots
 
+#### Functional diversity plots - Alpha diversity
 ```{r alpha_div_func_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
 alpha_div_F %>%
   ggplot(aes(x = region, y = q1, group = region, color = region)) +
@@ -968,8 +969,9 @@ adonis2(beta_div_func_S ~ region, data =metadata_ord_3, permutations = 999)
 # p-value: 0.954
 # THEREFORE there IS NOT a significant difference between the functional beta diversity in Ittoq and Daneborg
 
-## results match those of EHI workflow
+## results match those of EHI workflow - yay
 ```
+
 
 ## Functional capacity of the MAGs
 ```{r GIFTs_elements, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
@@ -997,7 +999,7 @@ heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
 
 
 ```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
-taxonomy <- taxonomyclean
+taxonomy <- taxonomyclean1
 ```
 
 ```{r tsne, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -1109,3 +1111,60 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
   theme_minimal() +
   theme()
 ```
+
+
+# Relative abundance analysis
+## DESeq2
+
+CLR transforming phyloseq object:
+```{r}
+# Perform CLR transformation
+physeq_clr <- microbiome::transform(physeq, 'clr')
+```
+Subsetting Daneborg and Ittoq from phyloseq object
+```{r}
+Daneborg_physeq <- subset_samples(physeq_clr, region == "Daneborg")
+Ittoq_physeq <- subset_samples(physeq_clr, region == "Ittoqqortoormii")
+```
+
+```{r}
+library(DESeq2)
+deseq1<- phyloseq_to_deseq2(physeq, ~ region) # could not get to run with physeq_clr
+deseq1 <- DESeq(deseq1)
+results_table <- results(deseq1)
+```
+```{r}
+results_table$padj <- p.adjust(results_table$pvalue, method = "BH")
+alpha <- 0.05
+sig_results <- subset(results_table, padj < alpha)
+```
+```{r}
+plotMA(deseq1)
+plotDispEsts(deseq1, main = "region")
+```
+
+```{r}
+summary(sig_results)
+```
+
+
+```{r}
+alpha <- 0.1  # Adjusted p-value threshold
+lfc_threshold <- 0  # Log-fold change threshold (0 for upregulated genes, adjust as needed)
+
+expressedUP_genes <- subset(results_table, padj < alpha & log2FoldChange > lfc_threshold)
+expressedDOWN_genes <- subset(results_table, padj < alpha & log2FoldChange < -lfc_threshold)
+```
+
+for expressedUP: Genes with positive log2FoldChange values are positively enriched in "Ittoqqortoormii" compared to "Daneborg."
+
+for expressedDOWN: Genes with negative log2FoldChange values are negatively enriched in "Ittoqqortoormii" compared to "Daneborg."
+
+```{r}
+# Heatmap showing top diff expressed genes
+
+library(pheatmap)
+top_genes <- rownames(sig_results)[sig_results$padj < 0.1]
+pheatmap(assay(deseq1)[top_genes, ],scale = "row", main = "Top Differentially Expressed Genes")
+```
+
