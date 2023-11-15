@@ -1112,14 +1112,12 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
   theme()
 ```
 
-
 # Relative abundance analysis
-## DESeq2
-
+## CLR transformation and wilcoxon testing
 CLR transforming phyloseq object:
 ```{r}
 # Perform CLR transformation
-physeq_clr <- microbiome::transform(physeq, 'clr')
+physeq_clr <- microbiome::transform(physeq, 'clr') # clr transformation is not working for further analysis
 ```
 Subsetting Daneborg and Ittoq from phyloseq object
 ```{r}
@@ -1127,44 +1125,212 @@ Daneborg_physeq <- subset_samples(physeq_clr, region == "Daneborg")
 Ittoq_physeq <- subset_samples(physeq_clr, region == "Ittoqqortoormii")
 ```
 
+## DESeq2
+### Phylum level
 ```{r}
 library(DESeq2)
-deseq1<- phyloseq_to_deseq2(physeq, ~ region) # could not get to run with physeq_clr
-deseq1 <- DESeq(deseq1)
-results_table <- results(deseq1)
+
+# first conglomerate at phylum level
+physeq.phylum <- tax_glom(physeq, 'phylum')
+
+# convert phyloseq object to DESeq object
+region_deseq_phylum <- phyloseq_to_deseq2(physeq.phylum, ~ region) 
+# DESeq runs with its own transformation, so the raw data (instead of the clr transformed data) is appropriate here. 
+
+# run standard DESeq analysis
+region_deseq_phylum <- DESeq(region_deseq_phylum)
+results_table <- results(region_deseq_phylum)
 ```
+Basic plotting of Data: 
 ```{r}
-results_table$padj <- p.adjust(results_table$pvalue, method = "BH")
-alpha <- 0.05
-sig_results <- subset(results_table, padj < alpha)
+plotMA(region_deseq_phylum)
+plotDispEsts(region_deseq_phylum, main = "Dispersion plot Greenland dogs")
 ```
-```{r}
-plotMA(deseq1)
-plotDispEsts(deseq1, main = "region")
-```
+Blue dots above x-axis indicate genes that are over-expressed (n=127) where blue dots below the x-axis are genes that are under-expressed (n= 76). X-axis is the mean of normalized counts, and the y-axis is the log fold change.
 
 ```{r}
-summary(sig_results)
-```
+deseq_res_ittoq_vs_daneborg <- results(region_deseq_phylum, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
 
+summary(deseq_res_ittoq_vs_daneborg) 
+# out of 12 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 0, 0%
+# LFC < 0 (down)     : 3, 25%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+# limit to only show results significant at p- adjusted value of 0.05
+
+sigtab_res_deseq_res_ittoq_vs_daneborg <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.05), ]
+
+summary(sigtab_res_deseq_res_ittoq_vs_daneborg) 
+# out of 6 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 0, 0%
+# LFC < 0 (down)     : 3, 50%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+```
+So from this information, we know that at the there are 3 phylums that are significantly differently abundant between Ittoq and Daneborg
+
+Add in taxonomic information and sort by baseMean
+```{r}
+sigtab_deseq <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.005), ]
+
+sigtab_deseq_region_phylum_with_tax <- cbind(as(sigtab_deseq, "data.frame"), as(tax_table(taxtable)[row.names(sigtab_deseq), ], "matrix"))
+sigtab_deseq_region_phylum_with_tax[order(sigtab_deseq_region_phylum_with_tax$baseMean, decreasing=T), ]
+
+deseq2_ins_fis <- as.data.frame(sigtab_deseq_region_phylum_with_tax)
+
+x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$phylum, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_phylum_with_tax$phylum = factor(as.character(sigtab_deseq_region_phylum_with_tax$phylum), levels=names(x))
+x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$genus, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_phylum_with_tax$genus = factor(as.character(sigtab_deseq_region_phylum_with_tax$genus), levels=names(x))
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table1 <- as.data.frame(unique(sigtab_deseq_region_phylum_with_tax$phylum))
+colnames(tax_table1)[1] <- "phylum"
+tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+
+sigtab_deseq_with_tax1 <- sigtab_deseq_region_phylum_with_tax %>%	dplyr::arrange(phylum)
+rownames(sigtab_deseq_with_tax1) <- sigtab_deseq_with_tax1$phylum
+```
 
 ```{r}
-alpha <- 0.1  # Adjusted p-value threshold
-lfc_threshold <- 0  # Log-fold change threshold (0 for upregulated genes, adjust as needed)
-
-expressedUP_genes <- subset(results_table, padj < alpha & log2FoldChange > lfc_threshold)
-expressedDOWN_genes <- subset(results_table, padj < alpha & log2FoldChange < -lfc_threshold)
+ggplot(sigtab_deseq_with_tax1, aes(x=forcats::fct_rev(reorder(phylum, as.integer(factor(phylum)))), y=log2FoldChange, color=phylum)) + 
+  geom_point(size=4) + 
+  scale_color_manual(values=tax_color1) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("Phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
 ```
-
-for expressedUP: Genes with positive log2FoldChange values are positively enriched in "Ittoqqortoormii" compared to "Daneborg."
-
-for expressedDOWN: Genes with negative log2FoldChange values are negatively enriched in "Ittoqqortoormii" compared to "Daneborg."
-
+Heatmap
 ```{r}
 # Heatmap showing top diff expressed genes
 
 library(pheatmap)
-top_genes <- rownames(sig_results)[sig_results$padj < 0.1]
-pheatmap(assay(deseq1)[top_genes, ],scale = "row", main = "Top Differentially Expressed Genes")
+top_phylum <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
+pheatmap(assay(region_deseq)[top_phylum, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_phylum_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Phylum level")
 ```
 
+
+### Genus level
+```{r}
+# first conglomerate at genus level
+physeq.genus <- tax_glom(physeq, 'genus')
+
+# convert phyloseq object to DESeq object
+region_deseq_genus <- phyloseq_to_deseq2(physeq.genus, ~ region) 
+# DESeq runs with its own transformation, so the raw data (instead of the clr transformed data) is appropriate here. 
+
+# run standard DESeq analysis
+region_deseq_genus <- DESeq(region_deseq_genus)
+results_table <- results(region_deseq_genus)
+```
+Basic plotting of Data: 
+```{r}
+plotMA(region_deseq_genus)
+plotDispEsts(region_deseq_genus, main = "Dispersion plot Greenland dogs")
+```
+Blue dots above x-axis indicate genes that are over-expressed (n=127) where blue dots below the x-axis are genes that are under-expressed (n= 76). X-axis is the mean of normalized counts, and the y-axis is the log fold change.
+
+```{r}
+deseq_res_ittoq_vs_daneborg_genus <- results(region_deseq_genus, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
+
+summary(deseq_res_ittoq_vs_daneborg_genus) 
+# out of 131 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 2, 1.5%
+# LFC < 0 (down)     : 17, 13%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 51, 39%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+# limit to only show results significant at p- adjusted value of 0.05
+
+sigtab_res_deseq_res_ittoq_vs_daneborg_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.05), ]
+
+summary(sigtab_res_deseq_res_ittoq_vs_daneborg_genus) 
+# out of 45 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 2, 4.4%
+# LFC < 0 (down)     : 17, 38%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+```
+So from this information, we know that at the there are 19 genusus that are significantly differently abundant between Ittoq and Daneborg
+```{r}
+sigtab_deseq_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.005), ]
+
+sigtab_deseq_region_genus_with_tax <- cbind(as(sigtab_deseq_genus, "data.frame"), as(tax_table(taxtable)[row.names(sigtab_deseq_genus), ], "matrix"))
+sigtab_deseq_region_genus_with_tax[order(sigtab_deseq_region_genus_with_tax$baseMean, decreasing=T), ]
+
+deseq2_ins_fis_2 <- as.data.frame(sigtab_deseq_region_genus_with_tax)
+
+x = tapply(sigtab_deseq_region_genus_with_tax$log2FoldChange, sigtab_deseq_region_genus_with_tax$phylum, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_genus_with_tax$phylum = factor(as.character(sigtab_deseq_region_genus_with_tax$phylum), levels=names(x))
+x = tapply(sigtab_deseq_region_genus_with_tax$log2FoldChange, sigtab_deseq_region_genus_with_tax$genus, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_genus_with_tax$genus = factor(as.character(sigtab_deseq_region_genus_with_tax$genus), levels=names(x))
+
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table2 <- as.data.frame(unique(sigtab_deseq_region_genus_with_tax$genus))
+colnames(tax_table2)[1] <- "genus"
+tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+
+sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%	dplyr::arrange(phylum)
+rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
+```
+
+
+```{r}
+ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(factor(genus)))), y=log2FoldChange, color=phylum)) + 
+  geom_point(size=4) + 
+ # scale_color_manual(values=tax_color1) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("Phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+Heatmap
+```{r}
+# Heatmap showing top diff expressed genes
+
+library(pheatmap)
+top_genus <- rownames(sigtab_deseq_region_genus_with_tax)[sigtab_deseq_region_genus_with_tax$padj < 0.005]
+pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_genus_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Genus level")
+```
