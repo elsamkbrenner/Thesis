@@ -1114,16 +1114,101 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
 
 # Relative abundance analysis
 ## CLR transformation and wilcoxon testing
+### Phylum level
 CLR transforming phyloseq object:
 ```{r}
 # Perform CLR transformation
 physeq_clr <- microbiome::transform(physeq, 'clr') # clr transformation is not working for further analysis
-```
-Subsetting Daneborg and Ittoq from phyloseq object
-```{r}
+
+# create 2 groups
 Daneborg_physeq <- subset_samples(physeq_clr, region == "Daneborg")
 Ittoq_physeq <- subset_samples(physeq_clr, region == "Ittoqqortoormii")
+
+# agregate results at the phylum level
+physeq_clr_phylum <- microbiome::aggregate_taxa(physeq_clr, 'phylum')
 ```
+
+Ittoq
+```{r}
+physeq_phylum_ittoq <- subset_samples(physeq_clr_phylum, region == "Ittoqqortoormii")
+physeq_phylum_ittoq <- prune_taxa(taxa_sums(physeq_phylum_ittoq)>0, physeq_phylum_ittoq)
+table.rel1_ittoq <- physeq_phylum_ittoq@otu_table
+means.table.rel1_ittoq <- as.data.frame(rowMeans(table.rel1_ittoq))
+sd.table.rel1_ittoq <- as.data.frame(matrixStats::rowSds(table.rel1_ittoq, useNames = TRUE))
+summary.phylum1_ittoq <- merge(means.table.rel1_ittoq, sd.table.rel1_ittoq, by="row.names")
+colnames(summary.phylum1_ittoq) <- c("Phylum","Mean", "SD")
+print(summary.phylum1_ittoq[order(-summary.phylum1_ittoq$Mean),], row.names = FALSE)
+```
+
+Daneborg
+```{r}
+physeq_phylum_daneborg <- subset_samples(physeq_clr_phylum, region == "Daneborg")
+physeq_phylum_daneborg <- prune_taxa(taxa_sums(physeq_phylum_daneborg)>0, physeq_phylum_daneborg)
+table.rel1_daneborg <- physeq_phylum_daneborg@otu_table
+means.table.rel1_daneborg <- as.data.frame(rowMeans(table.rel1_daneborg))
+sd.table.rel1_daneborg <- as.data.frame(matrixStats::rowSds(table.rel1_daneborg, useNames = TRUE))
+summary.phylum1_daneborg <- merge(means.table.rel1_daneborg, sd.table.rel1_daneborg, by="row.names")
+colnames(summary.phylum1_daneborg) <- c("Phylum","Mean", "SD")
+print(summary.phylum1_daneborg[order(-summary.phylum1_daneborg$Mean),], row.names = FALSE)
+```
+
+```{r mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_phylum.t <- as.data.frame(t(as.matrix(physeq_clr_phylum@otu_table)))
+table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
+sample_type <- all_metadata[,c(1,4)]
+table.W.meta <- merge(table.W,sample_type,by="sample")
+table.W.meta <- table.W.meta[,-c(1)]
+means_phylum_by_region_all <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_phylum_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
+means_all <- as.data.frame(means_phylum_by_region_all)
+means <- as.data.frame(means_phylum_by_region)
+
+means <- means[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
+
+knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r wilcox_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_phylum.t <- as.data.frame(t(as.matrix(physeq_clr_phylum@otu_table)))
+table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
+sample_type <- metadata[,c(1,4)]
+phylum_table <- merge(table.W,sample_type,by="sample")
+phylum_table <- phylum_table[,-c(1)]
+phylum_table.no <- phylum_table[,-ncol(phylum_table)]
+all.taxa <- colnames(phylum_table.no)
+Wilcox_result <- c()
+for (y in all.taxa){
+  res.wilcox <- wilcox.test(phylum_table[,y] ~ region, data = phylum_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result <- rbind(Wilcox_result,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+}
+rownames(Wilcox_result) <- all.taxa
+Wilcox_result <- as.data.frame(Wilcox_result)
+
+Wilcox_result$p_adjusted <- p.adjust(Wilcox_result$Pvalue, method = "fdr")
+
+Wilcox_result_sign <- subset(Wilcox_result, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Phylum")
+knitr::kable(Wilcox_result_sign, format = "html", full_width = F,col.names = c("Phylum", "W", "p-value","p-value adjusted"), digits = 4) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r selec_mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+table.W_filtered <- physeq_clr_phylum.t[colnames(physeq_clr_phylum.t) %in% Wilcox_result_sign$Phylum]
+sample_type <- metadata[,c(1,4)]
+table.W_filtered_meta <- table.W_filtered %>%
+  rownames_to_column(., "sample") %>%
+  merge(.,sample_type,by="sample")
+table.W_filtered_meta <- table.W_filtered_meta[,-c(1)]
+means_phylum_by_region <- table.W_filtered_meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:3],.funs = c(mean="mean", sd="sd"))
+means <- as.data.frame(means_phylum_by_region)
+means <- means[,c(1,2,5,3,6,4,7)]
+knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+### Genus level
 
 ## DESeq2
 ### Phylum level
@@ -1334,3 +1419,5 @@ library(pheatmap)
 top_genus <- rownames(sigtab_deseq_region_genus_with_tax)[sigtab_deseq_region_genus_with_tax$padj < 0.005]
 pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_genus_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Genus level")
 ```
+
+
