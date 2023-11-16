@@ -1,0 +1,1774 @@
+---
+title: "Elsa-analysis1"
+output: html_document
+date: "2023-09-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
+## Load required libraries
+library(ggnewscale) # this package allows you to have multiple fill and color scales when using ggplot2, a common plotting tool in R. 
+library(ggtree) # this package creates visual representations of phylogenetic trees
+library(R.utils) # this is a utility package, it helps R run smoothly
+library(tidyverse) # this is a utility package, it helps R run smoothly
+library(ape) # APE stands for 'Analyses of Phylogenetics and Evolution,' thus this package is used for phylogenetic analysis
+library(devtools) # this is a utility package, it helps R run smoothly
+library(ggplot2) # ggplot2 is a helpful package for making graphs in R. 
+library(hillR) # this package is used to calculate Hill numbers, a metric for 'combined' diversity 
+library(spaa) # this package holds tools used for the analysis of species associations, and niche overlap
+library(vegan) # Vegan is a common package used for the analysis of ecology data. Here, we apply it for its tools on diversity analysis. 
+#library(hilldiv) # this package is used for the calculation of Hill numbers (see also hillR)
+library(hilldiv2) # this package is an updated package for calculating Hill numbers
+library(Rhdf5lib)
+library(phyloseq)
+library(phytools) #phytools is a package that focuses on comparative phylogenetic analysis 
+library(microbiome) 
+library(matrixStats) # this package is used for opperations performed on matrices
+library(microbiomeutilities) 
+library(lme4) # this package is used for fitting and analyzing linear and nonlinear models/ 
+library(MuMIn) # MuMIn = Multi-model inference, and contains function for information-theoretic model selection, and model averaging 
+library(nlme) # this package contains packages related to nonlinear mixed-effects models
+library(knitr) # Knitr is a package for turning R script into reports, used here for the generation of an R markdown document 
+library(kableExtra) # Kable builds on Knitr, and adds extra functions
+library(pairwiseAdonis) # this is a function of (vegan) and is used for multi-level pairwise comparison
+library(sjPlot) # this package is used for visualizing statistical analysis 
+library(distillR) 
+library(RColorBrewer) # this is a series of preset color palettes
+library(reshape2) # this package is used for reformatting and "reshaping" data to fit ideal formats 
+library(ggpubr) # this package is used for formatting ggplot2 figures to be publication ready. 
+library(ggdendro) # this package allows you to apply ggplot2 to make Dendrograms and tree diagrams. 
+library(grid) # this package adds gridlines to existing plots
+library(gplots)
+library(dendextend) # this package allows you to extend dendrograms made in R, for the purposes of visualization and comparison. 
+library(stringr) # this is a utility package
+library(Rtsne) # this is a utility package 
+library(glue) # this is a utility package
+library(ggtree)
+library(ggrepel)
+library(ggpubr)
+library(ggnewscale)
+library(ggtreeExtra)
+```
+
+
+```{r directories, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
+## Download the tables from, change the working directory and files names if needed
+
+## in this section you define the names and locations of the files you will be using, and the working directory you will be using for the rest of the script.
+
+## Declare directories and files
+workingdir="/Users/elsa/Desktop/THESIS/Thesis"
+counts_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_counts.tsv"
+tree_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032.tree"
+taxonomy_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_mag_info.tsv"
+metadata_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_metadata.tsv"
+coverage_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_coverage.tsv"
+```
+
+```{r loaddata, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+## Load data 
+setwd(workingdir) # this line sets the working directory of the script to the location established in the block above, where i defined 'workingdir'
+
+batch="DMB0032" # this specifies the batch of data within the EHI data framework
+
+# the lines below take the tables imported above, and turn them into readable table files we can use for the rest of our analysis.  
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+coverage_table <- read.table(coverage_file, sep="\t",row.names=1,header=T)
+metadata <- read.table(metadata_file,sep="\t",header=T)%>%
+	rename(sample=EHI_plaintext)
+mags_table <- read.table(taxonomy_file,sep="\t",header=T)
+tree <- read.tree(tree_file)
+
+# Load EHI taxonomy colours. Download it first if you have not them in your computer
+#colours_URL="https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv"
+#download.file(colours_URL, "ehi_phylum_colors.tsv")
+
+# in this section we upload the EHI's standard color palatte. This is so that all EHI analyses follow a similar format, for ease of readability and comprehension. 
+
+ehi_phylum_colors <- read.table("~/Desktop/Thesis/R-analysis1/ehi_phylum_colors.tsv",sep="\t",header=T,comment.char = "")
+
+#Delete *__ from the taxonomy names
+ehi_phylum_colors1 <- ehi_phylum_colors %>%
+  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))
+taxonomyclean <- mags_table%>%
+  mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ str_replace(., "[dpcofgs]__", ""))
+```
+
+```{r summary, echo=FALSE, message=FALSE, warning=FALSE}
+nsamples <- ncol(counts_table) # this line defines our number of samples, by reading from the counts table
+metagenomic_bases <- sum(metadata$metagenomic_bases) #this line defines the number of metagenomic bases, by summing each sample from the metadata file. 
+host_bases <- sum(metadata$host_bases) #this line defines the number of host bases, from the sum from each sample from the metadata file
+discarded_bases <- sum(round(((metadata$metagenomic_bases+metadata$host_bases)/(1-metadata$bases_lost_fastp_percent))-(metadata$metagenomic_bases+metadata$host_bases))) # this line defines the number of discarded bases 
+total_bases <- discarded_bases + host_bases + metagenomic_bases # this line defines the number of total bases
+singlem_bases <- sum(metadata$metagenomic_bases * metadata$singlem_fraction) 
+nmags <- nrow(counts_table) # this line defines the number of MAGs
+new_species <- mags_table %>%
+	filter(species == "s__") %>%
+	nrow()
+
+sequencing_depth <- colSums(counts_table) # this line defines a variable for sequencing depth
+sequencing_depth_sum <- sum(sequencing_depth) # this line defines a variable for total sequencing depth sum 
+sequencing_depth_mean <- mean(sequencing_depth) # this line defines the variable for mean sequencing depth
+sequencing_depth_sd <- sd(sequencing_depth) # this line defines a variable for the standard deviation for the mean sequencing depth. 
+```
+
+# 1. Data pre-processing
+
+## 1.1 General statistics
+
+**Number of samples in total**
+```{r nsamples, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+ncol(counts_table) # this tells you the number of samples included in analysis = 58
+
+# cat() is used to concatenate strings. Thus, cat(nsamples) will tell us the number of samples in a readable integer form
+```
+
+**Number of MAGs**
+The number of metagenome-assembled genomes (MAG) or draft bacterial genomes reconstructed from the metagenomic data.
+
+```{r nmags, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+cat(nmags) # this tells you the number of metagenome-assembled genomes (MAGs) included in analysis = 555
+```
+
+**Amount of total data (GB):**
+The amount of total DNA data sequenced in gigabases (GB, one billion nucleotide bases).
+
+```{r totalGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+totalgb <- round(total_bases / 1000000000,2) #this line defines a variable, 'totalgb,' to be the total number of bases, written in the unit Gigabases. The ',2' denotes that the output is round to 2 decimal points. 
+
+cat(totalgb) # total DNA sequenced = 333.71 gigabases
+```
+
+**Amount of discarded data (GB):**
+The amount of data discarded due to low quality or lack of informativeness during data preprocesing. Discarding 5-15% of the produced data is within the expected range, due to formation of adaptor dimers, inclusion of adaptors in sequencing reads due to short insert sizes, low sequencing quality, etc.
+
+```{r discardedGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+discardgb <- round(discarded_bases / 1000000000,2)
+cat(discardgb) # total amount of discarded data (low quality, lack of info) = 10.37 Gigabases
+```
+
+**Amount of discarded data (in % of the raw data):**
+
+```{r %discarded, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+discarddata <- round(discarded_bases / total_bases * 100,2) #similar to the above calculations that convert to Gigabases, this line converts to a percentage value. 
+cat(discarddata) # amount of discarded data = 3.11% of total data. 3.11<5%, therefore good! and within expected range. 
+```
+
+**Amount of host data (GB):**
+The amount of data mapped against the host genome. The percentage refers to the amount of data mapped to the host genome respect to quality-filtered data. Note that this value can be very variable depending on the biological features of the sample (e.g., anal swabs contain more host DNA than faeces) and the employed reference genome (e.g., the chances for mapping to the genome are lower as the distance between) the study species and the employed reference genome differ).
+
+```{r hostGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+hostGB <- round(host_bases / 1000000000,2)
+cat(hostGB) # amount of host data = 6.49 gigabases
+```
+
+**Amount of host data (% of the quality-filtered data):**
+
+```{r host%, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+hostdata <- round(host_bases / (total_bases-discarded_bases) * 100,2)
+cat(hostdata) # host data represents 2.01% of quality filtered data
+```
+
+**Estimated prokaryotic data:** 
+The amount and proportion of data belonging to prokayotic genomes respect to the total metagenomic fraction, as estimated from singleM analysis. Note that this is an estimation that relies on the genome sizes of genomes available in reference databases. If a given taxon is not properly represented, genome size estimations can be less accurate.
+
+```{r prokaGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+prokaGB <- round(singlem_bases / 1000000000,2)
+cat(prokaGB) # an estimated amount of prokaryotic data = 293.14 gigabases of data
+```
+
+**Estimated prokaryotic data (% of the metagenomic data):** 
+
+```{r proka%, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+prokadata <- round(singlem_bases / (metagenomic_bases) * 100,2)
+cat(prokadata) # prokaryotic data is estimated to be 92.51% of metagenomic data. 
+```
+
+**Amount of metagenomic data (GB):**
+The amount of data mapped against the host genome. The percentage refers to the amount of data mapped to the host genome respect to quality-filtered data. Note that this value can be very variable depending on the biological features of the sample (e.g., anal swabs contain more host DNA than faeces) and the employed reference genome (e.g., the chances for mapping to the genome are lower as the distance between) the study species and the employed reference genome differ).
+
+```{r metaGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+metaGB <- round(metagenomic_bases / 1000000000,2)
+cat(metaGB) # =316.85 gigabases of metagenomic data
+```
+
+**Amount of metagenomic data (% of the quality-filtered data):**
+
+```{r meta%, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+metaperce <- round(metagenomic_bases / (total_bases-discarded_bases) * 100,2)
+cat(metaperce) # = 97.99%  metagenomic data
+```
+
+**Total mapped sequencing depth (million reads):**
+The amount of reads (and nucleotide bases) that were mapped to the entire MAG catalogue. Note that the amount of bases is only an approximation estimated by multiplying the exact number of mapped reads by 250 bp.
+
+```{r totalreads, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+totalreads <- round(sequencing_depth_sum / 1000000,2)
+cat(totalreads) # = 1833.71 million reads
+```
+
+**Total mapped sequencing depth (GB):**
+
+```{r mappedGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mappedGB <- round(sequencing_depth_sum / 1000000000 * 143,2)
+cat(mappedGB) # total mapped sequencing depth = 266.02 gigabases
+```
+
+**Average mapped sequencing depth (million reads):** 
+This is the average number of reads (and nucleotide bases) mapped to each sample. Note that the amount of bases is only an approximation estimated by multiplying the exact number of mapped reads by 250 bp.
+```{r meanreads, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+meanreads <- round(sequencing_depth_mean / 1000000,2)
+cat(meanreads) # average mapped sequencing depth = 32.07 million reads
+```
+
+**Average mapped sequencing depth (GB):** 
+```{r meanGB, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+meanGB <- round(sequencing_depth_mean / 1000000000 * 143,2)
+cat(meanGB) # average mapped sequencing depth = 4.59 gigabases 
+```
+
+## 1.2 MAG catalogue
+
+### 1.2.1 Phylogenetic tree
+The phylogenetic tree is constructed by placing the MAG sequences within the reference archaeal and bacterial trees using GTDBTK, followed by merging both trees.
+
+```{r list_phyla, echo=FALSE, warning=FALSE}
+phyla <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>% 
+	arrange(match(genome, tree$tip.label)) %>% 
+  select(phylum, colors) %>%
+	unique()
+
+# First, this chunk joins the ehi color palatte   to the genome taxonomy file specific to my data, joining them at the phylum level.
+# arrange() reorders the rows of a data frame via the collunm names
+# match() then matches genome to the bins 
+```
+
+```{r circular_tree_prep, echo=FALSE, warning=FALSE, comments="", message=FALSE, results="hide"}
+heatmap <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+	arrange(match(genome, tree$tip.label)) %>%
+  select(genome,phylum) %>%
+	mutate(phylum = factor(phylum, levels = unique(phylum))) %>%
+	column_to_rownames(var = "genome")
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+	arrange(match(genome, tree$tip.label)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+
+circular_tree <- force.ultrametric(tree,method="extend") %>%
+	ggtree(., layout = 'circular', size = 0.3)
+
+circular_tree <- gheatmap(circular_tree, heatmap, offset=0.65, width=0.1, colnames=FALSE) +
+		scale_fill_manual(values=colors_alphabetic) +
+		geom_tiplab2(size=1, hjust=-0.1) +
+		theme(plot.margin = margin(0, 0, 0, 0), panel.margin = margin(0, 0, 0, 0))
+
+print(circular_tree)
+```
+
+### 1.2.2 MAG details
+Overview of the taxonomy and genome characteristics of the MAGs.\
+**Completeness:** completeness of the MAG according to CheckM assessment.\
+**Contamination:** contamination or redundancy of the MAG according to CheckM assessment.\
+**Size:** size of the MAG in megabases (MB, one million nucleotide bases).
+
+```{r complet_conta, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+comp_cont <- taxonomyclean %>%
+  select(c(genome,phylum,completeness,contamination,mag_size)) %>%
+  mutate(mag_size=round(mag_size/1000000,2)) %>% #change mag_size to MBs
+  rename(comp=completeness,cont=contamination,size=mag_size) %>% 
+  remove_rownames() %>%
+  arrange(match(genome, rev(tree$tip.label))) #sort MAGs according to phylogenetic tree
+```
+```{r complet_conta_table, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+comp_cont_table <- comp_cont %>% 
+  select(-genome) %>% 
+  group_by(phylum) %>% 
+  summarise_at(.vars = names(.)[c(2,3,4)],.funs = c(mean="mean", sd="sd"))
+comp_cont_table <- comp_cont_table[,c(1,2,5,3,6,4,7)]
+knitr::kable(comp_cont_table, format = "html", full_width = F,col.names = c("Phylum", "Completeness Mean", "Completeness SD", "Contamination Mean", "Contamination SD", "Size Mean", "Size SD"), digits = 2) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r plot_mag_stats, echo=FALSE, warning=FALSE}
+ggscatter(comp_cont, x = "comp", y = "cont", color="phylum", 
+          add = "reg.line", conf.int = TRUE,  add.params = list(color = "black", fill = "lightgray"),
+          cor.coef = TRUE, cor.method = "kendall", size = "size",
+          cor.coeff.args = list(method = "kendall", label.x = 80, label.sep = "\n"), 
+          xlab = "Completeness", ylab = "Contamination", legend="right") +
+				scale_color_manual(values=colors_alphabetic) +
+  guides(col=guide_legend("Phylum"),
+         size=guide_legend("MAG size"))
+```
+
+## 1.3 Sequencing depth assessment
+When performing genome-resolved metagenomic analyses on host-associated microbial communities, the data usually contains a mixture of origins.
+  One fraction is low-quality data that is discarded in the bioinformatic preprocessing due to lack of informativeness. These data include low-quality bases, adaptors, low-complexity reads and alike, which do not contribute to the study. Another fraction belongs to the host genome against which the data are mapped. The host fraction can be very variable depending on the species and the sample type, and while it is not informative for metagenomic analyses, it can be used for genomic analyses. The rest is what we call the metagenomic fraction. Part of the metagenomic fraction is built into draft bacterial genomes or MAGs, against which metagenomic reads are mapped later on to quantify relative representation of genomes. The fraction that is not built into MAGs is what is also unmapped against the MAG catalogue. This last fraction includes DNA dietary items, viruses and other organisms, but can values_to include prokaryotic DNA of bacteria and archaea that were unable to be reconstructed.
+
+In order to have representative results, the number of reads mapped to the MAG catalogue should be similar across samples. However, multiple reasons can create large imbalances, including uneven sequencing depth, different microbiome complexity across samples, different amount of host or non-microbial reads in the dataset, etc. The following plot shows the distribution of reads across samples.
+
+
+```{r data_fraction, warning=FALSE, echo=FALSE, fig.height=5}
+# Calculate sequence fractions
+sequence_fractions <- counts_table %>%
+  rownames_to_column("Genome") %>%
+  pivot_longer(-Genome, names_to = "sample", values_to = "value") %>%
+  group_by(sample) %>%
+  summarise(mags = sum(value)) %>%
+	left_join(metadata, by = join_by(sample == sample))  %>%
+	select(sample,mags,metagenomic_bases,host_bases,bases_lost_fastp_percent) %>%
+	mutate(mags_bases = mags*146) %>%
+	mutate(lowqual_bases = ((metagenomic_bases+host_bases)/(1-bases_lost_fastp_percent))-(metagenomic_bases+host_bases)) %>%
+	mutate(unmapped_bases = metagenomic_bases - mags_bases) %>%
+	select(sample,mags_bases,unmapped_bases,host_bases,lowqual_bases)
+
+mags_bases_mean <- sequence_fractions %>%
+	mutate(mags_bases = mags_bases / 1000000000) %>%
+	select(mags_bases) %>%
+	mean()
+
+sequence_fractions_pivot <- sequence_fractions %>%
+	pivot_longer(!sample, names_to = "fraction", values_to = "value") %>%
+	mutate(value = value / 1000000000) %>%
+	mutate(fraction = factor(fraction, levels = c("lowqual_bases","host_bases","unmapped_bases","mags_bases")))
+
+sequence_fractions_meta <- merge(sequence_fractions_pivot, metadata, by="sample")
+```
+
+```{r data_fraction_barplot, echo=FALSE, warning=FALSE}
+ggplot(sequence_fractions_meta, aes(x = sample, y = value, fill=fraction)) +
+  geom_bar(position="stack", stat = "identity") +
+  scale_fill_manual(name=NULL,
+                    breaks=c("lowqual_bases","host_bases","unmapped_bases","mags_bases"),
+                    labels=c("Low quality","Host","Unmapped", "MAGs"),
+                    values=c("#CCCCCC","#178a94","#ee8080","#d03161")) +
+#  geom_hline(yintercept = mags_bases_mean, linetype = "dashed", color = "black") +
+  facet_grid(~region, scale="free", space="free") + # grouped the samples by region
+  labs(x = "Samples", y = "Amount of data (GB)") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6),
+        strip.text.x = element_text(size = 7, face = "bold"),
+        strip.background = element_rect(colour=NA, fill=NA),
+        panel.background = element_rect(fill = NA, color = "black"),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
+        legend.position="bottom",
+        legend.title=element_blank())
+
+```
+
+## 1.4 Minimum genome-coverage filtering
+Mapping of sequencing reads against the reference genome catalogue is not perfect, and in consequence, all MAGs tend to get a few reads assigned. Implementing a minimum genome coverage filter aims at minimising artificial inflation of diversity due to this artifact of genome-resolved metagenomic analysis. However, if the sequencing depth is low and uneven across samples, this filtering can also introduce more distorsion.
+
+```{r coverage, echo=FALSE, warning=FALSE}
+#Apply coverage filtering filtering
+min_coverage=0.3
+count_table_cov <- coverage_table %>%
+  mutate(across(everything(), ~ ifelse(. > min_coverage, 1, 0))) %>%
+  map2_df(., counts_table, ~ .x * .y) %>%
+  as.data.frame()
+rownames(count_table_cov) <- rownames(coverage_table)
+```
+
+## 1.5 Genome-size normalisation
+Bacterial genomes can vary between 1 and 8 MB, which make relative representation of each genome dependent on its size. To account for genome size biases, read-counts can be normalised by applying a normalisation factor that modifies the read numbers according to the size of each genome compared to the average genome size in the dataset.
+
+```{r genome_norm, echo=FALSE, warning=FALSE}
+#Transform by mean MAG-size
+mags_table1 <- column_to_rownames(mags_table, "genome")
+genome_read_sizes <- mags_table1[rownames(count_table_cov),] %>%
+    select(mag_size) %>%
+    mutate(mag_size = mag_size / 143) %>% #143 nt is the average read-length after quality filtering in EHI data
+    pull()
+count_table_cov_size <- sweep(count_table_cov, 1, genome_read_sizes, "/")
+
+count_table_cov_size_rel <- count_table_cov_size %>%
+  rownames_to_column("Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.)) #TSS normalisation
+```
+## 1.6 Count table
+Once low-coverage genome counts have been filtered out, and the read counts have been normalised into genome counts, we can visualise the relative MAG abundances per sample. Note that the count scale is log-transformed.
+
+```{r cov_size_heatmap, echo=FALSE, warning=FALSE, comments="", message=FALSE, results="hide"}
+vertical_tree <- force.ultrametric(tree,method="extend") %>%
+		ggtree(., size = 0.3)
+
+#Add phylum colors
+vertical_tree <- gheatmap(vertical_tree, heatmap, offset=0, width=0.1, colnames=FALSE) +
+	scale_fill_manual(values=colors_alphabetic)
+
+#Reset fill scale
+vertical_tree <- vertical_tree + new_scale_fill()
+
+#Add counts
+vertical_tree <- gheatmap(vertical_tree, log10(count_table_cov_size), offset=0.04, width=3.5, colnames=TRUE, colnames_angle=90, font.size=2, colnames_position="top", colnames_offset_y = 9) +
+	vexpand(.08) +
+	coord_cartesian(clip = "off") +
+	scale_fill_gradient(low = "white", high = "steelblue", na.value="white")
+```
+```{r plot_tree, echo=FALSE, warning=FALSE, comments="", message=FALSE}
+#Plot tree
+vertical_tree +
+	theme(legend.position='bottom',legend.key.size = unit(0.3, 'cm')) + labs(fill='Counts')
+```
+
+# 2. Taxonomic composition
+Note that TSS normalisation simply divides each count value for the total count for the sample, thus transforming the data to 0-1 scale.
+
+```{r taxo_comp, echo=FALSE, warning=FALSE}
+count_table_cov_size_pivot <- count_table_cov_size %>%
+  rownames_to_column("Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.)) %>% #apply TSS nornalisation
+  pivot_longer(-Genome, names_to = "sample", values_to = "count") %>% #reduce to minimum number of columns
+  left_join(., mags_table, by = join_by(Genome == genome)) %>% #append taxonomy
+  mutate(phylum = fct_relevel(phylum, rev(ehi_phylum_colors$phylum))) #sort phyla by taxonomy
+
+count_table_cov_size_pivot <- count_table_cov_size_pivot %>%
+  mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ str_replace(., "[dpcofgs]__", "")) #delete __ from the taxonomy
+
+count_table_cov_size_pivot_meta <- metadata[c(1,4)] %>%
+    merge(., count_table_cov_size_pivot, by="sample") #merge the metadata, 4 indicates region, 1 indicates sample
+
+# Retrieve taxonomy colors to use standardised EHI colors
+
+phylum_colors <- ehi_phylum_colors1 %>%
+  filter(phylum %in% unique(count_table_cov_size_pivot$phylum)) %>%
+  select(colors) %>%
+  pull() %>%
+  rev()
+phylum_colors <- c(phylum_colors,"#cccccc") #REMOVE! ONLY FOR ARCHAEANS
+# ELSA NOTE: am i meant to remove this line too? ^
+```
+
+```{r plot_another, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+# Plot stacked barplot
+ggplot(count_table_cov_size_pivot_meta, aes(x=sample,y=count,fill=phylum, group=phylum))+ #grouping enables keeping the same sorting of taxonomic units
+    geom_bar(stat="identity")+ 
+    scale_fill_manual(values=phylum_colors) +
+    facet_grid(~region, scale="free", space="free") + # grouped the samples by region
+    labs(x = "Samples", y = "Relative abundance") +
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6),
+        strip.text.x = element_text(size = 6, face = "bold"),
+        strip.background = element_rect(colour=NA, fill=NA),
+        panel.background = element_rect(fill = NA, color = "black"),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black"),
+        legend.position="bottom",
+        legend.title=element_blank(),
+        legend.text = element_text(size=6),
+        legend.key.size = unit(0.3, 'cm'))
+```
+
+
+```{r phyloseq, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+
+## Making phyloseq object
+# Coerce it into a phylseq
+MAGotu <- otu_table(count_table_cov_size, taxa_are_rows = T)
+## Coerce taxonomy into a phyloseq OTU table
+# Remove first column
+taxonomyclean1 <- taxonomyclean[,-1]
+# Get the necessary columns, convert to matrix
+taxmatrix <- as.matrix(taxonomyclean1[1:8])
+# Set MAG name as row names of the dataframe
+rownames(taxmatrix) <- taxonomyclean$genome
+taxtable <- tax_table(taxmatrix) 
+
+# Set the first column as row names
+metadata <- na.omit(metadata)
+rownames(metadata) <- NULL
+metadata.pre <- column_to_rownames(metadata, "sample")
+
+sample_tab <- sample_data(metadata.pre)
+
+## Coerce tree into a phylseq
+tree <- phytools::force.ultrametric(tree, method = "extend")
+treephylo = phyloseq::phy_tree(tree)
+
+## Merge into a phyloseq object
+physeq <- phyloseq(MAGotu, treephylo, sample_tab,taxtable)
+
+# Plot the phylogenetic tree
+# tree_plot <- ggtree(treephylo)
+
+# Print the tree plot
+# print(tree_plot)
+```
+
+### Phylum percentages
+
+```{r phylum1, comment="", echo=FALSE}
+
+physeq_phylum <- microbiome::aggregate_taxa(physeq, 'phylum')
+physeq_phylum_rel <-  microbiome::transform(physeq_phylum, "compositional")
+table.rel1 <- physeq_phylum_rel@otu_table*100
+means.table.rel1 <- as.data.frame(rowMeans(table.rel1))
+sd.table.rel1 <- as.data.frame(rowSds(table.rel1, useNames = TRUE))
+summary.phylum1 <- merge(means.table.rel1, sd.table.rel1, by="row.names")
+colnames(summary.phylum1) <- c("Phylum","Mean", "SD")
+print(summary.phylum1[order(-summary.phylum1$Mean),], row.names = FALSE)
+
+```
+
+# 3. Alpha diversity calculations - Community Level
+
+Diversity estimations for each sample.\
+**Richness:** Number of MAGs per sample (after applying coverage filter).\
+**Neutral diversity:** Hill number of q=1 (Shannon diversity), a diversity metric that accounts for richness and eveness (relative abundances) of the MAGs.\
+**Phylogenetic diversity:** Phylogenetic Hill number of q=1, a diversity metric that accounts for richness and eveness (relative abundances), as well as phylogenetic relationships among MAGs.\
+**Functional diversity:** Functional Hill number of q=1, a diversity metric that accounts for richness and eveness (relative abundances), as well as functional dissimilarities among MAGs.\
+
+```{r nofilter_samples, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+count_filtered <- column_to_rownames(count_table_cov_size_rel, "Genome")
+
+metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified.csv")
+metadata_unified_clean <- metadata_unified %>%
+  filter(sample != "")  # Filter rows where "sample" is not an empty string
+selected_columns <- metadata_unified_clean %>%
+  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
+
+# This metadata object includes the selected additional columns, above
+all_metadata <- left_join(metadata, selected_columns, by = "sample")
+```
+
+### Neutral
+```{r alpha_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+# Calculate neutral alpha diversities using hilldiv2
+alpha_div_neutral <- hilldiv(count_filtered, q=1)
+```
+
+#### Average neutral alpha diversities (q1)
+```{r div_mean, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div_N <- t(alpha_div_neutral) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample") %>%
+  merge(., all_metadata, by="sample")
+
+table_mean_alpha <- alpha_div_N %>% 
+  group_by(region) %>% 
+  summarise_at(.vars = names(.)[2],.funs = c(mean="mean", sd="sd"))
+knitr::kable(table_mean_alpha, format = "html", full_width = F,col.names = c('Groups', 'Mean', 'SD'), digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r alpha_table, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div <- t(alpha_div_neutral) %>%
+  as.data.frame() %>%
+  rename( "Diversity" = "q1")  %>%
+  rownames_to_column("sample") %>%
+  left_join(sequence_fractions, by = join_by(sample == sample)) %>% #add sequencing depth information
+  mutate(depth=round(mags_bases/1000000,3))
+```
+
+#### Correlations
+
+```{r correlation2_plot2, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+ggscatter(alpha_div, x = "mags_bases", y = "unmapped_bases", color="depth", 
+          add = "reg.line", conf.int = TRUE,  add.params = list(color = "gray", fill = "lightgray"),
+          cor.coef = TRUE, cor.method = "kendall", size = "Diversity",
+          cor.coeff.args = list(method = "kendall", label.x = 3e+9, label.sep = "\n"), 
+          xlab = "MAG bases", ylab = "Unmapped reads", legend="right") +
+  guides(col=guide_legend("Depth"),
+         size=guide_legend("Alpha diversity")) +
+  font("legend.title", face = "bold")
+```
+
+#### Alpha diversity plots - Community Level
+
+```{r alpha_div_neutral_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+# Create the plot for alpha_div_N
+alpha_div_N %>%
+  ggplot(aes(x = region, y = q1, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Alpha diversity")
+
+```
+
+```{r alpha_div_N STATS}
+
+# Shapiro-Wilk test for normality
+alpha_div_N %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(shapiro_p = shapiro.test(q1)$p.value) -> shapiro_results
+
+# Results: p = 0.01942486	(Daneborg), p = 0.61532713	Ittoqqortoormiit
+# THEREFORE Daneborg data is not normally distributed, though Ittoq is. THUS a non-parametric test is applied
+
+# Non-normally distributed data test for equal variance
+car::leveneTest(q1 ~ region, alpha_div_N)
+
+# Results: p = 0.0008284
+# THEREFORE data does not exhibit equal variance. 
+
+# Wilcoxon signed rank test for statistical significance
+alpha_div_N %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(wilcox_p = wilcox.test(q1 ~ region, data = .)$p.value) -> wilcox_results
+
+print(wilcox_results)
+# Results: p = 0.4869263	
+# THEREFORE Neutral alpha diversity does NOT have statistically significant differences between Ittoq and Daneborg
+```
+
+### Phylogenetic level
+```{r alpha_div_phylo, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div_phylo <- hilldiv(data=count_filtered,tree=tree, q=1)
+```
+
+#### Average phylogenetic alpha diversities
+
+```{r div_P_mean, comment="", echo=TRUE}
+
+alpha_div_P <-  t(alpha_div_phylo) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample") %>%
+  merge(., all_metadata, by="sample")
+
+table_mean_alpha_phylo <- alpha_div_P %>%
+  group_by(region) %>% 
+  summarise_at(.vars = names(.)[2],.funs = c(mean="mean", sd="sd"))
+
+knitr::kable(table_mean_alpha_phylo, format = "html", full_width = F,col.names = c('Groups', 'Mean', 'SD'), digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+#### Alpha diversity plots - Phylogenetic level
+
+```{r alpha_div_phylo_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+
+alpha_div_P %>%
+  ggplot(aes(x = region, y = q1, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Alpha diversity")
+```
+```{r alpha_div_P STATS}
+# Shapiro-Wilk test for normality
+alpha_div_P %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(shapiro_p = shapiro.test(q1)$p.value) -> shapiro_results_P
+
+# Results: p = 0.4556244 (Daneborg), p = 0.4019311 Ittoqqortoormiit
+# THEREFORE both regions exhibit NORMALLY distributed alpha_div_P values, and a PARAMETRIC test can be applied
+
+# Using Bartlett to test for variance
+bartlett.test(q1 ~ region, alpha_div_P)
+# Results: p-value = 0.0004803
+# THEREFORE therefore equal variance cannot be assumed
+
+# T-test not assuming equal variance
+alpha_div_P %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(t_test_p = t.test(q1 ~ region, data = ., var.equal = FALSE)$p.value) -> t_test_results_P
+
+print(t_test_results_P)
+# Results: p = 0.3423079	
+# THEREFORE Phylogenetic alpha diversity is NOT have statistically significant differences between Ittoq and Daneborg
+```
+
+### Beta diversity - Community level
+```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+
+beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
+
+beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
+```
+
+Using EHI workflow
+```{r}
+sample_table_adonis <- all_metadata %>%
+    filter(sample %in% labels(beta_q1n)) %>%
+    arrange(sample) %>%
+    # mutate(location=paste0(round(longitude,2),"_",round(latitude,2))) %>%
+    # select(sample,region) %>%
+    select_if(~ length(unique(.)) > 1) %>% #remove columns with all-identical values
+    column_to_rownames(var = "sample") %>%
+    as.data.frame()
+```
+```{r}
+    adonis2(formula=beta_q1n ~ region, data=sample_table_adonis[labels(beta_q1n),], permutations=999) %>%
+            as.matrix() %>%
+            kable()
+```
+
+#### NMDS:
+```{r}
+beta_q1n_nmds <- beta_q1n %>%
+                metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+                vegan::scores() %>%
+                as_tibble(., rownames = "sample") %>%
+                left_join(all_metadata, by = join_by(sample == sample))
+```
+```{r}
+group_n <- length(unique(beta_q1n_nmds$region))
+
+beta_q1n_nmds %>%
+            group_by(region) %>%
+            mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+            mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+            ungroup() %>%
+            ggplot(., aes(x=NMDS1,y=NMDS2, color=region)) +
+                scale_color_manual(values=beta_colors[c(1:group_n)]) +
+                geom_point(size=2) +
+                geom_segment(aes(x=x_cen, y=y_cen, xend=NMDS1, yend=NMDS2), alpha=0.2) +
+                theme_classic() +
+                theme(legend.position="right", legend.box="vertical") +
+                guides(color=guide_legend(title="Region"))
+```
+
+Adonis using old ordering system
+```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+# order data
+m2 <- as.matrix(beta_q1n) 
+sample_table_adonis_row <- rownames_to_column(sample_table_adonis, "Samples")
+metadata_ord_2<- sample_table_adonis[order(match(sample_table_adonis_row$Sample,rownames(m2))),]
+
+#Permutation test
+ps.disper.neutral <- betadisper(beta_q1n, metadata_ord_2$region) 
+permutest(ps.disper.neutral, pairwise = TRUE) 
+# F Statistic: 26.96
+# p-value: 0.001
+# THEREFORE the data does NOT have equal multivariate dispersions 
+ 
+# Adonis
+adonis2(beta_q1n ~ region, data =metadata_ord_2, permutations = 999)
+# A p-value of <0.05 is significant. The R2 value will tell you what amount of variation is based off the clustering variable. in this case the region. 
+# p-value: 0.001
+# R2: 0.28818
+# THEREFORE there IS a significant difference between the beta diversity in Ittoq and Daneborg, and the location accounts for 22.6% of the difference 
+```
+
+# Functional diversity analysis analysis
+```{r filter_annotations, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### read table ####
+filtered_df <- read.table("all_annotations.csv", sep="")
+```
+
+## Data Prep from EHI workflow
+# FIX THIS SECTION ELSA
+```{r}
+#Get list of present MAGs
+present_MAGs <- count_table_cov_size %>%
+        filter(rowSums(.[, -1]) != 0) %>%
+        rownames()
+
+#Remove samples with all zeros (no data after filtering)
+count_table_cov_size <- count_table_cov_size %>%
+  select_if(~!all(. == 0))
+
+#Align KEGG annotations with present MAGs and remove all-zero and all-one traits
+present_MAGs <- present_MAGs[present_MAGs %in% rownames(filtered_df)]
+filtered_df_filt <- filtered_df[present_MAGs,] %>%
+            select_if(~!all(. == 0)) %>%  #remove all-zero modules
+            select_if(~!all(. == 1)) #remove all-one modules
+
+#Filter count table to only contain present MAGs after KEGG filtering
+count_table_cov_size_filt <- count_table_cov_size[present_MAGs,]
+```
+
+## Data prep from old code:
+```{r gifts, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
+count_filtered_rel <- count_filtered %>%
+  rownames_to_column(., "Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.))  %>%
+  column_to_rownames(., "Genome")
+
+#Run distillation
+GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
+#GIFTs <- GIFTs[-c(9,10),]
+
+# counts filtered correctly to the GIFTs distillation. Use this for counts from here on out. 
+count_filtered_use_this <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(GIFTs),]
+
+#Aggregate bundle-level GIFTs into the compound level 
+# this is the level we will use for analysis
+GIFTs_elements <- to.elements(GIFTs,GIFT_db)
+
+#Aggregate element-level GIFTs into the function level
+GIFTs_functions <- to.functions(GIFTs_elements,GIFT_db)
+
+#Aggregate function-level GIFTs into overall Biosynthesis, Degradation and Structural GIFTs
+GIFTs_domains <- to.domains(GIFTs_functions,GIFT_db)
+
+#Get community-weighed average GIFTs per sample
+GIFTs_elements_community <- to.community(GIFTs_elements,count_filtered_use_this,GIFT_db)
+GIFTs_functions_community <- to.community(GIFTs_functions,count_filtered_use_this,GIFT_db)
+GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_use_this,GIFT_db)
+
+#Convert traits into distance matrix
+dist <- traits2dist(GIFTs_elements, method="gower")
+```
+
+#### Average functional diversities
+```{r alpha_div_funct, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+alpha_div_func <- hilldiv(data=count_filtered_use_this,q=1,dist=dist)
+
+#Q (Rao's Q); D_q (functional hill number, the effective number of equally abundant and functionally equally distinct species); MD_q (mean functional diversity per species, the effective sum of pairwise distances between a fixed species and all other species); FD_q (total functional diversity, the effective total functional distance between species of the assemblage).
+```
+
+```{r div_F_mean, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+alpha_div_F <-  t(alpha_div_func) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample") %>%
+  merge(., all_metadata, by="sample")
+
+table_mean_alpha_func <- alpha_div_F %>%
+  group_by(region) %>% 
+  summarise_at(.vars = names(.)[2],.funs = c(mean="mean", sd="sd"))
+
+knitr::kable(table_mean_alpha_func, format = "html", full_width = F,col.names = c('Groups', 'Mean', 'SD'), digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+
+#Daneborg Mean 1.423 SD 0.034
+#Ittoq Mean 1.453 SD 0.058
+
+```
+
+#### Functional diversity plots - Alpha diversity
+```{r alpha_div_func_plot1, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+alpha_div_F %>%
+  ggplot(aes(x = region, y = q1, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Functional diversity")
+```
+
+```{r}
+# Shapiro-Wilk test for normality
+alpha_div_F %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(shapiro_p = shapiro.test(q1)$p.value) -> shapiro_results_F
+# Results: p =  7.498381e-09	(Daneborg), p = 2.627117e-03	 Ittoqqortoormiit
+# THEREFORE the data is NOT NORMALLY distributed
+
+# Using leveneTest()
+car:: leveneTest(q1 ~ region, alpha_div_F)
+# Results: p-value = 0.03988 F-value = 4.4269
+# THEREFORE therefore equal variance cannot be assumed
+
+# Wilcoxon signed rank test for statistical significance
+alpha_div_F %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(wilcox_p = wilcox.test(q1 ~ region, data = .)$p.value) -> wilcox_results_F
+
+print(wilcox_results_F)
+# Results: p = 0.0001328166	
+# THEREFORE the difference in alpha diversity between Ittoq and Daneborg IS considered statistically significant. 
+```
+
+## Functional beta diversity calculations
+
+```{r beta_div_func, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+beta_div_func <- hillpair(data=count_filtered_use_this,q=1,dist=dist)
+beta_div_func_S <- beta_div_func$S
+```
+
+Beta div analysis using EHI Workflow:
+```{r}
+sample_table_adonis_func <- all_metadata %>%
+    filter(sample %in% labels(beta_div_func_S)) %>%
+    arrange(sample) %>%
+    # mutate(location=paste0(round(longitude,2),"_",round(latitude,2))) %>%
+    # select(sample,region) %>%
+    select_if(~ length(unique(.)) > 1) %>% #remove columns with all-identical values
+    column_to_rownames(var = "sample") %>%
+    as.data.frame()
+```
+```{r}
+adonis2(beta_div_func_S ~ region, data=sample_table_adonis_func[labels(beta_div_func_S),], permutations=999) %>%
+            as.matrix() %>%
+            kable()
+```
+```{r}
+beta_div_func_S_nmds <- beta_div_func_S %>%
+                metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+                vegan::scores() %>%
+                as_tibble(., rownames = "sample") %>%
+                left_join(all_metadata, by = join_by(sample == sample))
+```
+```{r}
+group_func <- length(unique(beta_div_func_S_nmds$region))
+
+beta_div_func_S_nmds %>%
+            group_by(region) %>%
+            mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+            mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+            ungroup() %>%
+            ggplot(., aes(x=NMDS1,y=NMDS2, color=region)) +
+                scale_color_manual(values=beta_colors[c(1:group_n)]) +
+                geom_point(size=2) +
+                geom_segment(aes(x=x_cen, y=y_cen, xend=NMDS1, yend=NMDS2), alpha=0.2) +
+                theme_classic() +
+                theme(legend.position="right", legend.box="vertical") +
+                guides(color=guide_legend(title="Region"))
+```
+
+Adonis using old code for ordering 
+```{r Adonis_Region, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+# order data
+m3 <- as.matrix(beta_div_func_S) 
+sample_table_adonis_row_func <- rownames_to_column(sample_table_adonis_func, "Samples")
+metadata_ord_3<- sample_table_adonis_func[order(match(sample_table_adonis_row_func$Sample,rownames(m2))),]
+
+#Permutation test
+ps.disper.func <- betadisper(beta_div_func_S, metadata_ord_3$region) 
+permutest(ps.disper.func, pairwise = TRUE) 
+# F Statistic: 7.9074
+# p-value: 0.005
+# THEREFORE the data does NOT have equal multivariate dispersions 
+ 
+# Adonis
+adonis2(beta_div_func_S ~ region, data =metadata_ord_3, permutations = 999)
+# A p-value of <0.05 is significant.
+# p-value: 0.954
+# THEREFORE there IS NOT a significant difference between the functional beta diversity in Ittoq and Daneborg
+
+## results match those of EHI workflow - yay
+```
+
+
+## Functional capacity of the MAGs
+```{r GIFTs_elements, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+GIFTs_elements %>%
+  reshape2::melt() %>%
+  rename(Genome = Var1, Code_element = Var2, GIFT = value) %>%
+  inner_join(GIFT_db,by="Code_element") %>%
+  ggplot(., aes(x=Code_element, y=Genome, fill=GIFT, group=Code_function))+
+  geom_tile()+
+  scale_y_discrete(guide = guide_axis(check.overlap = TRUE))+
+  scale_x_discrete(guide = guide_axis(check.overlap = TRUE))+
+  scale_fill_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  facet_grid(. ~ Code_function, scales = "free", space = "free")+
+  theme_grey(base_size=8)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),strip.text.x = element_text(angle = 90))
+```
+
+```{r hierachical_clustering, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.dim = c(20, 20)}
+col <- colorRampPalette(brewer.pal(7, "YlGnBu"))(256)
+heatmap(GIFTs_functions_community, scale = "none", col=col, Colv=NA,
+        trace = "none", density.info = "none", ylab="Samples", 
+        xlab="Gifts", cexRow=0.7, margins = c(8,8), lhei=c(2,4), lwid=c(2,5), 
+        keysize=0.75, key.par = list(cex=0.9),srtCol = 45)
+```
+
+
+```{r tsne_prep, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+taxonomy <- taxonomyclean1
+```
+
+```{r tsne, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+set.seed(100)
+
+GIFTs_elements_tSNE <- Rtsne(X=GIFTs_elements, dims = 2, perplexity = floor((nrow(GIFTs_elements) - 1) / 3), check_duplicates = FALSE)
+
+GIFTs_domains <- as.data.frame(GIFTs_domains)
+GIFTs_domains$genome <- rownames(GIFTs_domains)
+
+GIFTs_elements_tSNE <- GIFTs_elements_tSNE$Y %>%
+  as.data.frame() %>%
+  mutate(genome=rownames(GIFTs_elements)) %>%
+  inner_join(GIFTs_domains, by="genome") %>%
+  inner_join(taxonomyclean, by="genome") %>%
+  mutate_at(vars(phylum, class, order, family, genus), factor) %>%
+  #mutate(cyl = factor(Phylum, levels = phylum_colors$Phylum)) %>%
+  rename(tSNE1="V1", tSNE2="V2")
+
+count_t <- count_filtered_use_this %>%
+  t() %>%
+  as.data.frame()
+
+#colnames(count_t) <- count_t[1,]
+#count_t <- count_t[-1, ]
+```
+
+Create Merge table and GIFT elements for Ittoq dogs
+```{r tsne_Ittoq, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_Ittoq <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., all_metadata[ , c("sample", "region")], by="sample", all.x = TRUE) %>%
+  filter(region=="Ittoqqortoormii") %>%
+  column_to_rownames(., "sample")
+
+mergetable_Ittoq <- mergetable_Ittoq [1: ncol(mergetable_Ittoq)-1 ]
+
+GIFTs_elements_tSNE_rel_means_I <- colMeans(mergetable_Ittoq) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_Ittoq <- GIFTs_elements_tSNE_rel_means_I[GIFTs_elements_tSNE_rel_means_I$Relative_value != 0, ]
+
+```
+
+Create Merge table and GIFT elements for Daneborg dogs
+```{r tsne_Daneborg, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+mergetable_Daneborg <- count_t %>%
+  mutate_if(is.character, as.numeric) %>%
+  rownames_to_column("sample") %>%
+  merge(., all_metadata[ , c("sample", "region")], by="sample", all.x = TRUE) %>%
+  filter(region=="Daneborg") %>%
+  column_to_rownames(., "sample")
+
+mergetable_Daneborg <- mergetable_Daneborg [1: ncol(mergetable_Daneborg)-1 ]
+
+GIFTs_elements_tSNE_rel_means_D <- colMeans(mergetable_Daneborg) %>%
+  as.data.frame() %>%
+  rename( "Relative_value" = ".")  %>%
+  rownames_to_column(., "genome") %>%
+  merge(., GIFTs_elements_tSNE, by= "genome")
+
+GIFTs_elements_tSNE_rel_means_Daneborg <- GIFTs_elements_tSNE_rel_means_D[GIFTs_elements_tSNE_rel_means_D$Relative_value != 0, ]
+```
+
+### Region Daneborg: tSNE Phylum
+
+```{r tsneIttoq_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Ittoq %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+#  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Region Daneborg: tSNE Phylum
+
+```{r tsneDaneborg_plot_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Daneborg %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = phylum))+
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  #scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Region Ittoq: tSNE gifts
+
+```{r tsneIttoq_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Ittoq %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ #coloured by GIFT
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+### Region Daneborg: tSNE gifts
+
+```{r tsneDaneborg_plot_gift, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+GIFTs_elements_tSNE_rel_means_Daneborg %>%
+  ggplot(aes(x = tSNE1, y = tSNE2, color = Overall))+ 
+  geom_point(aes(size = Relative_value), shape=16, alpha=0.8) +
+  scale_color_gradientn(limits = c(0,1), colours=brewer.pal(7, "YlGnBu"))+
+  theme_minimal() +
+  theme()
+```
+
+ Relative abundance analysis
+## CLR transformation and wilcoxon testing
+### Phylum level
+CLR transforming phyloseq object:
+```{r}
+# Perform CLR transformation
+physeq_clr <- microbiome::transform(physeq, 'clr') # clr transformation is not working for further analysis
+
+# create 2 groups
+Daneborg_physeq <- subset_samples(physeq_clr, region == "Daneborg")
+Ittoq_physeq <- subset_samples(physeq_clr, region == "Ittoqqortoormii")
+
+# agregate results at the phylum level
+physeq_clr_phylum <- microbiome::aggregate_taxa(physeq_clr, 'phylum')
+```
+
+Ittoq
+```{r}
+physeq_phylum_ittoq <- subset_samples(physeq_clr_phylum, region == "Ittoqqortoormii")
+physeq_phylum_ittoq <- prune_taxa(taxa_sums(physeq_phylum_ittoq)>0, physeq_phylum_ittoq)
+table.rel1_ittoq <- physeq_phylum_ittoq@otu_table
+means.table.rel1_ittoq <- as.data.frame(rowMeans(table.rel1_ittoq))
+sd.table.rel1_ittoq <- as.data.frame(matrixStats::rowSds(table.rel1_ittoq, useNames = TRUE))
+summary.phylum1_ittoq <- merge(means.table.rel1_ittoq, sd.table.rel1_ittoq, by="row.names")
+colnames(summary.phylum1_ittoq) <- c("Phylum","Mean", "SD")
+print(summary.phylum1_ittoq[order(-summary.phylum1_ittoq$Mean),], row.names = FALSE)
+```
+
+Daneborg
+```{r}
+physeq_phylum_daneborg <- subset_samples(physeq_clr_phylum, region == "Daneborg")
+physeq_phylum_daneborg <- prune_taxa(taxa_sums(physeq_phylum_daneborg)>0, physeq_phylum_daneborg)
+table.rel1_daneborg <- physeq_phylum_daneborg@otu_table
+means.table.rel1_daneborg <- as.data.frame(rowMeans(table.rel1_daneborg))
+sd.table.rel1_daneborg <- as.data.frame(matrixStats::rowSds(table.rel1_daneborg, useNames = TRUE))
+summary.phylum1_daneborg <- merge(means.table.rel1_daneborg, sd.table.rel1_daneborg, by="row.names")
+colnames(summary.phylum1_daneborg) <- c("Phylum","Mean", "SD")
+print(summary.phylum1_daneborg[order(-summary.phylum1_daneborg$Mean),], row.names = FALSE)
+```
+
+```{r mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_phylum.t <- as.data.frame(t(as.matrix(physeq_clr_phylum@otu_table)))
+table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
+sample_type <- all_metadata[,c(1,4)]
+table.W.meta <- merge(table.W,sample_type,by="sample")
+table.W.meta <- table.W.meta[,-c(1)]
+means_phylum_by_region_all <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_phylum_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
+means_all <- as.data.frame(means_phylum_by_region_all)
+means <- as.data.frame(means_phylum_by_region)
+
+means <- means[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
+
+knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r wilcox_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_phylum.t <- as.data.frame(t(as.matrix(physeq_clr_phylum@otu_table)))
+table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
+sample_type <- metadata[,c(1,4)]
+phylum_table <- merge(table.W,sample_type,by="sample")
+phylum_table <- phylum_table[,-c(1)]
+phylum_table.no <- phylum_table[,-ncol(phylum_table)]
+all.taxa <- colnames(phylum_table.no)
+Wilcox_result <- c()
+for (y in all.taxa){
+  res.wilcox <- wilcox.test(phylum_table[,y] ~ region, data = phylum_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result <- rbind(Wilcox_result,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+}
+rownames(Wilcox_result) <- all.taxa
+Wilcox_result <- as.data.frame(Wilcox_result)
+
+Wilcox_result$p_adjusted <- p.adjust(Wilcox_result$Pvalue, method = "fdr")
+
+Wilcox_result_sign <- subset(Wilcox_result, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Phylum")
+knitr::kable(Wilcox_result_sign, format = "html", full_width = F,col.names = c("Phylum", "W", "p-value","p-value adjusted"), digits = 4) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r selec_mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+table.W_filtered <- physeq_clr_phylum.t[colnames(physeq_clr_phylum.t) %in% Wilcox_result_sign$Phylum]
+sample_type <- metadata[,c(1,4)]
+table.W_filtered_meta <- table.W_filtered %>%
+  rownames_to_column(., "sample") %>%
+  merge(.,sample_type,by="sample")
+table.W_filtered_meta <- table.W_filtered_meta[,-c(1)]
+means_phylum_by_region <- table.W_filtered_meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:3],.funs = c(mean="mean", sd="sd"))
+means <- as.data.frame(means_phylum_by_region)
+means <- means[,c(1,2,5,3,6,4,7)]
+knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+Plotting:
+```{r}
+# Bacillota_A
+p1<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Bacillota_A, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0003") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Bacillota_A")
+
+# Bacillota_C
+p2<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Bacillota_C, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0000") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Bacillota_C")
+
+# Campylobacterota
+p3<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Campylobacterota, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  # geom_text(label = "p-adj= 0.0464") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Campylobacterota")
+```
+
+### Genus level
+CLR transforming phyloseq object:
+```{r}
+# agregate results at the genus level
+physeq_clr_genus <- microbiome::aggregate_taxa(physeq_clr, 'genus')
+```
+
+Ittoq
+```{r}
+physeq_genus_ittoq <- subset_samples(physeq_clr_genus, region == "Ittoqqortoormii")
+physeq_genus_ittoq <- prune_taxa(taxa_sums(physeq_genus_ittoq)>0, physeq_genus_ittoq)
+table.rel1_ittoq <- physeq_genus_ittoq@otu_table
+means.table.rel1_ittoq <- as.data.frame(rowMeans(table.rel1_ittoq))
+sd.table.rel1_ittoq <- as.data.frame(matrixStats::rowSds(table.rel1_ittoq, useNames = TRUE))
+summary.genus1_ittoq <- merge(means.table.rel1_ittoq, sd.table.rel1_ittoq, by="row.names")
+colnames(summary.genus1_ittoq) <- c("genus","Mean", "SD")
+print(summary.genus1_ittoq[order(-summary.genus1_ittoq$Mean),], row.names = FALSE)
+```
+
+Daneborg
+```{r}
+physeq_genus_daneborg <- subset_samples(physeq_clr_genus, region == "Daneborg")
+physeq_genus_daneborg <- prune_taxa(taxa_sums(physeq_genus_daneborg)>0, physeq_genus_daneborg)
+table.rel1_daneborg <- physeq_genus_daneborg@otu_table
+means.table.rel1_daneborg <- as.data.frame(rowMeans(table.rel1_daneborg))
+sd.table.rel1_daneborg <- as.data.frame(matrixStats::rowSds(table.rel1_daneborg, useNames = TRUE))
+summary.genus1_daneborg <- merge(means.table.rel1_daneborg, sd.table.rel1_daneborg, by="row.names")
+colnames(summary.genus1_daneborg) <- c("genus","Mean", "SD")
+print(summary.genus1_daneborg[order(-summary.genus1_daneborg$Mean),], row.names = FALSE)
+```
+
+```{r mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_genus.t <- as.data.frame(t(as.matrix(physeq_clr_genus@otu_table)))
+table.W_genus <- tibble::rownames_to_column(physeq_clr_genus.t, "sample")
+sample_type <- all_metadata[,c(1,4)]
+table.W.meta_genus <- merge(table.W_genus,sample_type,by="sample")
+table.W.meta_genus <- table.W.meta_genus[,-c(1)]
+means_genus_by_region_all <- table.W.meta_genus %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_genus_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
+means_all_genus <- as.data.frame(means_genus_by_region_all)
+means <- as.data.frame(means_genus_by_region)
+
+means_genus <- means[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
+
+knitr::kable(means_genus, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r wilcox_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_genus.t <- as.data.frame(t(as.matrix(physeq_clr_genus@otu_table)))
+table.W <- tibble::rownames_to_column(physeq_clr_genus.t, "sample")
+sample_type_genus <- metadata[,c(1,4)]
+genus_table <- merge(table.W,sample_type_genus,by="sample")
+genus_table <- genus_table[,-c(1)]
+genus_table.no <- genus_table[,-ncol(genus_table)]
+all.taxa_genus <- colnames(genus_table.no)
+Wilcox_result_genus <- c()
+for (y in all.taxa_genus){
+  res.wilcox <- wilcox.test(genus_table[,y] ~ region, data = genus_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result_genus <- rbind(Wilcox_result_genus,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+}
+rownames(Wilcox_result_genus) <- all.taxa_genus
+Wilcox_result_genus <- as.data.frame(Wilcox_result_genus)
+
+Wilcox_result_genus$p_adjusted <- p.adjust(Wilcox_result_genus$Pvalue, method = "fdr")
+
+Wilcox_result_sign_genus <- subset(Wilcox_result_genus, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Genus")
+knitr::kable(Wilcox_result_sign_genus, format = "html", full_width = F,col.names = c("genus", "W", "p-value","p-value adjusted"), digits = 4) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r selec_mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+table.W_filtered <- physeq_clr_genus.t[colnames(physeq_clr_genus.t) %in% Wilcox_result_sign_genus$Genus]
+sample_type <- metadata[,c(1,4)]
+table.W_filtered_meta <- table.W_filtered %>%
+  rownames_to_column(., "sample") %>%
+  merge(.,sample_type,by="sample")
+table.W_filtered_meta <- table.W_filtered_meta[,-c(1)]
+means_genus_by_region <- table.W_filtered_meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:3],.funs = c(mean="mean", sd="sd"))
+means <- as.data.frame(means_genus_by_region)
+means <- means[,c(1,2,5,3,6,4,7)]
+knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+Box plots: 
+```{r}
+# Slackia_A
+g1<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Slackia_A, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0016") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Slackia_A")
+
+# Blautia_A
+g2<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Blautia_A, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0006") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Blautia_A")
+
+# Oliverpabstia
+g3<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Oliverpabstia, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0374") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Oliverpabstia")
+
+# Megamonas
+g4<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Megamonas, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0000") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Megamonas")
+
+# Paraprevotella
+g5<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Paraprevotella, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0236") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Paraprevotella")
+```
+
+
+## DESeq2
+### Phylum level
+```{r}
+library(DESeq2)
+
+# first conglomerate at phylum level
+physeq.phylum <- tax_glom(physeq, 'phylum')
+
+# convert phyloseq object to DESeq object
+region_deseq_phylum <- phyloseq_to_deseq2(physeq.phylum, ~ region) 
+# DESeq runs with its own transformation, so the raw data (instead of the clr transformed data) is appropriate here. 
+
+# run standard DESeq analysis
+region_deseq_phylum <- DESeq(region_deseq_phylum)
+results_table <- results(region_deseq_phylum)
+```
+Basic plotting of Data: 
+```{r}
+plotMA(region_deseq_phylum)
+plotDispEsts(region_deseq_phylum, main = "Dispersion plot Greenland dogs")
+```
+Blue dots above x-axis indicate genes that are over-expressed (n=127) where blue dots below the x-axis are genes that are under-expressed (n= 76). X-axis is the mean of normalized counts, and the y-axis is the log fold change.
+
+```{r}
+deseq_res_ittoq_vs_daneborg <- results(region_deseq_phylum, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
+
+summary(deseq_res_ittoq_vs_daneborg) 
+# out of 12 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 0, 0%
+# LFC < 0 (down)     : 3, 25%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+# limit to only show results significant at p- adjusted value of 0.05
+
+sigtab_res_deseq_res_ittoq_vs_daneborg <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.05), ]
+
+summary(sigtab_res_deseq_res_ittoq_vs_daneborg) 
+# out of 6 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 0, 0%
+# LFC < 0 (down)     : 3, 50%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+```
+So from this information, we know that at the there are 3 phylums that are significantly differently abundant between Ittoq and Daneborg
+
+Add in taxonomic information and sort by baseMean
+```{r}
+sigtab_deseq <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.005), ]
+
+sigtab_deseq_region_phylum_with_tax <- cbind(as(sigtab_deseq, "data.frame"), as(tax_table(taxtable)[row.names(sigtab_deseq), ], "matrix"))
+sigtab_deseq_region_phylum_with_tax[order(sigtab_deseq_region_phylum_with_tax$baseMean, decreasing=T), ]
+
+deseq2_ins_fis <- as.data.frame(sigtab_deseq_region_phylum_with_tax)
+
+x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$phylum, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_phylum_with_tax$phylum = factor(as.character(sigtab_deseq_region_phylum_with_tax$phylum), levels=names(x))
+x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$genus, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_phylum_with_tax$genus = factor(as.character(sigtab_deseq_region_phylum_with_tax$genus), levels=names(x))
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table1 <- as.data.frame(unique(sigtab_deseq_region_phylum_with_tax$phylum))
+colnames(tax_table1)[1] <- "phylum"
+tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+
+sigtab_deseq_with_tax1 <- sigtab_deseq_region_phylum_with_tax %>%	dplyr::arrange(phylum)
+rownames(sigtab_deseq_with_tax1) <- sigtab_deseq_with_tax1$phylum
+```
+
+```{r}
+ggplot(sigtab_deseq_with_tax1, aes(x=forcats::fct_rev(reorder(phylum, as.integer(factor(phylum)))), y=log2FoldChange, color=phylum)) + 
+  geom_point(size=4) + 
+  scale_color_manual(values=tax_color1) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("Phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+Heatmap
+```{r}
+# Heatmap showing top diff expressed genes
+
+library(pheatmap)
+top_phylum <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
+pheatmap(assay(region_deseq)[top_phylum, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_phylum_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Phylum level")
+```
+
+
+### Genus level
+```{r}
+# first conglomerate at genus level
+physeq.genus <- tax_glom(physeq, 'genus')
+
+# convert phyloseq object to DESeq object
+region_deseq_genus <- phyloseq_to_deseq2(physeq.genus, ~ region) 
+# DESeq runs with its own transformation, so the raw data (instead of the clr transformed data) is appropriate here. 
+
+# run standard DESeq analysis
+region_deseq_genus <- DESeq(region_deseq_genus)
+results_table <- results(region_deseq_genus)
+```
+Basic plotting of Data: 
+```{r}
+plotMA(region_deseq_genus)
+plotDispEsts(region_deseq_genus, main = "Dispersion plot Greenland dogs")
+```
+Blue dots above x-axis indicate genes that are over-expressed (n=127) where blue dots below the x-axis are genes that are under-expressed (n= 76). X-axis is the mean of normalized counts, and the y-axis is the log fold change.
+
+```{r}
+deseq_res_ittoq_vs_daneborg_genus <- results(region_deseq_genus, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
+
+summary(deseq_res_ittoq_vs_daneborg_genus) 
+# out of 131 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 2, 1.5%
+# LFC < 0 (down)     : 17, 13%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 51, 39%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+# limit to only show results significant at p- adjusted value of 0.05
+
+sigtab_res_deseq_res_ittoq_vs_daneborg_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.05), ]
+
+summary(sigtab_res_deseq_res_ittoq_vs_daneborg_genus) 
+# out of 45 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 2, 4.4%
+# LFC < 0 (down)     : 17, 38%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 1)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+```
+So from this information, we know that at the there are 19 genusus that are significantly differently abundant between Ittoq and Daneborg
+```{r}
+sigtab_deseq_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.005), ]
+
+sigtab_deseq_region_genus_with_tax <- cbind(as(sigtab_deseq_genus, "data.frame"), as(tax_table(taxtable)[row.names(sigtab_deseq_genus), ], "matrix"))
+sigtab_deseq_region_genus_with_tax[order(sigtab_deseq_region_genus_with_tax$baseMean, decreasing=T), ]
+
+deseq2_ins_fis_2 <- as.data.frame(sigtab_deseq_region_genus_with_tax)
+
+x = tapply(sigtab_deseq_region_genus_with_tax$log2FoldChange, sigtab_deseq_region_genus_with_tax$phylum, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_genus_with_tax$phylum = factor(as.character(sigtab_deseq_region_genus_with_tax$phylum), levels=names(x))
+x = tapply(sigtab_deseq_region_genus_with_tax$log2FoldChange, sigtab_deseq_region_genus_with_tax$genus, function(x) max(x))
+x = sort(x, TRUE)
+sigtab_deseq_region_genus_with_tax$genus = factor(as.character(sigtab_deseq_region_genus_with_tax$genus), levels=names(x))
+
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table2 <- as.data.frame(unique(sigtab_deseq_region_genus_with_tax$genus))
+colnames(tax_table2)[1] <- "genus"
+tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+
+sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%	dplyr::arrange(phylum)
+rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
+```
+
+```{r}
+ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(factor(genus)))), y=log2FoldChange, color=phylum)) + 
+  geom_point(size=4) + 
+ # scale_color_manual(values=tax_color1) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("Genus") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+Heatmap
+```{r}
+# Heatmap showing top diff expressed genes
+
+library(pheatmap)
+top_genus <- rownames(sigtab_deseq_region_genus_with_tax)[sigtab_deseq_region_genus_with_tax$padj < 0.005]
+pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_genus_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Genus level")
+```
+
+## ANCOM-BC
+### phylum level
+```{r}
+physeq.phylum <- tax_glom(physeq, 'phylum')
+tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum)
+
+print(tse)
+#class: TreeSummarizedExperiment 
+#dim: 12 58 
+#metadata(0):
+#assays(1): counts
+#rownames(12): EHA01923_bin.9 EHA01876_bin.8 ... EHA01908_bin.22 EHA01872_bin.6
+#rowData names(8): domain phylum ... species completeness
+#colnames(58): EHI01293 EHI01286 ... EHI01294 EHI01324
+#colData names(18): sample_code species ... diversity C
+
+ancombc2_out <- ancombc2(data = tse,
+                         assay_name = "counts",
+                         fix_formula = "region",
+                         p_adj_method = "fdr",
+                         prv_cut = 0,
+                         group = "region",
+                         struc_zero = TRUE,
+                         neg_lb = TRUE,
+                         # multi group comparison is deactivated automatically
+                         global = TRUE)
+
+tax <- data.frame(physeq@tax_table) %>%
+  rownames_to_column(., "taxon")
+
+ancombc_table <- ancombc2_out$res %>%
+  dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
+  filter(q_regionIttoqqortoormii < 0.05) %>%
+  dplyr::arrange(q_regionIttoqqortoormii) %>%
+  merge(., tax, by="taxon")
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_table$phylum))
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+```
+```{r}
+ggplot(ancombc_table, aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+  geom_point(size=4) + 
+  scale_color_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+### genus level
+```{r}
+physeq.genus <- tax_glom(physeq, 'genus')
+tse_genus = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.genus)
+
+print(tse_genus)
+#class: TreeSummarizedExperiment 
+#dim: 12 58 
+#metadata(0):
+#assays(1): counts
+#rownames(12): EHA01923_bin.9 EHA01876_bin.8 ... EHA01908_bin.22 EHA01872_bin.6
+#rowData names(8): domain phylum ... species completeness
+#colnames(58): EHI01293 EHI01286 ... EHI01294 EHI01324
+#colData names(18): sample_code species ... diversity C
+
+ancombc2_out_genus <- ancombc2(data = tse,
+                         assay_name = "counts",
+                         fix_formula = "region",
+                         p_adj_method = "fdr",
+                         prv_cut = 0,
+                         group = "region",
+                         struc_zero = TRUE,
+                         neg_lb = TRUE,
+                         # multi group comparison is deactivated automatically
+                         global = TRUE)
+
+tax <- data.frame(physeq@tax_table) %>%
+  rownames_to_column(., "taxon")
+
+ancombc_table_genus <- ancombc2_out_genus$res %>%
+  dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
+  filter(q_regionIttoqqortoormii < 0.05) %>%
+  dplyr::arrange(q_regionIttoqqortoormii) %>%
+  merge(., tax, by="taxon")
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_table_genus$genus))
+colnames(tax_table)[1] <- "genus"
+# tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+#	dplyr::arrange(phylum) %>%
+#	select(colors) %>%
+#	pull()
+```
+```{r}
+ggplot(ancombc_table_genus, aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+  geom_point(size=4) + 
+  scale_color_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("genus") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+
+## LEfSE
+### phylum level
+```{r}
+
+lefser(
+  tse,
+  kruskal.threshold = 0.05,
+  wilcox.threshold = 0.05,
+  lda.threshold = 2,
+  groupCol = "region",
+  blockCol = NULL,
+  assay = "counts", 
+  trim.names = FALSE,
+  checkAbundances = TRUE
+)
+```
+### genus level
+```{r}
+
+lefser(
+  tse_genus,
+  kruskal.threshold = 0.05,
+  wilcox.threshold = 0.05,
+  lda.threshold = 2,
+  groupCol = "region",
+  blockCol = NULL,
+  assay = "counts", 
+  trim.names = FALSE,
+  checkAbundances = TRUE
+)
+```
+## Functional
