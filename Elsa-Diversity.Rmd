@@ -52,6 +52,8 @@ library(ggpubr)
 library(ggnewscale)
 library(ggtreeExtra)
 library(DESeq2)
+library(ANCOMBC)
+library(lefser)
 ```
 
 
@@ -1610,7 +1612,7 @@ ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(
  # scale_color_manual(values=tax_color1) + 
   geom_hline(yintercept=0) + 
   coord_flip()+
-  xlab("Phylum") + 
+  xlab("Genus") + 
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
@@ -1623,4 +1625,152 @@ top_genus <- rownames(sigtab_deseq_region_genus_with_tax)[sigtab_deseq_region_ge
 pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_genus_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Genus level")
 ```
 
+## ANCOM-BC
+### phylum level
+```{r}
+physeq.phylum <- tax_glom(physeq, 'phylum')
+tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum)
 
+print(tse)
+#class: TreeSummarizedExperiment 
+#dim: 12 58 
+#metadata(0):
+#assays(1): counts
+#rownames(12): EHA01923_bin.9 EHA01876_bin.8 ... EHA01908_bin.22 EHA01872_bin.6
+#rowData names(8): domain phylum ... species completeness
+#colnames(58): EHI01293 EHI01286 ... EHI01294 EHI01324
+#colData names(18): sample_code species ... diversity C
+
+ancombc2_out <- ancombc2(data = tse,
+                         assay_name = "counts",
+                         fix_formula = "region",
+                         p_adj_method = "fdr",
+                         prv_cut = 0,
+                         group = "region",
+                         struc_zero = TRUE,
+                         neg_lb = TRUE,
+                         # multi group comparison is deactivated automatically
+                         global = TRUE)
+
+tax <- data.frame(physeq@tax_table) %>%
+  rownames_to_column(., "taxon")
+
+ancombc_table <- ancombc2_out$res %>%
+  dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
+  filter(q_regionIttoqqortoormii < 0.05) %>%
+  dplyr::arrange(q_regionIttoqqortoormii) %>%
+  merge(., tax, by="taxon")
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_table$phylum))
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+```
+```{r}
+ggplot(ancombc_table, aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+  geom_point(size=4) + 
+  scale_color_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+### genus level
+```{r}
+physeq.genus <- tax_glom(physeq, 'genus')
+tse_genus = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.genus)
+
+print(tse_genus)
+#class: TreeSummarizedExperiment 
+#dim: 12 58 
+#metadata(0):
+#assays(1): counts
+#rownames(12): EHA01923_bin.9 EHA01876_bin.8 ... EHA01908_bin.22 EHA01872_bin.6
+#rowData names(8): domain phylum ... species completeness
+#colnames(58): EHI01293 EHI01286 ... EHI01294 EHI01324
+#colData names(18): sample_code species ... diversity C
+
+ancombc2_out_genus <- ancombc2(data = tse,
+                         assay_name = "counts",
+                         fix_formula = "region",
+                         p_adj_method = "fdr",
+                         prv_cut = 0,
+                         group = "region",
+                         struc_zero = TRUE,
+                         neg_lb = TRUE,
+                         # multi group comparison is deactivated automatically
+                         global = TRUE)
+
+tax <- data.frame(physeq@tax_table) %>%
+  rownames_to_column(., "taxon")
+
+ancombc_table_genus <- ancombc2_out_genus$res %>%
+  dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
+  filter(q_regionIttoqqortoormii < 0.05) %>%
+  dplyr::arrange(q_regionIttoqqortoormii) %>%
+  merge(., tax, by="taxon")
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_table_genus$genus))
+colnames(tax_table)[1] <- "genus"
+# tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+#	dplyr::arrange(phylum) %>%
+#	select(colors) %>%
+#	pull()
+```
+```{r}
+ggplot(ancombc_table_genus, aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+  geom_point(size=4) + 
+  scale_color_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("genus") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
+```
+
+## LEfSE
+### phylum level
+```{r}
+
+lefser(
+  tse,
+  kruskal.threshold = 0.05,
+  wilcox.threshold = 0.05,
+  lda.threshold = 2,
+  groupCol = "region",
+  blockCol = NULL,
+  assay = "counts", 
+  trim.names = FALSE,
+  checkAbundances = TRUE
+)
+```
+### genus level
+```{r}
+
+lefser(
+  tse_genus,
+  kruskal.threshold = 0.05,
+  wilcox.threshold = 0.05,
+  lda.threshold = 2,
+  groupCol = "region",
+  blockCol = NULL,
+  assay = "counts", 
+  trim.names = FALSE,
+  checkAbundances = TRUE
+)
+```
