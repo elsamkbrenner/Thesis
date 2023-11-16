@@ -1208,6 +1208,50 @@ means <- means[,c(1,2,5,3,6,4,7)]
 knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
   kable_styling(latex_options="scale_down")
 ```
+Plotting:
+```{r}
+# Bacillota_A
+p1<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Bacillota_A, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0003") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Bacillota_A")
+
+# Bacillota_C
+p2<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Bacillota_C, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0000") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Bacillota_C")
+
+# Campylobacterota
+p3<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Campylobacterota, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  # geom_text(label = "p-adj= 0.0464") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Campylobacterota")
+```
 
 ### Genus level
 CLR transforming phyloseq object:
@@ -1294,6 +1338,79 @@ means <- as.data.frame(means_genus_by_region)
 means <- means[,c(1,2,5,3,6,4,7)]
 knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
   kable_styling(latex_options="scale_down")
+```
+
+Box plots: 
+```{r}
+# Slackia_A
+g1<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Slackia_A, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0016") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Slackia_A")
+
+# Blautia_A
+g2<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Blautia_A, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0006") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Blautia_A")
+
+# Oliverpabstia
+g3<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Oliverpabstia, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0374") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Oliverpabstia")
+
+# Megamonas
+g4<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Megamonas, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0000") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Megamonas")
+
+# Paraprevotella
+g5<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Paraprevotella, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+# geom_text(label = "p-adj= 0.0236") +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Paraprevotella")
 ```
 
 
@@ -1486,7 +1603,6 @@ tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
 sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%	dplyr::arrange(phylum)
 rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
 ```
-
 
 ```{r}
 ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(factor(genus)))), y=log2FoldChange, color=phylum)) + 
