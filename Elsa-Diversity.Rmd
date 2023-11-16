@@ -51,6 +51,7 @@ library(ggrepel)
 library(ggpubr)
 library(ggnewscale)
 library(ggtreeExtra)
+library(DESeq2)
 ```
 
 
@@ -1209,6 +1210,92 @@ knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
 ```
 
 ### Genus level
+CLR transforming phyloseq object:
+```{r}
+# agregate results at the genus level
+physeq_clr_genus <- microbiome::aggregate_taxa(physeq_clr, 'genus')
+```
+
+Ittoq
+```{r}
+physeq_genus_ittoq <- subset_samples(physeq_clr_genus, region == "Ittoqqortoormii")
+physeq_genus_ittoq <- prune_taxa(taxa_sums(physeq_genus_ittoq)>0, physeq_genus_ittoq)
+table.rel1_ittoq <- physeq_genus_ittoq@otu_table
+means.table.rel1_ittoq <- as.data.frame(rowMeans(table.rel1_ittoq))
+sd.table.rel1_ittoq <- as.data.frame(matrixStats::rowSds(table.rel1_ittoq, useNames = TRUE))
+summary.genus1_ittoq <- merge(means.table.rel1_ittoq, sd.table.rel1_ittoq, by="row.names")
+colnames(summary.genus1_ittoq) <- c("genus","Mean", "SD")
+print(summary.genus1_ittoq[order(-summary.genus1_ittoq$Mean),], row.names = FALSE)
+```
+
+Daneborg
+```{r}
+physeq_genus_daneborg <- subset_samples(physeq_clr_genus, region == "Daneborg")
+physeq_genus_daneborg <- prune_taxa(taxa_sums(physeq_genus_daneborg)>0, physeq_genus_daneborg)
+table.rel1_daneborg <- physeq_genus_daneborg@otu_table
+means.table.rel1_daneborg <- as.data.frame(rowMeans(table.rel1_daneborg))
+sd.table.rel1_daneborg <- as.data.frame(matrixStats::rowSds(table.rel1_daneborg, useNames = TRUE))
+summary.genus1_daneborg <- merge(means.table.rel1_daneborg, sd.table.rel1_daneborg, by="row.names")
+colnames(summary.genus1_daneborg) <- c("genus","Mean", "SD")
+print(summary.genus1_daneborg[order(-summary.genus1_daneborg$Mean),], row.names = FALSE)
+```
+
+```{r mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_genus.t <- as.data.frame(t(as.matrix(physeq_clr_genus@otu_table)))
+table.W_genus <- tibble::rownames_to_column(physeq_clr_genus.t, "sample")
+sample_type <- all_metadata[,c(1,4)]
+table.W.meta_genus <- merge(table.W_genus,sample_type,by="sample")
+table.W.meta_genus <- table.W.meta_genus[,-c(1)]
+means_genus_by_region_all <- table.W.meta_genus %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_genus_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
+means_all_genus <- as.data.frame(means_genus_by_region_all)
+means <- as.data.frame(means_genus_by_region)
+
+means_genus <- means[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
+
+knitr::kable(means_genus, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r wilcox_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_genus.t <- as.data.frame(t(as.matrix(physeq_clr_genus@otu_table)))
+table.W <- tibble::rownames_to_column(physeq_clr_genus.t, "sample")
+sample_type_genus <- metadata[,c(1,4)]
+genus_table <- merge(table.W,sample_type_genus,by="sample")
+genus_table <- genus_table[,-c(1)]
+genus_table.no <- genus_table[,-ncol(genus_table)]
+all.taxa_genus <- colnames(genus_table.no)
+Wilcox_result_genus <- c()
+for (y in all.taxa_genus){
+  res.wilcox <- wilcox.test(genus_table[,y] ~ region, data = genus_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result_genus <- rbind(Wilcox_result_genus,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+}
+rownames(Wilcox_result_genus) <- all.taxa_genus
+Wilcox_result_genus <- as.data.frame(Wilcox_result_genus)
+
+Wilcox_result_genus$p_adjusted <- p.adjust(Wilcox_result_genus$Pvalue, method = "fdr")
+
+Wilcox_result_sign_genus <- subset(Wilcox_result_genus, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Genus")
+knitr::kable(Wilcox_result_sign_genus, format = "html", full_width = F,col.names = c("genus", "W", "p-value","p-value adjusted"), digits = 4) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r selec_mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+table.W_filtered <- physeq_clr_genus.t[colnames(physeq_clr_genus.t) %in% Wilcox_result_sign_genus$Genus]
+sample_type <- metadata[,c(1,4)]
+table.W_filtered_meta <- table.W_filtered %>%
+  rownames_to_column(., "sample") %>%
+  merge(.,sample_type,by="sample")
+table.W_filtered_meta <- table.W_filtered_meta[,-c(1)]
+means_genus_by_region <- table.W_filtered_meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:3],.funs = c(mean="mean", sd="sd"))
+means <- as.data.frame(means_genus_by_region)
+means <- means[,c(1,2,5,3,6,4,7)]
+knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
 
 ## DESeq2
 ### Phylum level
