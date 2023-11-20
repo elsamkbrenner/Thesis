@@ -525,6 +525,21 @@ print(summary.phylum1[order(-summary.phylum1$Mean),], row.names = FALSE)
 
 ```
 
+### genus percentages
+
+```{r genus1, comment="", echo=FALSE}
+
+physeq_genus <- microbiome::aggregate_taxa(physeq, 'genus')
+physeq_genus_rel <-  microbiome::transform(physeq_genus, "compositional")
+table.rel2 <- physeq_genus_rel@otu_table*100
+means.table.rel2 <- as.data.frame(rowMeans(table.rel2))
+sd.table.rel2 <- as.data.frame(matrixStats::rowSds(table.rel2, useNames = TRUE))
+summary.genus1 <- merge(means.table.rel2, sd.table.rel2, by="row.names")
+colnames(summary.genus1) <- c("genus","Mean", "SD")
+print(summary.genus1[order(-summary.genus1$Mean),], row.names = FALSE)
+
+```
+
 # 3. Alpha diversity calculations - Community Level
 
 Diversity estimations for each sample.\
@@ -607,7 +622,7 @@ alpha_div_N %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Alpha diversity")
+  ylab("Neutral Alpha diversity")
 
 ```
 
