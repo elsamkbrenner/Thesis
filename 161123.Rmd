@@ -51,6 +51,10 @@ library(ggrepel)
 library(ggpubr)
 library(ggnewscale)
 library(ggtreeExtra)
+library(DESeq2)
+library(ANCOMBC)
+library(lefser)
+library(dplyr)
 ```
 
 
@@ -691,7 +695,7 @@ alpha_div_P %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Alpha diversity")
+  ylab("Phylogenetic Alpha diversity")
 ```
 ```{r alpha_div_P STATS}
 # Shapiro-Wilk test for normality
@@ -889,7 +893,7 @@ alpha_div_F %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Functional diversity")
+  ylab("Functional Alpha diversity")
 ```
 
 ```{r}
@@ -1205,7 +1209,7 @@ Wilcox_result$p_adjusted <- p.adjust(Wilcox_result$Pvalue, method = "fdr")
 
 Wilcox_result_sign <- subset(Wilcox_result, p_adjusted <= 0.05) %>%
   rownames_to_column(., "Phylum")
-knitr::kable(Wilcox_result_sign, format = "html", full_width = F,col.names = c("Phylum", "W", "p-value","p-value adjusted"), digits = 4) %>%
+knitr::kable(Wilcox_result_sign, format = "html", full_width = F,col.names = c("Phylum", "W", "p-value","p-value adjusted"), digits = 10) %>%
   kable_styling(latex_options="scale_down")
 ```
 
@@ -1236,7 +1240,7 @@ p1<- table.W_filtered_meta %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Bacillota_A")
+  ylab("Bacillota A")
 
 # Bacillota_C
 p2<- table.W_filtered_meta %>%
@@ -1250,7 +1254,7 @@ p2<- table.W_filtered_meta %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Bacillota_C")
+  ylab("Bacillota C")
 
 # Campylobacterota
 p3<- table.W_filtered_meta %>%
@@ -1336,7 +1340,7 @@ Wilcox_result_genus$p_adjusted <- p.adjust(Wilcox_result_genus$Pvalue, method = 
 
 Wilcox_result_sign_genus <- subset(Wilcox_result_genus, p_adjusted <= 0.05) %>%
   rownames_to_column(., "Genus")
-knitr::kable(Wilcox_result_sign_genus, format = "html", full_width = F,col.names = c("genus", "W", "p-value","p-value adjusted"), digits = 4) %>%
+knitr::kable(Wilcox_result_sign_genus, format = "html", full_width = F,col.names = c("genus", "W", "p-value","p-value adjusted"), digits = 10) %>%
   kable_styling(latex_options="scale_down")
 ```
 
@@ -1368,7 +1372,7 @@ g1<- table.W_filtered_meta %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Slackia_A")
+  ylab("Slackia A")
 
 # Blautia_A
 g2<- table.W_filtered_meta %>%
@@ -1382,7 +1386,7 @@ g2<- table.W_filtered_meta %>%
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Blautia_A")
+  ylab("Blautia A")
 
 # Oliverpabstia
 g3<- table.W_filtered_meta %>%
@@ -1607,12 +1611,12 @@ colors_alphabetic <- ehi_phylum_colors1 %>%
 	unique() %>%
 	dplyr::arrange(phylum)
 
-tax_table2 <- as.data.frame(unique(sigtab_deseq_region_genus_with_tax$genus))
-colnames(tax_table2)[1] <- "genus"
+tax_table1 <- as.data.frame(unique(sigtab_deseq_region_genus_with_tax$phylum))
+colnames(tax_table1)[1] <- "phylum"
 tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
-	dplyr::arrange(phylum) %>%
-	select(colors) %>%
-	pull()
+  dplyr::arrange(phylum) %>%
+  select(colors) %>%
+  pull()
 
 sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%	dplyr::arrange(phylum)
 rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
@@ -1621,7 +1625,7 @@ rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
 ```{r}
 ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(factor(genus)))), y=log2FoldChange, color=phylum)) + 
   geom_point(size=4) + 
- # scale_color_manual(values=tax_color1) + 
+ scale_color_manual(values=tax_color1) + 
   geom_hline(yintercept=0) + 
   coord_flip()+
   xlab("Genus") + 
@@ -1745,7 +1749,7 @@ colnames(tax_table)[1] <- "genus"
 #	pull()
 ```
 ```{r}
-ggplot(ancombc_table_genus, aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+ggplot(ancombc_table_genus, aes(x=forcats::fct_rev(genus), y=lfc_regionIttoqqortoormii, color=phylum)) + 
   geom_point(size=4) + 
   scale_color_manual(values=tax_color) + 
   geom_hline(yintercept=0) + 
@@ -1786,11 +1790,120 @@ lefser(
   checkAbundances = TRUE
 )
 ```
-## Functional
+## Functional DA
 
+Make functional phyloseq object
+```{r phyloseq, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 
+## Making phyloseq object
+# Coerce it into a phylseq
+FuncOTU <- otu_table(count_filtered_use_this, taxa_are_rows = T)
 
+## Coerce taxonomy into a phyloseq OTU table
+# Remove first column
+taxonomyclean1 <- taxonomyclean[,-1]
+# Get the necessary columns, convert to matrix
 
+taxmatrix <- as.matrix(taxonomyclean1[1:8])
+# Set MAG name as row names of the dataframe
+rownames(taxmatrix) <- taxonomyclean$genome
+taxtable <- tax_table(taxmatrix) 
 
+# Set the first column as row names
+metadata <- na.omit(metadata)
+rownames(metadata) <- NULL
+metadata.pre <- column_to_rownames(metadata, "sample")
 
-test test test
+sample_tab <- sample_data(metadata.pre)
+
+## Coerce tree into a phylseq
+tree <- phytools::force.ultrametric(tree, method = "extend")
+treephylo = phyloseq::phy_tree(tree)
+
+## Merge into a phyloseq object
+physeq_FUNC <- phyloseq(FuncOTU, treephylo, sample_tab,taxtable)
+
+# Plot the phylogenetic tree
+# tree_plot <- ggtree(treephylo)
+
+# Print the tree plot
+# print(tree_plot)
+```
+
+```{r}
+# Perform CLR transformation
+physeq_clr_func <- microbiome::transform(physeq_FUNC, 'clr') 
+
+# create 2 groups
+Daneborg_physeq_func <- subset_samples(physeq_clr_func, region == "Daneborg")
+Ittoq_physeq_func <- subset_samples(physeq_clr_func, region == "Ittoqqortoormii")
+```
+
+Ittoq Func
+```{r}
+physeq_func_ittoq <- subset_samples(physeq_clr_func, region == "Ittoqqortoormii")
+physeq_func_ittoq <- prune_taxa(taxa_sums(physeq_func_ittoq)>0, physeq_func_ittoq)
+table.rel_ittoq_func <- physeq_func_ittoq@otu_table
+means.table.rel1_ittoq_func <- as.data.frame(rowMeans(table.rel_ittoq_func))
+sd.table.rel1_ittoq_func <- as.data.frame(matrixStats::rowSds(table.rel_ittoq_func, useNames = TRUE))
+summary.func_ittoq <- merge(means.table.rel1_ittoq_func, sd.table.rel1_ittoq_func, by="row.names")
+colnames(summary.func_ittoq) <- c("Gene","Mean", "SD")
+print(summary.func_ittoq[order(-summary.func_ittoq$Mean),], row.names = FALSE)
+```
+
+Daneborg Func
+```{r}
+physeq_func_daneborg <- subset_samples(physeq_clr_func, region == "Daneborg")
+physeq_func_daneborg <- prune_taxa(taxa_sums(physeq_func_daneborg)>0, physeq_func_daneborg)
+table.rel_daneborg_func <- physeq_func_daneborg@otu_table
+means.table.rel1_daneborg_func <- as.data.frame(rowMeans(table.rel_daneborg_func))
+sd.table.rel1_daneborg_func <- as.data.frame(matrixStats::rowSds(table.rel_daneborg_func, useNames = TRUE))
+summary.func_daneborg <- merge(means.table.rel1_daneborg_func, sd.table.rel1_daneborg_func, by="row.names")
+colnames(summary.func_daneborg) <- c("Gene","Mean", "SD")
+print(summary.func_daneborg[order(-summary.func_daneborg$Mean),], row.names = FALSE)
+```
+
+```{r mean_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_func.t <- as.data.frame(t(as.matrix(physeq_clr_func@otu_table)))
+table.W_func <- tibble::rownames_to_column(physeq_clr_func.t, "sample")
+sample_type_func <- all_metadata[,c(1,4)]
+table.W.meta_func <- merge(table.W_func,sample_type,by="sample")
+table.W.meta_func <- table.W.meta_func[,-c(1)]
+means_func_by_region_all <- table.W.meta_func %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_func_by_region <- table.W.meta_func %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
+means_all_func <- as.data.frame(means_func_by_region_all)
+means_func <- as.data.frame(means_func_by_region)
+
+means_func <- means_func[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
+
+knitr::kable(means_func, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+```{r wilcox_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_clr_func.t <- as.data.frame(t(as.matrix(physeq_clr_func@otu_table)))
+table.W_func <- tibble::rownames_to_column(physeq_clr_func.t, "sample")
+sample_type <- metadata[,c(1,4)]
+func_table <- merge(table.W,sample_type,by="sample")
+func_table <- func_table[,-c(1)]
+func_table.no <- func_table[,-ncol(phylum_table)]
+all.func <- colnames(func_table.no)
+Wilcox_result_func <- c()
+
+func_table[, y] <- as.numeric(func_table[, y])
+
+for (y in all.func){
+  res.wilcox <- wilcox.test(func_table[,y] ~ region, data = func_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result_func <- rbind(Wilcox_result,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+}
+rownames(Wilcox_result_func) <- all.taxa
+Wilcox_result_func <- as.data.frame(Wilcox_result_func)
+
+Wilcox_result_func$p_adjusted <- p.adjust(Wilcox_result_func$Pvalue, method = "fdr")
+
+Wilcox_result_sign_func <- subset(Wilcox_result_func, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Function")
+knitr::kable(Wilcox_result_sign_func, format = "html", full_width = F,col.names = c("Function", "W", "p-value","p-value adjusted"), digits = 10) %>%
+  kable_styling(latex_options="scale_down")
+```
