@@ -1781,16 +1781,60 @@ library(mia)
 tse_LinDA <- mia::subsetByPrevalentTaxa(tse, detection = 0, prevalence = 0.1)
 ```
 ```{r}
-# first we rarefy data to stick to Nearing et al 2022
-tse_LinDA <- subsampleCounts(
-  tse_LinDA,
-  abund_values = "count_filtered",
-  min_size = min(colSums2(assay(tse))),
-  seed = runif(1, 0, .Machine$integer.max),
-  replace = TRUE,
-  name = "subsampled",
-  verbose = TRUE
-)
+# install.packages(c("modeest", "lmerTest", "foreach", "parallel", "ggplot2", "ggrepel"))
+# install.packages("devtools")
+# devtools::install_github("zhouhj1994/LinDA")
+
+otu.tab <- as.data.frame(assay(tse_LinDA))
+meta <- as.data.frame(colData(tse_LinDA)) %>% select(region)
+LinDA_phylum <- LinDA::linda(
+  otu.tab, 
+  meta, 
+  formula = '~region', 
+  alpha = 0.05, 
+  prev.cut = 0, # we already filtered 
+  lib.cut = 1000, 
+  winsor.quan = 0.97)
+
+LinDA_phylum
+LinDA::linda.plot(LinDA_phylum, c('region') )
+
+LinDA_table_phylum <- rownames_to_column(LinDA_phylum$output$regionIttoqqortoormii, "phylum") 
+```
+So from this information, we know that at the there are 8 phyla that are significantly differently abundant between Ittoq and Daneborg according to LinDA
+```{r}
+tax <- data.frame(physeq@tax_table) %>%
+  rownames_to_column(., "taxon")
+
+LinDA_table_phylum <- rownames_to_column(LinDA_phylum$output$regionIttoqqortoormii, "genome") 
+LinDA_table_phylum <- merge(LinDA_table_phylum, taxonomyclean[, c("genome", "phylum")], by = "genome", all.x = TRUE)
+
+LinDA_table_phylum <- LinDA_table_phylum %>%
+  dplyr::select(phylum, lfcSE, padj, log2FoldChange) %>%
+  filter(padj < 0.005)
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(LinDA_table_phylum$phylum))
+colnames(tax_table)[1] <- "phylum"
+# tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+#	dplyr::arrange(phylum) %>%
+#	select(colors) %>%
+#	pull()
+```
+```{r}
+ggplot(LinDA_table_phylum, aes(x=forcats::fct_rev(phylum), y=log2FoldChange, color=phylum)) + 
+  geom_point(size=4) + 
+  #scale_color_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
 ```
 
 
