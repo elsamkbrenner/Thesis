@@ -83,7 +83,7 @@ batch="DMB0032" # this specifies the batch of data within the EHI data framework
 counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
 coverage_table <- read.table(coverage_file, sep="\t",row.names=1,header=T)
 metadata <- read.table(metadata_file,sep="\t",header=T)%>%
-	rename(sample=EHI_plaintext)
+	dplyr::rename(sample=EHI_plaintext)
 mags_table <- read.table(taxonomy_file,sep="\t",header=T)
 tree <- read.tree(tree_file)
 
@@ -246,10 +246,6 @@ phyla <- ehi_phylum_colors1 %>%
 	arrange(match(genome, tree$tip.label)) %>% 
   select(phylum, colors) %>%
 	unique()
-
-# First, this chunk joins the ehi color palatte   to the genome taxonomy file specific to my data, joining them at the phylum level.
-# arrange() reorders the rows of a data frame via the collunm names
-# match() then matches genome to the bins 
 ```
 
 ```{r circular_tree_prep, echo=FALSE, warning=FALSE, comments="", message=FALSE, results="hide"}
@@ -287,12 +283,21 @@ Overview of the taxonomy and genome characteristics of the MAGs.\
 **Size:** size of the MAG in megabases (MB, one million nucleotide bases).
 
 ```{r complet_conta, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-comp_cont <- taxonomyclean %>%
-  select(c(genome,phylum,completeness,contamination,mag_size)) %>%
-  mutate(mag_size=round(mag_size/1000000,2)) %>% #change mag_size to MBs
-  rename(comp=completeness,cont=contamination,size=mag_size) %>% 
+# Load required libraries
+library(dplyr)
+
+# Select columns and perform operations
+comp_cont <- mutate(
+  select(taxonomyclean, genome, phylum, completeness, contamination, mag_size),
+  mag_size = round(mag_size / 1000000, 2),
+  comp = completeness,
+  cont = contamination,
+  size = mag_size
+) %>%
+  select(-completeness, -contamination, -mag_size) %>%
   remove_rownames() %>%
-  arrange(match(genome, rev(tree$tip.label))) #sort MAGs according to phylogenetic tree
+  arrange(match(genome, rev(tree$tip.label)))
+
 ```
 ```{r complet_conta_table, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 comp_cont_table <- comp_cont %>% 
@@ -522,7 +527,7 @@ physeq_phylum <- microbiome::aggregate_taxa(physeq, 'phylum')
 physeq_phylum_rel <-  microbiome::transform(physeq_phylum, "compositional")
 table.rel1 <- physeq_phylum_rel@otu_table*100
 means.table.rel1 <- as.data.frame(rowMeans(table.rel1))
-sd.table.rel1 <- as.data.frame(rowSds(table.rel1, useNames = TRUE))
+sd.table.rel1 <- as.data.frame(matrixStats::rowSds(table.rel1, useNames = TRUE))
 summary.phylum1 <- merge(means.table.rel1, sd.table.rel1, by="row.names")
 colnames(summary.phylum1) <- c("Phylum","Mean", "SD")
 print(summary.phylum1[order(-summary.phylum1$Mean),], row.names = FALSE)
@@ -591,7 +596,7 @@ knitr::kable(table_mean_alpha, format = "html", full_width = F,col.names = c('Gr
 
 alpha_div <- t(alpha_div_neutral) %>%
   as.data.frame() %>%
-  rename( "Diversity" = "q1")  %>%
+  dplyr::rename( "Diversity" = "q1")  %>%
   rownames_to_column("sample") %>%
   left_join(sequence_fractions, by = join_by(sample == sample)) %>% #add sequencing depth information
   mutate(depth=round(mags_bases/1000000,3))
@@ -1014,7 +1019,7 @@ GIFTs_elements_tSNE <- GIFTs_elements_tSNE$Y %>%
   inner_join(taxonomyclean, by="genome") %>%
   mutate_at(vars(phylum, class, order, family, genus), factor) %>%
   #mutate(cyl = factor(Phylum, levels = phylum_colors$Phylum)) %>%
-  rename(tSNE1="V1", tSNE2="V2")
+  dplyr::rename(tSNE1="V1", tSNE2="V2")
 
 count_t <- count_filtered_use_this %>%
   t() %>%
@@ -1037,7 +1042,7 @@ mergetable_Ittoq <- mergetable_Ittoq [1: ncol(mergetable_Ittoq)-1 ]
 
 GIFTs_elements_tSNE_rel_means_I <- colMeans(mergetable_Ittoq) %>%
   as.data.frame() %>%
-  rename( "Relative_value" = ".")  %>%
+  dplyr::rename( "Relative_value" = ".")  %>%
   rownames_to_column(., "genome") %>%
   merge(., GIFTs_elements_tSNE, by= "genome")
 
@@ -1058,7 +1063,7 @@ mergetable_Daneborg <- mergetable_Daneborg [1: ncol(mergetable_Daneborg)-1 ]
 
 GIFTs_elements_tSNE_rel_means_D <- colMeans(mergetable_Daneborg) %>%
   as.data.frame() %>%
-  rename( "Relative_value" = ".")  %>%
+  dplyr::rename( "Relative_value" = ".")  %>%
   rownames_to_column(., "genome") %>%
   merge(., GIFTs_elements_tSNE, by= "genome")
 
@@ -1512,8 +1517,8 @@ Heatmap
 # Heatmap showing top diff expressed genes
 
 library(pheatmap)
-top_phylum <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
-pheatmap(assay(region_deseq)[top_phylum, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_phylum_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Phylum level")
+top_genus <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
+pheatmap(assay(region_deseq_phylum)[top_phylum, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_phylum_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Phylum level")
 ```
 
 
@@ -1768,6 +1773,27 @@ lefser(
   checkAbundances = TRUE
 )
 ```
+
+### LinDA
+
+```{r}
+library(mia)
+tse_LinDA <- mia::subsetByPrevalentTaxa(tse, detection = 0, prevalence = 0.1)
+```
+```{r}
+# first we rarefy data to stick to Nearing et al 2022
+tse_LinDA <- subsampleCounts(
+  tse_LinDA,
+  abund_values = "count_filtered",
+  min_size = min(colSums2(assay(tse))),
+  seed = runif(1, 0, .Machine$integer.max),
+  replace = TRUE,
+  name = "subsampled",
+  verbose = TRUE
+)
+```
+
+
 ## Functional DA
 
 ### Set up:
