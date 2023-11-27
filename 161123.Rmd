@@ -816,6 +816,7 @@ count_filtered_rel <- count_filtered %>%
 #Run distillation
 GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
 #GIFTs <- GIFTs[-c(9,10),]
+GIFT_db_table <- GIFT_db
 
 # counts filtered correctly to the GIFTs distillation. Use this for counts from here on out. 
 count_filtered_use_this <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(GIFTs),]
@@ -1517,7 +1518,7 @@ Heatmap
 # Heatmap showing top diff expressed genes
 
 library(pheatmap)
-top_genus <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
+top_phylum <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
 pheatmap(assay(region_deseq_phylum)[top_phylum, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_phylum_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Phylum level")
 ```
 
@@ -1802,7 +1803,6 @@ LinDA::linda.plot(LinDA_phylum, c('region') )
 
 LinDA_table_phylum <- rownames_to_column(LinDA_phylum$output$regionIttoqqortoormii, "phylum") 
 ```
-So from this information, we know that at the there are 5 phyla that are significantly differently abundant between Ittoq and Daneborg according to LinDA
 ```{r}
 tax <- data.frame(physeq@tax_table) %>%
   rownames_to_column(., "taxon")
@@ -1837,9 +1837,8 @@ ggplot(LinDA_table_phylum, aes(x=forcats::fct_rev(phylum), y=log2FoldChange, col
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
+
 #### genus level
-### LinDA
-#### phylum level
 
 ```{r}
 library(mia)
@@ -1912,8 +1911,19 @@ Make functional phyloseq object
 count_filtered_func <- count_table_cov_size[rownames(count_filtered) %in% rownames(GIFTs),]
 FuncOTU <- otu_table(count_filtered_func, taxa_are_rows = T)
 
-# Func table (Tax table replacement)
-functable <- GIFTs_elements
+genome <- rownames(GIFTs_elements)
+rownames(GIFTs_elements) <- NULL
+GIFTs_elements_clean  <- cbind(genome,GIFTs_elements) %>%
+  as.data.frame()
+GIFTs_elements_clean1 <- GIFTs_elements_clean[,-1] %>%
+  as.data.frame()
+
+funcmatrix <- as.matrix(GIFTs_elements_clean1)
+
+rownames(funcmatrix) <- GIFTs_elements_clean$genome
+functable <- tax_table(funcmatrix) 
+  
+
 
 # Set the first column as row names
 metadata <- na.omit(metadata)
@@ -1927,7 +1937,7 @@ tree <- phytools::force.ultrametric(tree, method = "extend")
 treephylo = phyloseq::phy_tree(tree)
 
 ## Merge into a phyloseq object
-physeq_FUNC <- phyloseq(FuncOTU, treephylo, sample_tab,functable)
+physeq_FUNC <- phyloseq(FuncOTU, treephylo, sample_tab, functable)
 ```
 
 ```{r}
@@ -1937,9 +1947,6 @@ physeq_clr_FUNC <- microbiome::transform(physeq_FUNC, 'clr')
 # create 2 groups
 Daneborg_physeq_FUNC <- subset_samples(physeq_clr_FUNC, region == "Daneborg")
 Ittoq_physeq_FUNC <- subset_samples(physeq_clr_FUNC, region == "Ittoqqortoormii")
-
-# agregate results at the code element level
-# physeq_clr_FUNC <- microbiome::aggregate_taxa(physeq_clr_FUNC, "Function")
 ```
 
 Ittoq
@@ -2061,34 +2068,27 @@ Add in Functional information and sort by baseMean
 ```{r}
 sigtab_deseq_FUNC <- deseq_res_ittoq_vs_daneborg_FUNC[which(deseq_res_ittoq_vs_daneborg_FUNC$padj < 0.005), ]
 
-func_matrix <- as.character(as(tax_table(functable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
-
+func_matrix <- as.character(as(tax_table(taxtable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
 
 sigtab_deseq_region_FUNC_with_FUNC <- cbind(as(sigtab_deseq_FUNC, "data.frame"), as(tax_table(functable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
 sigtab_deseq_region_FUNC_with_FUNC[order(sigtab_deseq_region_FUNC_with_FUNC$baseMean, decreasing=T), ]
+genome <- rownames(sigtab_deseq_region_FUNC_with_FUNC)
 
-deseq2_ins_fis <- as.data.frame(sigtab_deseq_region_phylum_with_tax)
+deseq2_ins_fis_func <- as.data.frame(cbind(sigtab_deseq_region_FUNC_with_FUNC, genome))
 
-x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$phylum, function(x) max(x))
+x = tapply(deseq2_ins_fis_func$log2FoldChange, deseq2_ins_fis_func$genome, function(x) max(x))
 x = sort(x, TRUE)
-sigtab_deseq_region_phylum_with_tax$phylum = factor(as.character(sigtab_deseq_region_phylum_with_tax$phylum), levels=names(x))
-x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$genus, function(x) max(x))
+deseq2_ins_fis_func$genome = factor(as.character(deseq2_ins_fis_func$genome), levels=names(x))
+x = tapply(deseq2_ins_fis_func$log2FoldChange, deseq2_ins_fis_func$genome, function(x) max(x))
 x = sort(x, TRUE)
-sigtab_deseq_region_phylum_with_tax$genus = factor(as.character(sigtab_deseq_region_phylum_with_tax$genus), levels=names(x))
-
-colors_alphabetic <- ehi_phylum_colors1 %>%
-  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
-  select(phylum, colors) %>%
-	unique() %>%
-	dplyr::arrange(phylum)
-
-tax_table1 <- as.data.frame(unique(sigtab_deseq_region_phylum_with_tax$phylum))
-colnames(tax_table1)[1] <- "phylum"
-tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
-	dplyr::arrange(phylum) %>%
-	select(colors) %>%
-	pull()
-
-sigtab_deseq_with_tax1 <- sigtab_deseq_region_phylum_with_tax %>%	dplyr::arrange(phylum)
-rownames(sigtab_deseq_with_tax1) <- sigtab_deseq_with_tax1$phylum
+deseq2_ins_fis_func$genome = factor(as.character(deseq2_ins_fis_func$genome), levels=names(x))
+```
+```{r}
+ggplot(deseq2_ins_fis_func, aes(x=forcats::fct_rev(reorder(genome, as.integer(factor(genome)))), y=log2FoldChange)) + 
+  geom_point(size=4) + 
+ #scale_color_manual(values=tax_color1) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("Gonome") + 
+  ylab("log2FoldChange")
 ```

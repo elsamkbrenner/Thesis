@@ -1,0 +1,307 @@
+---
+title: "Functional DA"
+author: "Elsa"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Functional DA
+
+```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
+## Load required libraries
+library(ggnewscale)
+library(ggtree) 
+library(R.utils)
+library(tidyverse) 
+library(ape)
+library(devtools)
+library(ggplot2)
+library(hillR)
+library(spaa) 
+library(vegan)
+library(hilldiv2) 
+library(Rhdf5lib)
+library(phyloseq)
+library(phytools)
+library(microbiome) 
+library(matrixStats)
+library(microbiomeutilities) 
+library(lme4)
+library(MuMIn)
+library(nlme)
+library(knitr)
+library(kableExtra)
+library(pairwiseAdonis)
+library(sjPlot)
+library(distillR) 
+library(RColorBrewer) 
+library(reshape2)
+library(ggpubr)
+library(ggdendro)
+library(grid) 
+library(gplots)
+library(dendextend) 
+library(stringr) 
+library(Rtsne) 
+library(glue) 
+library(ggtree)
+library(ggrepel)
+library(ggpubr)
+library(ggnewscale)
+library(ggtreeExtra)
+library(DESeq2)
+library(ANCOMBC)
+library(lefser)
+library(dplyr)
+```
+
+
+## Data prep from old code:
+```{r old variables, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+workingdir="/Users/elsa/Desktop/THESIS/Thesis"
+setwd(workingdir)
+counts_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_counts.tsv"
+tree_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032.tree"
+taxonomy_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_mag_info.tsv"
+metadata_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_metadata.tsv"
+coverage_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_coverage.tsv"
+coverage_table <- read.table(coverage_file, sep="\t",row.names=1,header=T)
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+mags_table <- read.table(taxonomy_file,sep="\t",header=T)
+tree <- read.tree(tree_file)
+min_coverage=0.3
+count_table_cov <- coverage_table %>%
+  mutate(across(everything(), ~ ifelse(. > min_coverage, 1, 0))) %>%
+  map2_df(., counts_table, ~ .x * .y) %>%
+  as.data.frame()
+rownames(count_table_cov) <- rownames(coverage_table)
+mags_table1 <- column_to_rownames(mags_table, "genome")
+genome_read_sizes <- mags_table1[rownames(count_table_cov),] %>%
+    select(mag_size) %>%
+    mutate(mag_size = mag_size / 143) %>% #143 nt is the average read-length after quality filtering in EHI data
+    pull()
+count_table_cov_size <- sweep(count_table_cov, 1, genome_read_sizes, "/")
+
+count_table_cov_size_rel <- count_table_cov_size %>%
+  rownames_to_column("Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.)) #TSS normalisation
+count_filtered <- column_to_rownames(count_table_cov_size_rel, "Genome")
+```
+
+```{r filter_annotations, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#### read table ####
+filtered_df <- read.table("all_annotations.csv", sep="")
+```
+
+```{r gifts, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
+count_filtered_rel <- count_filtered %>%
+  rownames_to_column(., "Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.))  %>%
+  column_to_rownames(., "Genome")
+
+#Run distillation
+GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
+#GIFTs <- GIFTs[-c(9,10),]
+GIFT_db_table <- GIFT_db
+
+# counts filtered correctly to the GIFTs distillation. Use this for counts from here on out. 
+count_filtered_use_this <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(GIFTs),]
+
+#Aggregate bundle-level GIFTs into the compound level 
+# this is the level we will use for analysis
+GIFTs_elements <- to.elements(GIFTs,GIFT_db)
+
+#Aggregate element-level GIFTs into the function level
+GIFTs_functions <- to.functions(GIFTs_elements,GIFT_db)
+
+#Aggregate function-level GIFTs into overall Biosynthesis, Degradation and Structural GIFTs
+GIFTs_domains <- to.domains(GIFTs_functions,GIFT_db)
+
+#Get community-weighed average GIFTs per sample
+GIFTs_elements_community <- to.community(GIFTs_elements,count_filtered_use_this,GIFT_db)
+GIFTs_functions_community <- to.community(GIFTs_functions,count_filtered_use_this,GIFT_db)
+GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_use_this,GIFT_db)
+
+#Convert traits into distance matrix
+dist <- traits2dist(GIFTs_elements, method="gower")
+```
+
+## Make functional phyloseq object: 
+```{r phyloseq, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+
+## Making phyloseq object
+# OTU Table
+count_filtered_func <- count_table_cov_size[rownames(count_filtered) %in% rownames(GIFTs),]
+FuncOTU <- otu_table(count_filtered_func, taxa_are_rows = T)
+
+genome <- rownames(GIFTs_elements)
+rownames(GIFTs_elements) <- NULL
+GIFTs_elements_clean  <- cbind(genome,GIFTs_elements) %>%
+  as.data.frame(.)
+GIFTs_elements_clean1 <- GIFTs_elements_clean[,-1] %>%
+  as.data.frame(.)
+
+funcmatrix <- as.matrix(GIFTs_elements_clean1)
+
+rownames(funcmatrix) <- GIFTs_elements_clean$genome
+functable <- tax_table(funcmatrix) 
+  
+
+# Set the first column as row names
+metadata <- na.omit(metadata)
+rownames(metadata) <- NULL
+metadata.pre <- column_to_rownames(metadata, "sample")
+
+sample_tab <- sample_data(metadata.pre)
+
+## Coerce tree into a phylseq
+tree <- phytools::force.ultrametric(tree, method = "extend")
+treephylo = phyloseq::phy_tree(tree)
+
+## Merge into a phyloseq object
+physeq_FUNC <- phyloseq(FuncOTU, treephylo, sample_tab, functable)
+```
+
+## CLR transformation
+```{CLR transformation, echo=TRUE, message=FALSE, warning=FALSE}
+# Perform CLR transformation
+physeq_clr_FUNC <- microbiome::transform(physeq_FUNC, 'clr') 
+
+# create 2 groups
+Daneborg_physeq_FUNC <- subset_samples(physeq_clr_FUNC, region == "Daneborg")
+Ittoq_physeq_FUNC <- subset_samples(physeq_clr_FUNC, region == "Ittoqqortoormii")
+```
+
+### Ittoq
+```{Ittoq, echo=TRUE, message=FALSE, warning=FALSE}
+physeq_FUNC_ittoq <- subset_samples(physeq_clr_FUNC, region == "Ittoqqortoormii")
+physeq_FUNC_ittoq <- prune_taxa(taxa_sums(physeq_FUNC_ittoq)>0, physeq_FUNC_ittoq)
+table.rel1_ittoq_FUNC <- physeq_FUNC_ittoq@otu_table
+means.table.rel1_ittoq_FUNC <- as.data.frame(rowMeans(table.rel1_ittoq_FUNC))
+sd.table.rel1_ittoq_FUNC <- as.data.frame(matrixStats::rowSds(table.rel1_ittoq_FUNC, useNames = TRUE))
+summary.FUNC_ittoq <- merge(means.table.rel1_ittoq_FUNC, sd.table.rel1_ittoq_FUNC, by="row.names")
+colnames(summary.FUNC_ittoq) <- c("Gift","Mean", "SD")
+print(summary.FUNC_ittoq[order(-summary.FUNC_ittoq$Mean),], row.names = FALSE)
+```
+
+### Daneborg
+```{Daneborg, echo=TRUE, message=FALSE, warning=FALSE}
+physeq_FUNC_daneborg <- subset_samples(physeq_clr_FUNC, region == "Daneborg")
+physeq_FUNC_daneborg <- prune_taxa(taxa_sums(physeq_FUNC_daneborg)>0, physeq_FUNC_daneborg)
+table.rel1_daneborg_FUNC <- physeq_FUNC_daneborg@otu_table
+means.table.rel1_daneborg_FUNC <- as.data.frame(rowMeans(table.rel1_daneborg_FUNC))
+sd.table.rel1_daneborg_FUNC <- as.data.frame(matrixStats::rowSds(table.rel1_daneborg_FUNC, useNames = TRUE))
+summary.FUNC_daneborg <- merge(means.table.rel1_daneborg_FUNC, sd.table.rel1_daneborg_FUNC, by="row.names")
+colnames(summary.FUNC_daneborg) <- c("Gift","Mean", "SD")
+print(summary.FUNC_daneborg[order(-summary.FUNC_daneborg$Mean),], row.names = FALSE)
+```
+
+## Wilcoxon testing
+```{r mean function wilcoxon, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+physeq_clr_FUNC.t <- as.data.frame(t(as.matrix(physeq_clr_FUNC@otu_table)))
+table.W_FUNC <- tibble::rownames_to_column(physeq_clr_FUNC.t, "sample")
+sample_type <- all_metadata[,c(1,4)]
+table.W.meta_FUNC <- merge(table.W_FUNC,sample_type,by="sample")
+table.W.meta_FUNC <- table.W.meta_FUNC[,-c(1)]
+means_FUNC_by_region_all <- table.W.meta_FUNC %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_FUNC_by_region <- table.W.meta_FUNC %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
+means_all_FUNC <- as.data.frame(means_FUNC_by_region_all)
+means_FUNC <- as.data.frame(means_FUNC_by_region)
+
+means_FUNC <- means_FUNC[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
+
+knitr::kable(means_FUNC, format = "html", full_width = F, digits = 3) %>%
+  kable_styling(latex_options="scale_down")
+```
+```{r wilcox function, comment="", echo=TRUE, message=FALSE, warning=FALSE}
+physeq_clr_FUNC.t <- as.data.frame(t(as.matrix(physeq_clr_FUNC@otu_table)))
+table.W_FUNC <- tibble::rownames_to_column(physeq_clr_FUNC.t, "sample")
+sample_type <- metadata[,c(1,4)]
+FUNC_table <- merge(table.W_FUNC,sample_type,by="sample")
+FUNC_table <- FUNC_table[,-c(1)]
+FUNC_table.no <- FUNC_table[,-ncol(FUNC_table)]
+all.taxa_FUNC <- colnames(FUNC_table.no)
+Wilcox_result_FUNC <- c()
+for (y in all.taxa_FUNC){
+  res.wilcox_FUNC <- wilcox.test(FUNC_table[,y] ~ region, data = FUNC_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result_FUNC <- rbind(Wilcox_result_FUNC,c(res.wilcox_FUNC[[1]],Pvalue=res.wilcox_FUNC[[3]]))
+}
+rownames(Wilcox_result_FUNC) <- all.taxa_FUNC
+Wilcox_result_FUNC <- as.data.frame(Wilcox_result_FUNC)
+
+Wilcox_result_FUNC$p_adjusted <- p.adjust(Wilcox_result_FUNC$Pvalue, method = "fdr")
+
+Wilcox_result_sign_FUNC <- subset(Wilcox_result_FUNC, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "FUNC")
+knitr::kable(Wilcox_result_sign_FUNC, format = "html", full_width = F,col.names = c("Gift", "W", "p-value","p-value adjusted"), digits = 10) %>%
+  kable_styling(latex_options="scale_down")
+```
+
+
+# DESeq2
+```{DESeq2, echo=TRUE, message=FALSE, warning=FALSE}
+deseq_func <- phyloseq_to_deseq2(physeq_FUNC, ~region)
+
+deseq_func <- DESeq(deseq_func)
+results_table_FUNC <- results(deseq_func)
+```
+
+```{DESeq2 analysis, echo=TRUE, message=FALSE, warning=FALSE}
+deseq_res_ittoq_vs_daneborg_FUNC <- results(deseq_func, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
+
+summary(deseq_res_ittoq_vs_daneborg_FUNC) 
+# out of 545 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 64, 12%
+# LFC < 0 (down)     : 87, 16%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 82, 15%
+# (mean count < 0)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+
+# limit to only show results significant at p- adjusted value of 0.05
+
+sigtab_res_deseq_res_ittoq_vs_daneborg_FUNC <- deseq_res_ittoq_vs_daneborg_FUNC[which(deseq_res_ittoq_vs_daneborg_FUNC$padj < 0.05), ]
+
+summary(sigtab_res_deseq_res_ittoq_vs_daneborg_FUNC) 
+# out of 208 with nonzero total read count
+# adjusted p-value < 0.005
+# LFC > 0 (up)       : 64, 31%
+# LFC < 0 (down)     : 87, 42%
+# outliers [1]       : 0, 0%
+# low counts [2]     : 0, 0%
+# (mean count < 0)
+# [1] see 'cooksCutoff' argument of ?results
+# [2] see 'independentFiltering' argument of ?results
+```
+
+### Plotting
+```{DESeq2 table, echo=TRUE, message=FALSE, warning=FALSE}
+sigtab_deseq_FUNC <- deseq_res_ittoq_vs_daneborg_FUNC[which(deseq_res_ittoq_vs_daneborg_FUNC$padj < 0.005), ]
+
+func_matrix <- as.character(as(tax_table(taxtable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
+
+sigtab_deseq_region_FUNC_with_FUNC <- cbind(as(sigtab_deseq_FUNC, "data.frame"), as(tax_table(functable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
+sigtab_deseq_region_FUNC_with_FUNC[order(sigtab_deseq_region_FUNC_with_FUNC$baseMean, decreasing=T), ]
+genome <- rownames(sigtab_deseq_region_FUNC_with_FUNC)
+
+deseq2_ins_fis_func <- as.data.frame(cbind(sigtab_deseq_region_FUNC_with_FUNC, genome))
+
+x = tapply(deseq2_ins_fis_func$log2FoldChange, deseq2_ins_fis_func$genome, function(x) max(x))
+x = sort(x, TRUE)
+deseq2_ins_fis_func$genome = factor(as.character(deseq2_ins_fis_func$genome), levels=names(x))
+x = tapply(deseq2_ins_fis_func$log2FoldChange, deseq2_ins_fis_func$genome, function(x) max(x))
+x = sort(x, TRUE)
+deseq2_ins_fis_func$genome = factor(as.character(deseq2_ins_fis_func$genome), levels=names(x))
+```
+```{DESeq2 plotting, echo=TRUE, message=FALSE, warning=FALSE}
+ggplot(deseq2_ins_fis_func, aes(x=forcats::fct_rev(reorder(genome, as.integer(factor(genome)))), y=log2FoldChange)) + 
+  geom_point(size=4) + 
+ #scale_color_manual(values=tax_color1) + 
+  geom_hline(yintercept=0) + 
+  coord_flip()+
+  xlab("Gonome") + 
+  ylab("log2FoldChange")
+```
