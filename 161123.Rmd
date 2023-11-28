@@ -2089,6 +2089,77 @@ ggplot(deseq2_ins_fis_func, aes(x=forcats::fct_rev(reorder(genome, as.integer(fa
  #scale_color_manual(values=tax_color1) + 
   geom_hline(yintercept=0) + 
   coord_flip()+
-  xlab("Gonome") + 
+  xlab("Geonome") + 
   ylab("log2FoldChange")
 ```
+
+Heatmap
+```{r}
+# Heatmap showing top diff expressed genes
+
+library(pheatmap)
+top_FUNC <- rownames(deseq2_ins_fis_func)[deseq2_ins_fis_func$padj < 0.005]
+pheatmap(assay(deseq_func)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = deseq2_ins_fis_func$genome, main = "Significantly Differentially Expressed Genes at the Functional level")
+```
+LinDA
+
+
+```{r}
+library(mia)
+tse_func = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq_FUNC)
+tse_LinDA_FUNC <- mia::subsetByPrevalentTaxa(tse_func, detection = 0, prevalence = 0.1)
+```
+```{r}
+# install.packages(c("modeest", "lmerTest", "foreach", "parallel", "ggplot2", "ggrepel"))
+# install.packages("devtools")
+# devtools::install_github("zhouhj1994/LinDA")
+
+otu.tab_func <- as.data.frame(assay(tse_LinDA_FUNC))
+meta_func <- as.data.frame(colData(tse_LinDA_FUNC)) %>% select(region)
+LinDA_FUNC <- LinDA::linda(
+  otu.tab_func, 
+  meta_func, 
+  formula = '~region', 
+  alpha = 0.05, 
+  prev.cut = 0, # we already filtered 
+  lib.cut = 1000, 
+  winsor.quan = 0.97)
+
+LinDA_FUNC
+LinDA::linda.plot(LinDA_FUNC, c('region') )
+
+LinDA_table_FUNC <- rownames_to_column(LinDA_FUNC$output$regionIttoqqortoormii, "genus") 
+```
+```{r}
+tax_func <- data.frame(physeq_FUNC@tax_table) %>%
+  rownames_to_column(., "genome")
+
+LinDA_table_func <- rownames_to_column(LinDA_FUNC$output$regionIttoqqortoormii, "genome") 
+LinDA_table_func <- merge(LinDA_table_func, GIFTs_elements_clean, by = "genome", all.x = TRUE)
+
+LinDA_table_func <- LinDA_table_func %>%
+  dplyr::select(genome, lfcSE, padj, log2FoldChange) %>%
+  filter(padj < 0.005)
+
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table_func <- as.data.frame(unique(LinDA_table_func$genome))
+colnames(tax_table_func)[1] <- "genome"
+# tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+#	dplyr::arrange(phylum) %>%
+#	select(colors) %>%
+#	pull()
+```
+```{r}
+ggplot(LinDA_table_func, aes(x = genome, y = log2FoldChange)) + 
+  geom_point(size = 4) + 
+  geom_hline(yintercept = 0) + 
+  coord_flip() +
+  xlab("genome") + 
+  ylab("log2FoldChange")
+```
+
