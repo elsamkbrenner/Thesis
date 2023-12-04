@@ -91,7 +91,7 @@ ehi_phylum_colors <- read.table("~/Desktop/Thesis/R-analysis1/ehi_phylum_colors.
 
 #Fromat data for analysis, delete *__ from the taxonomy names
 ehi_phylum_colors1 <- ehi_phylum_colors %>%
-  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))
+  mutate_at(vars(phylum), ~ stringr::str_replace(., "[dpcofgs]__", ""))
 taxonomyclean <- mags_table%>%
   mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ str_replace(., "[dpcofgs]__", ""))
 ```
@@ -413,7 +413,7 @@ count_table_cov_size_pivot <- count_table_cov_size %>%
   mutate(phylum = fct_relevel(phylum, rev(ehi_phylum_colors$phylum))) #sort phyla by taxonomy
 
 count_table_cov_size_pivot <- count_table_cov_size_pivot %>%
-  mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ str_replace(., "[dpcofgs]__", "")) #delete __ from the taxonomy
+  mutate_at(vars(domain,phylum,class,order,family,genus,species), ~ stringr::str_replace(., "[dpcofgs]__", "")) #delete __ from the taxonomy
 
 count_table_cov_size_pivot_meta <- metadata[c(1,4)] %>%
     merge(., count_table_cov_size_pivot, by="sample") #merge with metadata
@@ -521,7 +521,7 @@ metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified
 metadata_unified_clean <- metadata_unified %>%
   filter(sample != "")
 selected_columns <- metadata_unified_clean %>%
-  select(sample, Pack, PR_results_short, toxocaris_leonina, sarcocystis_spp, Tania_serialis, cryptosporidium, giardia, toxoplasma_gondii, trichincella_spp, Huldscore)
+  select(sample, PR_results_short, PR_toxocaris_leonina, PR_sarcocystis, PR_Tania_serialis, PR_cryptosporidium, PR_giardia, sero_toxoplasma_gondii_PR, sero_trichincella_spp_PR, Huldscore, Eukaryota_., Cryptosporidium_., Giardia_., Sarcocystis_., Toxoplasma_gondii_., Toxacaris_., Trichinella_., Uncinaria_., Echinococcus_., Taenia_., Cestoda_., Nematoda_.)
 
 all_metadata <- dplyr::left_join(metadata, selected_columns, by = "sample") # use for remaining analysis
 ```
@@ -676,6 +676,7 @@ print(t_test_results_P)
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
 beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
+betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S") #error
 ```
 
 ### Statistical analysis from EHI workflow
@@ -2031,3 +2032,47 @@ ggplot(LinDA_table_func, aes(x = genome, y = log2FoldChange)) +
   xlab("genome") + 
   ylab("log2FoldChange")
 ```
+
+
+######################### EHI FUNC WORKFLOW ####################################
+
+Kegg tree from EHI workflow page
+```{r kegg tree from EHI, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#Generate a basal utrametric tree for the sake of visualisation
+kegg_tree <- force.ultrametric(tree,method="extend") %>%
+                ggtree(., size = 0.3)
+```
+Kegg data prep from EHI workflow, not running now because no Kegg file
+```{r kegg data prep from EHI, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+# Microbiome functional attribute table
+kegg_table <- read.table(
+      gunzip(paste0("data/",batch,"_merged_kegg.tsv.gz"), remove=FALSE, overwrite=TRUE),
+      sep="\t",header=T, row.names=1)
+
+#Add phylum colors next to the tree tips
+    kegg_tree <- gheatmap(kegg_tree, heatmap, offset=0, width=0.1, colnames=FALSE) +
+            scale_fill_manual(values=colors_alphabetic)
+
+#Reset fill scale to use a different colour profile in the heatmap
+kegg_tree <- kegg_tree + new_scale_fill()
+
+#Add KEGG heatmap
+kegg_tree <- gheatmap(kegg_tree, kegg_table, offset=0.5, width=3.5, colnames=FALSE) +
+            vexpand(.08) +
+            coord_cartesian(clip = "off") +
+            scale_fill_gradient(low = "#f4f4f4", high = "steelblue", na.value="white")
+
+#Plot combined tree + heatmap
+kegg_tree +
+            theme(legend.position='none')
+```
+
+################# WORKSPACE ####################
+
+```{r}
+gene_annotations_df <- gene_annotations
+
+
+```
+
+
