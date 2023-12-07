@@ -521,7 +521,7 @@ metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified
 metadata_unified_clean <- metadata_unified %>%
   filter(sample != "")
 selected_columns <- metadata_unified_clean %>%
-  select(sample, PR_results_short, PR_toxocaris_leonina, PR_sarcocystis, PR_Tania_serialis, PR_cryptosporidium, PR_giardia, sero_toxoplasma_gondii_PR, sero_trichincella_spp_PR, Huldscore, Eukaryota_., Cryptosporidium_., Giardia_., Sarcocystis_., Toxoplasma_gondii_., Toxacaris_., Trichinella_., Uncinaria_., Echinococcus_., Taenia_., Cestoda_., Nematoda_.)
+  select(sample, Q_code, PR_results_short, PR_toxocaris_leonina, PR_sarcocystis, PR_Tania_serialis, PR_cryptosporidium, PR_giardia, sero_toxoplasma_gondii_PR, sero_trichincella_spp_PR, Huldscore, Eukaryota_., Cryptosporidium_., Giardia_., Sarcocystis_., Toxoplasma_gondii_., Toxacaris_., Trichinella_., Uncinaria_., Echinococcus_., Taenia_., Cestoda_., Nematoda_.)
 
 all_metadata <- dplyr::left_join(metadata, selected_columns, by = "sample") # use for remaining analysis
 ```
@@ -676,7 +676,7 @@ print(t_test_results_P)
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
 beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
-betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S") #error
+# betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S") #error
 ```
 
 ### Statistical analysis from EHI workflow
@@ -2034,40 +2034,18 @@ ggplot(LinDA_table_func, aes(x = genome, y = log2FoldChange)) +
 ```
 
 
-######################### EHI FUNC WORKFLOW ####################################
-
-Kegg tree from EHI workflow page
-```{r kegg tree from EHI, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-#Generate a basal utrametric tree for the sake of visualisation
-kegg_tree <- force.ultrametric(tree,method="extend") %>%
-                ggtree(., size = 0.3)
-```
+######################### FUNC WORKFLOW ####################################
 Kegg data prep from EHI workflow, not running now because no Kegg file
 ```{r kegg data prep from EHI, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
 # Microbiome functional attribute table
-kegg_table <- read.table(
-      gunzip(paste0("data/",batch,"_merged_kegg.tsv.gz"), remove=FALSE, overwrite=TRUE),
-      sep="\t",header=T, row.names=1)
+kegg_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_merged_kegg.tsv"
+kegg_table <- read.table(kegg_file,sep="\t",header=T)
 
-#Add phylum colors next to the tree tips
-    kegg_tree <- gheatmap(kegg_tree, heatmap, offset=0, width=0.1, colnames=FALSE) +
-            scale_fill_manual(values=colors_alphabetic)
-
-#Reset fill scale to use a different colour profile in the heatmap
-kegg_tree <- kegg_tree + new_scale_fill()
-
-#Add KEGG heatmap
-kegg_tree <- gheatmap(kegg_tree, kegg_table, offset=0.5, width=3.5, colnames=FALSE) +
-            vexpand(.08) +
-            coord_cartesian(clip = "off") +
-            scale_fill_gradient(low = "#f4f4f4", high = "steelblue", na.value="white")
-
-#Plot combined tree + heatmap
-kegg_tree +
-            theme(legend.position='none')
+kegg_table_clean <- dplyr::distinct(kegg_table) #remove duplicate rows
 ```
 
-################# WORKSPACE ####################
+################# Kraken ####################
 
 ```{r Percent Eukaryotic summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 summary(all_metadata$Eukaryota_.)
@@ -2180,6 +2158,7 @@ Giardia
 summary(all_metadata$Giardia_.)
 # Range 0 - 0.004
 # Med = 0.0002, Mean = 0.0004107
+summary((subset(all_metadata, Giardia_. != 0)$Giardia_.))
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Giardia_R <- all_metadata %>%
@@ -2403,7 +2382,8 @@ ggplot(all_metadata, aes(x = region, y = Trichinella_., group = region, color = 
     title = "Trichinella",
     x = "Region",
     y = "% of Eukaryotic reads"
-  )
+  ) +
+    coord_cartesian(ylim = c(0, 0.03))
 
 # Plot by PR results
 ggplot(all_metadata %>% filter(sero_trichincella_spp_PR != "excluded"),
@@ -2429,6 +2409,7 @@ Taenia
 summary(all_metadata$Taenia_.)
 # Range 0 - 0.008
 # Med = 0, Mean = 0.0004343
+mean(subset(all_metadata, Taenia_. != 0)$Taenia_.) #0.001145
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Taenia_R <- all_metadata %>%
@@ -2490,6 +2471,7 @@ Uncinaria
 summary(all_metadata$Uncinaria_.)
 # Range 0 - 0.02 
 # Med = 0, Mean = 0.0003843
+summary((subset(all_metadata, Uncinaria_. != 0)$Uncinaria_.))
 
 # Shapiro-Wilk test for normality
 shapiro_results_Uncinaria <- all_metadata %>%
@@ -2519,7 +2501,8 @@ ggplot(all_metadata, aes(x = region, y = Uncinaria_., group = region, color = re
     title = "Uncinaria",
     x = "Region",
     y = "% of Euk reads"
-  )
+  ) +
+      coord_cartesian(ylim = c(0, 0.00025))
 ```
 Echinococcus
 ```{r Percent Echinococcus summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
