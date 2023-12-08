@@ -2612,3 +2612,59 @@ ggplot(all_metadata, aes(x = region, y = Nematoda_., group = region, color = reg
     y = "% of unmapped reads"
   )
 ```
+
+
+```{r}
+inferred_species <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/inferred_species.csv") %>% as.data.frame()
+
+columns_to_select <- setdiff(names(iferred_species), "region")
+
+# Perform left join excluding the 'region' column
+all_metadata <- dplyr::left_join(all_metadata, iferred_species %>% select(all_of(columns_to_select)), by = "sample")
+
+```
+
+```{r}
+# Reshape the data for ggplot2 using tidyr
+inferred_species_long <- inferred_species %>%
+  pivot_longer(cols = -c(sample, region), names_to = "species", values_to = "count")
+inferred_species_long <- inferred_species %>%
+  pivot_longer(cols = -c(sample, region), names_to = "species", values_to = "count")
+
+# Define a function to group species based on prefixes
+group_species <- function(species) {
+  if (grepl("^C_", species)) {
+    return("C_")
+  } else if (grepl("^G_", species)) {
+    return("G_")
+  } else if (grepl("^Ta_", species)) {
+    return("Ta_")
+  } else if (grepl("^Tr_", species)) {
+    return("Tr_")
+  } else if (grepl("^S_", species)) {
+    return("S_")
+  } else if (grepl("^E_", species)) {
+    return("E_")
+  } else {
+    return("Other")
+  }
+}
+
+custom_palette <- brewer.pal(n = 7, name = "Set3")
+
+# Add a new column for species group
+inferred_species_long <- inferred_species_long %>%
+  mutate(species_group = sapply(species, group_species))
+
+# Create a stacked bar graph with facets along the x-axis
+ggplot(inferred_species_long, aes(x = sample, y = count, fill = species_group)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = setNames(custom_palette, unique(inferred_species_long$species_group))) +  # Use custom color palette
+  facet_wrap(~region, scales = "free_x") +  # Display scales along the bottom
+  labs(title = "Stacked Bar Graph",
+       x = "Sample ID",
+       y = "Count",
+       fill = "Species Group") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
