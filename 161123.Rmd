@@ -716,11 +716,32 @@ beta_q1n_nmds <- beta_q1n %>%
                 vegan::scores() %>%
                 as_tibble(., rownames = "sample") %>%
                 dplyr::left_join(all_metadata, by = join_by(sample == sample))
+
+betaq1p_nmds <- betaq1p %>%
+                metaMDS(.,trymax = 500, k=2, verbosity=FALSE) %>%
+                vegan::scores() %>%
+                as_tibble(., rownames = "sample") %>%
+                dplyr::left_join(all_metadata, by = join_by(sample == sample))
 ```
 ```{r beta div NMDS plot, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 group_n <- length(unique(beta_q1n_nmds$region))
 
+group_p <- length(unique(betaq1p_nmds$region))
+
 beta_q1n_nmds %>%
+            group_by(region) %>%
+            mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
+            mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
+            ungroup() %>%
+            ggplot(., aes(x=NMDS1,y=NMDS2, color=region)) +
+                scale_color_manual(values=beta_colors[c(1:group_n)]) +
+                geom_point(size=2) +
+                geom_segment(aes(x=x_cen, y=y_cen, xend=NMDS1, yend=NMDS2), alpha=0.2) +
+                theme_classic() +
+                theme(legend.position="right", legend.box="vertical") +
+                guides(color=guide_legend(title="Region"))
+
+betaq1p_nmds %>%
             group_by(region) %>%
             mutate(x_cen = mean(NMDS1, na.rm = TRUE)) %>%
             mutate(y_cen = mean(NMDS2, na.rm = TRUE)) %>%
@@ -2059,6 +2080,84 @@ kegg_table_clean <- dplyr::distinct(kegg_table) #remove duplicate rows
 
 kegg_table_clean_1 <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(kegg_table_clean),]
 
+```
+```{r}
+# Functional diversity analysis analysis
+#### read table ####
+filtered_df <- read.table("all_annotations.csv", sep="")
+```
+
+## Functional GIFT distillation:
+```{r gifts, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide', cache=TRUE}
+count_filtered_rel <- count_filtered %>%
+  rownames_to_column(., "Genome") %>%
+  mutate_at(vars(-Genome),~./sum(.))  %>%
+  column_to_rownames(., "Genome")
+
+#Run distillation
+GIFTs <- distill(filtered_df,GIFT_db,genomecol=2,annotcol=c(9,10,19))
+#GIFTs <- GIFTs[-c(9,10),]
+GIFT_db_table <- GIFT_db
+
+# counts filtered correctly to the GIFTs distillation. Use this for counts from here on out. 
+count_filtered_use_this <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(GIFTs),]
+
+# Aggregate bundle-level GIFTs into the compound level 
+# This is the level we will use for analysis
+GIFTs_elements <- to.elements(GIFTs,GIFT_db)
+
+#Aggregate element-level GIFTs into the function level
+GIFTs_functions <- to.functions(GIFTs_elements,GIFT_db)
+
+#Aggregate function-level GIFTs into overall Biosynthesis, Degradation and Structural GIFTs
+GIFTs_domains <- to.domains(GIFTs_functions,GIFT_db)
+
+#Get community-weighed average GIFTs per sample
+GIFTs_elements_community <- to.community(GIFTs_elements,count_filtered_use_this,GIFT_db)
+GIFTs_functions_community <- to.community(GIFTs_functions,count_filtered_use_this,GIFT_db)
+GIFTs_domains_community <- to.community(GIFTs_domains,count_filtered_use_this,GIFT_db)
+
+#Convert traits into distance matrix
+dist <- traits2dist(GIFTs_elements, method="gower")
+```
+```{r}
+GIFTs_domains_community_df <- as.data.frame(GIFTs_domains_community)
+GIFTs_domains_community_df$sample <- rownames(GIFTs_domains_community_df)
+
+selected_columns_func <- all_metadata %>%
+  select(sample, region)
+
+GIFTs_domains_community_df <- dplyr::left_join(GIFTs_domains_community_df, selected_columns_func, by = "sample")
+```
+```{r}
+# Plot
+ggplot(GIFTs_domains_community_df, aes(x = region, y = Biosynthesis, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "Community Domain",
+    x = "Region",
+    y = "Biosynthesis"
+  )
+
+shapiro_results_biosynthesis <- GIFTs_domains_community_df %>%
+  group_by(region) %>%
+  summarise(shapiro_p_value = shapiro.test(Biosynthesis)$p.value)
+# Daneborg p = 0.08991827	Ittoq p = 0.57914457
+
+GIFTs_domains_community_df %>%
+  filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
+  group_by(region) %>%
+  summarise(wilcox_p = wilcox.test(Biosynthesis ~ region, data = .)$p.value) -> wilcox_results
+print(wilcox_results)
+# YES statistically significant p=0.02144674
 ```
 
 ################# Kraken ####################
