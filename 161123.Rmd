@@ -2083,6 +2083,7 @@ kegg_table_clean_1 <- count_filtered_rel[rownames(count_filtered_rel) %in% rowna
 ```
 
 # back to using distillR
+## Community Domain level
 ```{r}
 GIFTs_domains_community_df <- as.data.frame(GIFTs_domains_community)
 GIFTs_domains_community_df$sample <- rownames(GIFTs_domains_community_df)
@@ -2213,6 +2214,32 @@ print(t_results_overall)
 library(gridExtra)
 grid.arrange(arrangeGrob(a1, a2,a3, a4, ncol = 2))
 ```
+
+Now at the Community Functions level:
+
+```{r}
+GIFTs_functions_community_df <- as.data.frame(GIFTs_functions_community)
+GIFTs_functions_community_df$sample <- rownames(GIFTs_functions_community_df)
+
+GIFTs_functions_community_df <- dplyr::left_join(GIFTs_functions_community_df, selected_columns_func, by = "sample")
+
+Wilcox_result_functions_community <- c()
+for (y in GIFTs_functions_community_df$sample){
+  res.wilcox <- wilcox.test(phylum_table[,y] ~ region, data = phylum_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result <- rbind(Wilcox_result,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+}
+rownames(Wilcox_result) <- all.taxa
+Wilcox_result <- as.data.frame(Wilcox_result)
+
+Wilcox_result$p_adjusted <- p.adjust(Wilcox_result$Pvalue, method = "fdr")
+
+Wilcox_result_sign <- subset(Wilcox_result, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Phylum")
+knitr::kable(Wilcox_result_sign, format = "html", full_width = F,col.names = c("Phylum", "W", "p-value","p-value adjusted"), digits = 10) %>%
+  kable_styling(latex_options="scale_down")
+```
+
 
 ################# Kraken ####################
 
