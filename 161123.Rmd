@@ -676,7 +676,7 @@ print(t_test_results_P)
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
 beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
-# betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S") #error
+betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S") #error
 ```
 
 ### Statistical analysis from EHI workflow
@@ -689,9 +689,22 @@ sample_table_adonis <- all_metadata %>%
     select_if(~ length(unique(.)) > 1) %>% #remove columns with all-identical values
     column_to_rownames(var = "sample") %>%
     as.data.frame()
+
+sample_table_adonis_p <- all_metadata %>%
+    filter(sample %in% labels(betaq1p)) %>%
+    arrange(sample) %>%
+    # mutate(location=paste0(round(longitude,2),"_",round(latitude,2))) %>%
+    # select(sample,region) %>%
+    select_if(~ length(unique(.)) > 1) %>% #remove columns with all-identical values
+    column_to_rownames(var = "sample") %>%
+    as.data.frame()
 ```
 ```{r}
     adonis2(formula=beta_q1n ~ region, data=sample_table_adonis[labels(beta_q1n),], permutations=999) %>%
+            as.matrix() %>%
+            kable()
+
+    adonis2(formula=betaq1p ~ region, data=sample_table_adonis[labels(betaq1p),], permutations=999) %>%
             as.matrix() %>%
             kable()
 ```
@@ -2043,6 +2056,9 @@ kegg_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_merged_kegg.tsv"
 kegg_table <- read.table(kegg_file,sep="\t",header=T)
 
 kegg_table_clean <- dplyr::distinct(kegg_table) #remove duplicate rows
+
+kegg_table_clean_1 <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(kegg_table_clean),]
+
 ```
 
 ################# Kraken ####################
