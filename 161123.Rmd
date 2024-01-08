@@ -2281,6 +2281,231 @@ cf2<- ggplot(GIFTs_functions_community_df, aes(x = region, y = S02, group = regi
 library(gridExtra)
 grid.arrange(arrangeGrob(cf1, cf2, ncol = 2))
 ```
+#Community Element
+```{r}
+# community element level
+GIFTs_elements_community_df <- as.data.frame(GIFTs_elements_community) %>%
+  rownames_to_column(., var = "sample")
+GIFTs_elements_community_df <- merge(selected_columns_func, GIFTs_elements_community_df, by = "sample")
+GIFTs_elements_community_df <- column_to_rownames(GIFTs_elements_community_df, var = "sample")
+table.W_elements <- tibble::rownames_to_column(GIFTs_elements_community_df, "sample")
+comm_elements_table <- subset(table.W_elements, select = -c(sample))
+comm_elements_table.no <- subset(comm_elements_table, select = -c(region))
+all.comm_elements <- colnames(comm_elements_table.no)
+
+Wilcox_result_comm_elements <- c()
+for (y in all.comm_elements){ 
+  res.wilcox_comm_elements <- wilcox.test(comm_elements_table[,y] ~ region, data = comm_elements_table,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result_comm_elements <- rbind(Wilcox_result_comm_elements,c(res.wilcox_comm_elements[[1]],Pvalue=res.wilcox_comm_elements[[3]]))
+}
+rownames(Wilcox_result_comm_elements) <- all.comm_elements
+Wilcox_result_comm_elements <- as.data.frame(Wilcox_result_comm_elements)
+
+Wilcox_result_comm_elements$p_adjusted <- p.adjust(Wilcox_result_comm_elements$Pvalue, method = "fdr")
+
+Wilcox_result_comm_elements_sign <- subset(Wilcox_result_comm_elements, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Code_element")
+knitr::kable(Wilcox_result_comm_elements_sign, format = "html", full_width = F,col.names = c("Code_element", "W", "p-value","p-value adjusted"), digits = 10) %>%
+  kable_styling(latex_options="scale_down")
+```
+```{r}
+# B0103 - Nucleic acid biosynthesis - UDP/UTP
+ce1<- ggplot(GIFTs_elements_community_df, aes(x = region, y = B0103, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "B0103 - Nucleic acid biosynthesis - UDP/UTP",
+    x = "Region",
+    y = "B0103"
+  )
+# B1028 - Antibiotic biosynthesis - Pyocyanin
+ce2<- ggplot(GIFTs_elements_community_df, aes(x = region, y = B1028, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "B1028 - Antibiotic biosynthesis - Pyocyanin",
+    x = "Region",
+    y = "B1028"
+  )
+# D0302 - Sugar degradation - Sucrose
+ce3<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0302, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0302 - Sugar degradation - Sucrose",
+    x = "Region",
+    y = "D0302"
+  )
+# D0309 - Sugar degradation - Galactose
+ce4<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0309, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0309 - Sugar degradation - Galactose",
+    x = "Region",
+    y = "D0309"
+  )
+# D0501 - Amino acid degradation - Serine
+ce5<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0501, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0501 - Amino acid degradation - Serine",
+    x = "Region",
+    y = "D0501"
+  )
+# D0701 - Alcohol degradation - 2,3-Butanediol
+ce6<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0701, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0701 - Alcohol degradation - 2,3-Butanediol",
+    x = "Region",
+    y = "D0701"
+  )
+# D0705 - Alcohol degradation - Propylene glycol
+ce7<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0705, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0705 - Alcohol degradation - Propylene glycol",
+    x = "Region",
+    y = "D0705"
+  )
+# D0807 - Xenobiotic degradation - Catechol
+ce8<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0807, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0807 - Xenobiotic degradation - Catechol",
+    x = "Region",
+    y = "D0807"
+  )
+# D0905 - Antibiotic degradation - Streptogramin
+ce9<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0905, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0905 - Antibiotic degradation - Streptogramin",
+    x = "Region",
+    y = "D0905"
+  )
+# D0911 - Antibiotic degradation - Lincosamide
+ce10<- ggplot(GIFTs_elements_community_df, aes(x = region, y = D0911, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D0911 - Antibiotic degradation - Lincosamide",
+    x = "Region",
+    y = "D0911"
+  )
+# S0104 - Cellular structure - Lipoteichoic acid
+ce11<- ggplot(GIFTs_elements_community_df, aes(x = region, y = S0104, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "S0104 - Cellular structure - Lipoteichoic acid",
+    x = "Region",
+    y = "S0104"
+  )
+# S0201 - Appendages - Flagellum
+ce12<- ggplot(GIFTs_elements_community_df, aes(x = region, y = S0201, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "S0201 - Appendages - Flagellum",
+    x = "Region",
+    y = "S0201"
+  )
+# Joint figure
+library(gridExtra)
+grid.arrange(arrangeGrob(ce1, ce2,ce3, ce4, ce5, ce6, ce7, ce8, ce9, ce10, ce11, ce12, ncol = 4))
+```
 
 
 ################# Kraken ####################
