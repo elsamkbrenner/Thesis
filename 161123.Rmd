@@ -676,7 +676,7 @@ print(t_test_results_P)
 ```{r beta_div_neutral, comment="", echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 beta_colors <- c("#e5bd5b","#6b7398","#76b183","#d57d2c","#2a2d26","#f9d4cc","#3c634e","#ea68c3")
 beta_q1n <- hilldiv2::hillpair(count_table_cov_size, q=1, metric="S")
-betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S") #error
+betaq1p <- hilldiv2::hillpair(count_table_cov_size, q=1, tree = tree, metric ="S")
 ```
 
 ### Statistical analysis from EHI workflow
@@ -2216,28 +2216,70 @@ grid.arrange(arrangeGrob(a1, a2,a3, a4, ncol = 2))
 ```
 
 Now at the Community Functions level:
-
 ```{r}
-GIFTs_functions_community_df <- as.data.frame(GIFTs_functions_community)
-GIFTs_functions_community_df$sample <- rownames(GIFTs_functions_community_df)
+GIFTs_functions_community_df <- as.data.frame(GIFTs_functions_community) %>%
+  rownames_to_column(., var = "sample")
+GIFTs_functions_community_df <- merge(selected_columns_func, GIFTs_functions_community_df, by = "sample")
+GIFTs_functions_community_df <- column_to_rownames(GIFTs_functions_community_df, var = "sample")
+table.W_comm <- tibble::rownames_to_column(GIFTs_functions_community_df, "sample")
+comm_func_table <- subset(table.W_comm, select = -c(sample))
+comm_func_table.no <- subset(comm_func_table, select = -c(region))
+all.comm_func <- colnames(comm_func_table.no)
 
-GIFTs_functions_community_df <- dplyr::left_join(GIFTs_functions_community_df, selected_columns_func, by = "sample")
-
-Wilcox_result_functions_community <- c()
-for (y in GIFTs_functions_community_df$sample){
-  res.wilcox <- wilcox.test(phylum_table[,y] ~ region, data = phylum_table,
+Wilcox_result_comm_func <- c()
+for (y in all.comm_func){ 
+  res.wilcox_comm_func <- wilcox.test(comm_func_table[,y] ~ region, data = comm_func_table,
                             exact = FALSE, alternative = "less")
-  Wilcox_result <- rbind(Wilcox_result,c(res.wilcox[[1]],Pvalue=res.wilcox[[3]]))
+  Wilcox_result_comm_func <- rbind(Wilcox_result_comm_func,c(res.wilcox_comm_func[[1]],Pvalue=res.wilcox_comm_func[[3]]))
 }
-rownames(Wilcox_result) <- all.taxa
-Wilcox_result <- as.data.frame(Wilcox_result)
+rownames(Wilcox_result_comm_func) <- all.comm_func
+Wilcox_result_comm_func <- as.data.frame(Wilcox_result_comm_func)
 
-Wilcox_result$p_adjusted <- p.adjust(Wilcox_result$Pvalue, method = "fdr")
+Wilcox_result_comm_func$p_adjusted <- p.adjust(Wilcox_result_comm_func$Pvalue, method = "fdr")
 
-Wilcox_result_sign <- subset(Wilcox_result, p_adjusted <= 0.05) %>%
-  rownames_to_column(., "Phylum")
-knitr::kable(Wilcox_result_sign, format = "html", full_width = F,col.names = c("Phylum", "W", "p-value","p-value adjusted"), digits = 10) %>%
+Wilcox_result_comm_func_sign <- subset(Wilcox_result_comm_func, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Code_function")
+knitr::kable(Wilcox_result_comm_func_sign, format = "html", full_width = F,col.names = c("Code_function", "W", "p-value","p-value adjusted"), digits = 10) %>%
   kable_styling(latex_options="scale_down")
+```
+```{r}
+# D09-Antibiotic degradation
+cf1<- ggplot(GIFTs_functions_community_df, aes(x = region, y = D09, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "D09-Antibiotic degradation",
+    x = "Region",
+    y = "D09"
+  )
+
+# S02-Appendages
+cf2<- ggplot(GIFTs_functions_community_df, aes(x = region, y = S02, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "S02-Appendages",
+    x = "Region",
+    y = "S02"
+  )
+
+# joint figure
+library(gridExtra)
+grid.arrange(arrangeGrob(cf1, cf2, ncol = 2))
 ```
 
 
