@@ -3165,5 +3165,3 @@ knitr::kable(Wilcox_result_sign_pathogenic, format = "html", full_width = F,col.
 
 # No sig differences in potentially pathogenic bacteria when samples are grouped by region
 ```
-
-
