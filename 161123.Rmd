@@ -2507,7 +2507,6 @@ library(gridExtra)
 grid.arrange(arrangeGrob(ce1, ce2,ce3, ce4, ce5, ce6, ce7, ce8, ce9, ce10, ce11, ce12, ncol = 4))
 ```
 
-
 ################# Kraken ####################
 
 ```{r Percent Eukaryotic summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -3130,4 +3129,41 @@ ggplot(inferred_species_long, aes(x = sample, y = count, fill = species_group)) 
        fill = "Species Group") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+
+# DA of potentially pathogenic bacteria:
+
+Bacteroides
+```{r}
+
+pathogenic_physeq = subset_taxa(physeq_clr_genus, genus=="Bacteroides" | genus== "Campylobacter_D" | genus== "Clostridium"| genus== "Clostridium_AH"| genus== "Clostridium_G"| genus== "Clostridium_H"| genus== "Clostridium_I"| genus== "Clostridium_Q"| genus== "Enterococcus_B"| genus== "Escherichia"| genus== "Fusobacterium_A"| genus== "Fusobacterium_B" | genus== "Helicobacter_A" | genus== "Helicobacter_B" | genus== "Helicobacter_C" | genus== "Helicobacter_D" | genus== "Helicobacter_G" | genus== "Klebsiella" | genus== "Streptococcus")
+
+pathogenic_physeq.t <- as.data.frame(t(as.matrix(pathogenic_physeq@otu_table)))
+table.W_pathogenic <- tibble::rownames_to_column(pathogenic_physeq.t, "sample")
+sample_type <- metadata[,c(1,4)]
+taxa_table_pathogenic <- merge(table.W_pathogenic,sample_type,by="sample")
+taxa_table_pathogenic <- taxa_table_pathogenic[,-c(1)]
+taxa_table_pathogenic.no <- taxa_table_pathogenic[,-ncol(taxa_table_pathogenic)]
+all.taxa_pathogenic <- colnames(taxa_table_pathogenic.no)
+Wilcox_result_pathogenic <- c()
+for (y in all.taxa_pathogenic){
+  res.wilcox_pathogenic <- wilcox.test(taxa_table_pathogenic[,y] ~ region, data = taxa_table_pathogenic,
+                            exact = FALSE, alternative = "less")
+  Wilcox_result_pathogenic <- rbind(Wilcox_result_pathogenic,c(res.wilcox_pathogenic[[1]],Pvalue=res.wilcox_pathogenic[[3]]))
+}
+rownames(Wilcox_result_pathogenic) <- all.taxa_pathogenic
+Wilcox_result_pathogenic <- as.data.frame(Wilcox_result_pathogenic)
+
+Wilcox_result_pathogenic$p_adjusted <- p.adjust(Wilcox_result_pathogenic$Pvalue, method = "fdr")
+
+Wilcox_result_sign_pathogenic <- subset(Wilcox_result_pathogenic, p_adjusted <= 0.05) %>%
+  rownames_to_column(., "Phylum")
+knitr::kable(Wilcox_result_pathogenic, format = "html", full_width = F,col.names = c("Genus", "W", "p-value","p-value adjusted"), digits = 10) %>%
+  kable_styling(latex_options="scale_down")
+
+knitr::kable(Wilcox_result_sign_pathogenic, format = "html", full_width = F,col.names = c("Genus", "W", "p-value","p-value adjusted"), digits = 10) %>%
+  kable_styling(latex_options="scale_down")
+
+# No sig differences in potentially pathogenic bacteria when samples are grouped by region
+```
+
 
