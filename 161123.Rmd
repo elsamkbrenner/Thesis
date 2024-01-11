@@ -521,7 +521,7 @@ metadata_unified <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/metadata_unified
 metadata_unified_clean <- metadata_unified %>%
   filter(sample != "")
 selected_columns <- metadata_unified_clean %>%
-  select(sample, Q_code, PR_results_short, PR_toxocaris_leonina, PR_sarcocystis, PR_Tania_serialis, PR_cryptosporidium, PR_giardia, sero_toxoplasma_gondii_PR, sero_trichincella_spp_PR, Huldscore, Eukaryota_., Cryptosporidium_., Giardia_., Sarcocystis_., Toxoplasma_gondii_., Toxacaris_., Trichinella_., Uncinaria_., Echinococcus_., Taenia_., Cestoda_., Nematoda_.)
+  select(sample, Q_code, PR_results_short, PR_toxocaris_leonina, PR_sarcocystis, PR_Tania_serialis, PR_cryptosporidium, PR_giardia, sero_toxoplasma_gondii_PR, sero_trichincella_spp_PR, Huldscore, Eukaryota_., Cryptosporidium_., Giardia_., Sarcocystis_., Toxoplasma_gondii_., Toxacaris_., Trichinella_., Uncinaria_., Echinococcus_., Taenia_., Cestoda_., Nematoda_., Virus_., PARVO_Parvoviridae_., PARVO_Bocaparvovirus_., PARVO_Canine_Minute_., PARVO_Canine_bufavirus_., PARVO_Canine_protoparvovirus_., PARVO_Canine_parvovirus_., ADENO_Adenoviridae_., ADENO_Canine_mastadenovirus_., PAP_Papillomaviridae_., )
 
 all_metadata <- dplyr::left_join(metadata, selected_columns, by = "sample") # use for remaining analysis
 ```
@@ -3079,10 +3079,10 @@ ggplot(all_metadata, aes(x = region, y = Nematoda_., group = region, color = reg
 ```{r}
 inferred_species <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/inferred_species.csv") %>% as.data.frame()
 
-columns_to_select <- setdiff(names(iferred_species), "region")
+columns_to_select <- setdiff(names(inferred_species), "region")
 
 # Perform left join excluding the 'region' column
-all_metadata <- dplyr::left_join(all_metadata, iferred_species %>% select(all_of(columns_to_select)), by = "sample")
+all_metadata <- dplyr::left_join(all_metadata, inferred_species %>% select(all_of(columns_to_select)), by = "sample")
 
 ```
 
@@ -3131,10 +3131,7 @@ ggplot(inferred_species_long, aes(x = sample, y = count, fill = species_group)) 
 ```
 
 # DA of potentially pathogenic bacteria:
-
-Bacteroides
 ```{r}
-
 pathogenic_physeq = subset_taxa(physeq_clr_genus, genus=="Bacteroides" | genus== "Campylobacter_D" | genus== "Clostridium"| genus== "Clostridium_AH"| genus== "Clostridium_G"| genus== "Clostridium_H"| genus== "Clostridium_I"| genus== "Clostridium_Q"| genus== "Enterococcus_B"| genus== "Escherichia"| genus== "Fusobacterium_A"| genus== "Fusobacterium_B" | genus== "Helicobacter_A" | genus== "Helicobacter_B" | genus== "Helicobacter_C" | genus== "Helicobacter_D" | genus== "Helicobacter_G" | genus== "Klebsiella" | genus== "Streptococcus")
 
 pathogenic_physeq.t <- as.data.frame(t(as.matrix(pathogenic_physeq@otu_table)))
