@@ -1095,6 +1095,87 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
 ```
 
 # DA
+```{r}
+# remove MAGs only present in one treatment, in this case the region
+Ittoq_samples <- all_metadata %>% 
+                    filter(region == "Ittoqqortoormii") %>% 
+                    dplyr::select(sample) %>% pull()
+
+Daneborg_samples <- all_metadata %>% 
+                    filter(region == "Daneborg") %>% 
+                    dplyr::select(sample) %>% pull()
+
+# count_table_cov_size <- rownames_to_column(counts_table, var = "genome") already done
+
+structural_zeros <- count_table_cov_size %>% 
+   rowwise() %>% #compute for each row (genome)
+   mutate(all_zeros_Ittoq = all(c_across(all_of(Ittoq_samples)) == 0)) %>% # set true if all samples in Ittoq have zeros
+   mutate(all_zeros_Daneborg = all(c_across(all_of(Daneborg_samples)) == 0)) %>% # set true if all samples in Daneborg have zeros
+   mutate(average_Ittoq = mean(c_across(all_of(Ittoq_samples)), na.rm = TRUE)) %>% # get average genome counts across Ittoq
+   mutate(average_Daneborg = mean(c_across(all_of(Daneborg_samples)), na.rm = TRUE)) %>% # get average genome counts across Daneborg
+   filter(all_zeros_Ittoq == TRUE || all_zeros_Daneborg==TRUE)  %>% # filter only genomes with structural zeros
+   mutate(present = case_when(
+      all_zeros_Ittoq & !all_zeros_Daneborg ~ "Daneborg",
+      !all_zeros_Ittoq & all_zeros_Daneborg ~ "Ittoq",
+      !all_zeros_Ittoq & !all_zeros_Daneborg ~ "None",
+      TRUE ~ NA_character_
+    )) %>%
+   mutate(average = ifelse(present == "Ittoq", average_Ittoq, average_Daneborg)) %>%
+   dplyr::select(genome, present, average) %>%
+   dplyr::left_join(mags_table, by=join_by(genome==genome)) %>%
+   arrange(present,-average)
+```
+```{r}
+structural_zeros %>%
+    mutate(average = ifelse(present == "Ittoq", average * -1, average)) %>% #convert Ittoq genome counts to negative
+    ggplot(., aes(x=average, y=forcats::fct_rev(phylum), color=phylum)) +
+      geom_jitter(size=3) +
+      geom_vline(xintercept=0) + 
+      xlim(-max(structural_zeros$average)-3,max(structural_zeros$average)+3) +
+      scale_color_manual(values=phylum_colors) +
+      geom_text(aes(-max(structural_zeros$average)+5, 1), label = "Only present\nin Ittoq", color="#666666") +
+      geom_text(aes(max(structural_zeros$average)-5, 1), label = "Only present\nin Daneborg", color="#666666") +
+     theme(legend.position='none',
+          panel.background = element_blank(),
+          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"))+
+      labs(y="Genus",x="Genome counts") + 
+      guides(col=guide_legend("Phylum"))
+```
+```{r}
+# Make new counts table with structural zeros removed
+count_table_cov_size_DA <- count_table_cov_size[!count_table_cov_size$genome %in% structural_zeros$genome, ]
+row.names(count_table_cov_size_DA) <- count_table_cov_size_DA$genome
+count_table_cov_size_DA$genome <- NULL 
+```
+
+```{r}
+## Making phyloseq object -- for DA analysis
+
+# OTU table
+MAGotu <- otu_table(count_table_cov_size_DA, taxa_are_rows = T)
+
+# Tax table
+taxonomyclean1 <- taxonomyclean[,-1]
+taxmatrix <- as.matrix(taxonomyclean1[1:8])
+rownames(taxmatrix) <- taxonomyclean$genome
+taxtable <- tax_table(taxmatrix) 
+
+#Metadata
+metadata <- na.omit(metadata)
+rownames(metadata) <- NULL
+metadata.pre <- column_to_rownames(metadata, "sample")
+
+#Sample table
+sample_tab <- sample_data(metadata.pre)
+
+# Tree
+tree <- phytools::force.ultrametric(tree, method = "extend")
+treephylo = phyloseq::phy_tree(tree)
+
+## Merge into phyloseq object
+physeq <- phyloseq(MAGotu, treephylo, sample_tab,taxtable)
+```
+
 ## CLR transformation and wilcoxon testing
 ### Phylum level
 CLR transforming phyloseq object:
@@ -1139,7 +1220,7 @@ table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
 sample_type <- all_metadata[,c(1,4)]
 table.W.meta <- merge(table.W,sample_type,by="sample")
 table.W.meta <- table.W.meta[,-c(1)]
-means_phylum_by_region_all <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
+means_phylum_by_region_all <- table.W.meta %>% dplyr::group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
 means_phylum_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
 means_all <- as.data.frame(means_phylum_by_region_all)
 means <- as.data.frame(means_phylum_by_region)
@@ -1571,6 +1652,9 @@ pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F,
 ```
 
 ## ANCOM-BC
+
+
+
 ### phylum level
 ```{r ANCOM-BC DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 physeq.phylum <- tax_glom(physeq, 'phylum')
@@ -1686,36 +1770,6 @@ ggplot(ancombc_table_genus, aes(x=forcats::fct_rev(genus), y=lfc_regionIttoqqort
   xlab("genus") + 
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
-```
-
-## Lefser
-### phylum level
-```{r Lefser DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-lefser(
-  tse,
-  kruskal.threshold = 0.05,
-  wilcox.threshold = 0.05,
-  lda.threshold = 2,
-  groupCol = "region",
-  blockCol = NULL,
-  assay = "counts", 
-  trim.names = FALSE,
-  checkAbundances = TRUE
-)
-```
-### genus level
-```{r lefser DA G, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-lefser(
-  tse_genus,
-  kruskal.threshold = 0.05,
-  wilcox.threshold = 0.05,
-  lda.threshold = 2,
-  groupCol = "region",
-  blockCol = NULL,
-  assay = "counts", 
-  trim.names = FALSE,
-  checkAbundances = TRUE
-)
 ```
 
 ### LinDA
@@ -3074,6 +3128,102 @@ ggplot(all_metadata, aes(x = region, y = Nematoda_., group = region, color = reg
     y = "% of unmapped reads"
   )
 ```
+# Viruses
+
+Viral overall
+```{r}
+summary(all_metadata$Virus_.)
+# Range 0.3-4.0 % reads mapped to Virus
+# Med = 0.07%, Mean = 0.225
+
+# Shapiro-Wilk test for normality
+shapiro_results_Virus <- all_metadata %>%
+  group_by(region) %>%
+  summarise(shapiro_p_value = shapiro.test(Virus_.)$p.value)
+# Results: p = 0.000237 Daneborg, p = 0.00000000206 Ittoq
+# THEREFORE neither region has normally distributed values for % Virus reads
+
+# Wilcoxon Exact rank test
+library(exactRankTests)
+wilcox_exact_results_Virus <- exactRankTests::wilcox.exact(Virus_. ~ region, data = all_metadata)
+print(wilcox_exact_results_Virus)
+# Results: p = 0.002321
+# THEREFORE YES sig diff in % Virus reads between regions
+
+# Plot
+ggplot(all_metadata, aes(x = region, y = Virus_., group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank()
+  ) +
+  labs(
+    title = "Virus",
+    x = "Region",
+    y = "% of unmapped reads"
+  ) + coord_cartesian(ylim = c(0, 1) )
+```
+```{r}
+# Parvo
+# Wilcoxon Exact rank test
+library(exactRankTests)
+wilcox_exact_results_Parvo <- exactRankTests::wilcox.exact(all_metadata$PARVO_Parvoviridae_. ~ region, data = all_metadata)
+print(wilcox_exact_results_Parvo)
+# Results: p = 7.547e-09
+# THEREFORE YES sig diff in % Viral reads mapped to Parvo between regions
+
+count_Parvo <- aggregate(PARVO_Parvoviridae ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 28, Ittoq = 27
+count_Bocaparvovirus <- aggregate(PARVO_Bocaparvovirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 23, Ittoq = 27
+count_Human_Bocavirus <- aggregate(PARVO_Human_Bocavirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 19, Ittoq = 1
+count_Bufavirus_1 <- aggregate(PARVO_Bufavirus_1 ~ region, data = all_metadata, FUN = sum)
+# Daneborg 9, Ittoq = 10
+count_Canine_Minute <- aggregate(PARVO_Canine_Minute ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 0, Ittoq = 1
+count_Canine_bufavirus <- aggregate(PARVO_Canine_bufavirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 0, Ittoq = 1
+count_Canine_protoparvovirus <- aggregate(PARVO_Canine_protoparvovirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 0, Ittoq = 1
+count_Canine_parvovirus <- aggregate(PARVO_Canine_parvovirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 1, Ittoq = 0
+
+# Adenovirus
+# Wilcoxon Exact rank test
+library(exactRankTests)
+wilcox_exact_results_Adeno <- exactRankTests::wilcox.exact(all_metadata$ADENO_Adenoviridae_. ~ region, data = all_metadata)
+print(wilcox_exact_results_Adeno)
+# Results: p = 0.0001022
+# THEREFORE YES sig diff in % Viral reads mapped to Adeno between regions
+
+count_Adeno <- aggregate(ADENO_Adenoviridae ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 19 Ittoq = 27
+count_Canine_mastadenovirus <- aggregate(ADENO_Canine_mastadenovirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 0, Ittoq = 3
+count_Human_adenovirus <- aggregate(ADENO_Human_adenovirus ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 3, Ittoq = 24
+
+#Papilloma
+# Wilcoxon Exact rank test
+library(exactRankTests)
+wilcox_exact_results_Pap <- exactRankTests::wilcox.exact(all_metadata$PAP_Papillomaviridae_. ~ region, data = all_metadata)
+print(wilcox_exact_results_Pap)
+# Results: p = 8.691e-05
+# THEREFORE YES sig diff in % Viral reads mapped to Pap between regions
+
+count_Pap <- aggregate(PAP_Papillomaviridae ~ region, data = all_metadata, FUN = sum)
+#Daneborg = 28 Ittoq = 29
+count_HPV <- aggregate(PAP_HPV ~ region, data = all_metadata, FUN = sum)
+# Daneborg = 28, Ittoq = 29
+count_Tick_assoc_papillomavirus_lsx <- aggregate(PAP_Tick_assoc_papillomavirus_lsx ~ region, data = all_metadata, FUN = sum)
+# Daneborg 0, Ittoq = 25
+```
+
 
 
 ```{r}
