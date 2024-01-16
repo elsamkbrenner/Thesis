@@ -1743,9 +1743,9 @@ ancom_result %>%
 
 ancom_results <- ancom_result %>%
   filter(lfc_regionIttoqqortoormii < 0) %>% #
-  filter(p_regionIttoqqortoormii < 0.01) %>%
+  filter(q_regionIttoqqortoormii < 0.05) %>%
   arrange(lfc_regionIttoqqortoormii) %>%
-  dplyr::select(genome,lfc_regionIttoqqortoormii,phylum)
+  dplyr::select(genome,lfc_regionIttoqqortoormii,q_regionIttoqqortoormii, phylum)
 
 kable(ancom_results)
 ```
@@ -1870,9 +1870,9 @@ ancom_result_genus %>%
 
 ancom_result_genus <- ancom_result_genus %>%
   filter(lfc_regionIttoqqortoormii < 0) %>%
-  filter(p_regionIttoqqortoormii < 0.05) %>%
+  filter(q_regionIttoqqortoormii < 0.05) %>%
   arrange(lfc_regionIttoqqortoormii) %>%
-  dplyr::select(genome, lfc_regionIttoqqortoormii, p_regionIttoqqortoormii, phylum, genus)
+  dplyr::select(genome, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii, phylum, genus)
 
 kable(ancom_result_genus)
 ```
@@ -1892,6 +1892,135 @@ ggplot(ancom_result_genus, aes(x=forcats::fct_rev(genus), y=lfc_regionIttoqqorto
   ylab("log2FoldChange") +
   guides(col=guide_legend("phylum"))
 ```
+### ADLEx2
+
+```{r}
+library(ALDEx2)
+
+count_ALDEx <- count_table_cov_size_DA %>%
+  as.data.frame() %>%
+  mutate_all(~ . * 1e6) %>% #multiple by a million
+  round(0) #round to integer
+
+count_ALDEx.clr <- aldex.clr(count_ALDEx, 
+               all_metadata$region, 
+               mc.samples=128, 
+               denom="all", 
+               verbose=F)
+
+```
+```{r}
+count_ALDEx.ttest <- aldex.ttest(count_ALDEx.clr, 
+                hist.plot=F, 
+                paired.test=F, 
+                verbose=F)
+
+count_ALDEx.effect <- aldex.effect(count_ALDEx.clr, 
+              CI=T, 
+              verbose=F, 
+              include.sample.summary=F, 
+              glm.conds=NULL, 
+              useMC=F)
+```
+```{r}
+count_ALDEx.all <- data.frame(count_ALDEx.ttest,count_ALDEx.effect) %>%
+    rownames_to_column(var="genome") %>%
+    left_join(taxonomyclean,by=join_by(genome==genome))
+```
+Bland-Altman plot
+```{r}
+count_ALDEx.all %>%
+    mutate(significance = ifelse(we.eBH < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=rab.all, y=diff.btw, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      labs(color="Significance", y="Difference between treatments", x="Mean CLR") +
+      theme_classic()
+```
+Volcano plot
+```{r}
+count_ALDEx.all %>%
+    mutate(significance = ifelse(wi.eBH < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=-log(wi.eBH), y=diff.btw, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      labs(color="Significance", y="Difference between treatments", x="p-value") +
+      theme_classic()
+```
+```{r}
+count_ALDEx.all %>%
+    mutate(significance = ifelse(wi.eBH < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=diff.win, y=diff.btw, color=significance)) +
+      geom_abline(intercept = 0, slope =  0, size=0.4, linetype="solid",  color="#000000") +
+      geom_abline(intercept = 0, slope =  1, size=0.4, linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope =  2, size=0.6,   linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope =  4, size=0.8,   linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope = -1, size=0.4, linetype="dashed", color="#000000") + 
+      geom_abline(intercept = 0, slope = -2, size=0.6,   linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope = -4, size=0.8,   linetype="dashed", color="#000000") +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc90","#00FFFF90")) +
+      geom_text(aes(2.5, 20), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(2.5, -20), label = "Enriched\nin Ittoq", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="Dispersion within treatments") +
+      theme_classic()
+```
+Significance based on posterior probabilities
+```{r}
+count_ALDEx.all %>%
+    mutate(significance = ifelse(overlap < 0.1, "1", "0")) %>%
+    ggplot(., aes(x=diff.win, y=diff.btw, color=significance)) +
+      geom_abline(intercept = 0, slope =  0, size=0.4, linetype="solid",  color="#000000") +
+      geom_abline(intercept = 0, slope =  1, size=0.4, linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope =  2, size=0.6,   linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope =  4, size=0.8,   linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope = -1, size=0.4, linetype="dashed", color="#000000") + 
+      geom_abline(intercept = 0, slope = -2, size=0.6,   linetype="dashed", color="#000000") +
+      geom_abline(intercept = 0, slope = -4, size=0.8,   linetype="dashed", color="#000000") +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc90","#00FFFF90")) +
+      geom_text(aes(2.5, 20), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(2.5, -20), label = "Enriched\nin Ittoq", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="Dispersion within treatments") +
+      theme_classic()
+```
+```{r}
+count_ALDEx.all %>%
+    filter(overlap < 0.5) %>% # changed to see if chart worked. tutorial has set at 0.1
+    ggplot(., aes(x=effect, y=forcats::fct_rev(phylum), color=phylum)) +
+      geom_jitter(size=3) +
+      geom_vline(xintercept=0) + 
+      xlim(-max(count_ALDEx.all$effect)-1,max(count_ALDEx.all$effect)+1) +
+      scale_color_manual(values=colors_alphabetic$colors) +
+      geom_text(aes(-max(count_ALDEx.all$effect)+1, 1), label = "Enriched\nin I", color="#666666") +
+      geom_text(aes(max(count_ALDEx.all$effect)-1, 1), label = "Enriched\nin D", color="#666666") +
+     theme(legend.position='none',
+          panel.background = element_blank(),
+          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+          axis.title.x=element_blank())+
+      labs(y="Genus",x="Genome counts") + 
+      guides(col=guide_legend("Phylum"))
+```
+Top enriched in Ittoq
+```{r}
+count_ALDEx.all %>%
+  filter(effect < -1) %>% #
+  filter(overlap < 0.1) %>% # >90% of the estimated effect sizes are >0
+  arrange(effect) %>%
+  dplyr::select(genome,effect,phylum, genus) %>%
+  kable()
+```
+Top enriched in Daneborg
+```{r}
+count_ALDEx.all %>%
+  filter(effect > 1) %>%
+  filter(overlap < 0.1) %>% # >90% of the estimated effect sizes are >0
+  arrange(-effect) %>%
+  dplyr::select(genome,effect,phylum,order,genus) %>%
+  kable()
+```
+
+
 
 ### LinDA
 #### phylum level
