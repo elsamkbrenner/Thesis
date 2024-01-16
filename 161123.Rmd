@@ -584,7 +584,6 @@ alpha_div_N %>%
 ```
 
 ```{r alpha_div_neutral_stats, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-
 # Shapiro-Wilk test for normality
 alpha_div_N %>%
   filter(region %in% c("Daneborg", "Ittoqqortoormii")) %>%
@@ -593,12 +592,10 @@ alpha_div_N %>%
 # Results: p = 0.01942486	(Daneborg), p = 0.61532713	Ittoqqortoormiit
 # THEREFORE Daneborg data is not normally distributed, though Ittoq is. THUS a non-parametric test is applied
 
-
 # Non-normally distributed data test for equal variance
 car::leveneTest(q1 ~ region, alpha_div_N)
 # Results: p = 0.0008284
 # THEREFORE data does not exhibit equal variance. 
-
 
 # Wilcoxon signed rank test for statistical significance
 alpha_div_N %>%
@@ -757,12 +754,10 @@ betaq1p_nmds %>%
 
 ### Stats second method, to check EHI workflow results
 ```{r Adonis_Region EHI, comment="", echo=TRUE, message=FALSE, warning=FALSE}
-
 # order data
 m2 <- as.matrix(beta_q1n) 
 sample_table_adonis_row <- rownames_to_column(sample_table_adonis, "Samples")
 metadata_ord_2<- sample_table_adonis[order(match(sample_table_adonis_row$Sample,rownames(m2))),]
-
 
 #Permutation test
 ps.disper.neutral <- betadisper(beta_q1n, metadata_ord_2$region) 
@@ -770,7 +765,6 @@ permutest(ps.disper.neutral, pairwise = TRUE)
 # F Statistic: 26.96
 # p-value: 0.001
 # THEREFORE the data does NOT have equal multivariate dispersions 
- 
 
 # Adonis
 adonis2(beta_q1n ~ region, data =metadata_ord_2, permutations = 999)
@@ -1105,7 +1099,7 @@ Daneborg_samples <- all_metadata %>%
                     filter(region == "Daneborg") %>% 
                     dplyr::select(sample) %>% pull()
 
-# count_table_cov_size <- rownames_to_column(counts_table, var = "genome") already done
+# count_table_cov_size <- rownames_to_column(counts_table, var = "genome") # only run once
 
 structural_zeros <- count_table_cov_size %>% 
    rowwise() %>% #compute for each row (genome)
@@ -1492,29 +1486,10 @@ results_table <- results(region_deseq_phylum)
 deseq_res_ittoq_vs_daneborg <- results(region_deseq_phylum, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
 
 summary(deseq_res_ittoq_vs_daneborg) 
-# out of 12 with nonzero total read count
-# adjusted p-value < 0.005
-# LFC > 0 (up)       : 0, 0%
-# LFC < 0 (down)     : 3, 25%
-# outliers [1]       : 0, 0%
-# low counts [2]     : 0, 0%
-# (mean count < 1)
-# [1] see 'cooksCutoff' argument of ?results
-# [2] see 'independentFiltering' argument of ?results
-
 # limit to only show results significant at p- adjusted value of 0.05
 sigtab_res_deseq_res_ittoq_vs_daneborg <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.05), ]
 
 summary(sigtab_res_deseq_res_ittoq_vs_daneborg) 
-# out of 6 with nonzero total read count
-# adjusted p-value < 0.005
-# LFC > 0 (up)       : 0, 0%
-# LFC < 0 (down)     : 3, 50%
-# outliers [1]       : 0, 0%
-# low counts [2]     : 0, 0%
-# (mean count < 1)
-# [1] see 'cooksCutoff' argument of ?results
-# [2] see 'independentFiltering' argument of ?results
 ```
 3 phyla are significantly differently abundant between Ittoq and Daneborg
 
@@ -1530,9 +1505,9 @@ deseq2_ins_fis <- as.data.frame(sigtab_deseq_region_phylum_with_tax)
 x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$phylum, function(x) max(x))
 x = sort(x, TRUE)
 sigtab_deseq_region_phylum_with_tax$phylum = factor(as.character(sigtab_deseq_region_phylum_with_tax$phylum), levels=names(x))
-x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$genus, function(x) max(x))
+x = tapply(sigtab_deseq_region_phylum_with_tax$log2FoldChange, sigtab_deseq_region_phylum_with_tax$phylum, function(x) max(x))
 x = sort(x, TRUE)
-sigtab_deseq_region_phylum_with_tax$genus = factor(as.character(sigtab_deseq_region_phylum_with_tax$genus), levels=names(x))
+sigtab_deseq_region_phylum_with_tax$phylum = factor(as.character(sigtab_deseq_region_phylum_with_tax$phylum), levels=names(x))
 
 colors_alphabetic <- ehi_phylum_colors1 %>%
   dplyr::right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
@@ -1604,7 +1579,7 @@ summary(sigtab_res_deseq_res_ittoq_vs_daneborg_genus)
 # [1] see 'cooksCutoff' argument of ?results
 # [2] see 'independentFiltering' argument of ?results
 ```
-19 genusus w/ significant DA between regions
+22 genusus w/ significant DA between regions
 ```{r DESeq2 DA G stats, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 sigtab_deseq_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.005), ]
 
@@ -1633,8 +1608,12 @@ tax_color1 <- merge(tax_table1, colors_alphabetic, by="phylum")%>%
   select(colors) %>%
   pull()
 
-sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%	dplyr::arrange(phylum)
+sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%
+  select(genus, phylum, padj, log2FoldChange) %>%
+  arrange(phylum)
+
 rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
+
 ```
 ```{r DESeq2 DA G plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(factor(genus)))), y=log2FoldChange, color=phylum)) + 
@@ -1653,36 +1632,43 @@ pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F,
 
 ## ANCOM-BC
 
-
-
 ### phylum level
 ```{r ANCOM-BC DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 physeq.phylum <- tax_glom(physeq, 'phylum')
 tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum) # create tse object
 
-print(tse)
-#class: TreeSummarizedExperiment 
-#dim: 12 58 
-#metadata(0):
-#assays(1): counts
-#rownames(12): EHA01923_bin.9 EHA01876_bin.8 ... EHA01908_bin.22 EHA01872_bin.6
-#rowData names(8): domain phylum ... species completeness
-#colnames(58): EHI01293 EHI01286 ... EHI01294 EHI01324
-#colData names(18): sample_code species ... diversity C
-
-ancombc2_out <- ancombc2(data = tse,
-                         assay_name = "counts",
-                         fix_formula = "region",
-                         p_adj_method = "fdr",
-                         prv_cut = 0,
-                         group = "region",
-                         struc_zero = TRUE,
-                         neg_lb = TRUE,
-                         # multi group comparison is deactivated automatically
-                         global = TRUE)
+set.seed(1234) #set seed for reproducibility
+ancombc2_out <- ancombc2(physeq.phylum, 
+                  assay_name = "counts", 
+                  tax_level = NULL,
+                  fix_formula = "region",
+                  p_adj_method = "holm", 
+                  pseudo_sens = TRUE,
+                  prv_cut = 0.10, 
+                  lib_cut = 1000, 
+                  s0_perc = 0.05,
+                  group = NULL, 
+                  struc_zero = FALSE, 
+                  neg_lb = FALSE,
+                  alpha = 0.05, 
+                  n_cl = 2, 
+                  verbose = TRUE,
+                  global = FALSE, 
+                  pairwise = FALSE, 
+                  dunnet = FALSE, 
+                  trend = FALSE,
+                  iter_control = list(tol = 1e-5, max_iter = 20, verbose = FALSE),
+                  em_control = list(tol = 1e-5, max_iter = 100),
+                  lme_control = NULL, 
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
+                  trend_control = NULL)
 
 tax <- data.frame(physeq@tax_table) %>%
-  rownames_to_column(., "taxon")
+  rownames_to_column(., "taxon") 
+
+ancom_result <- ancombc2_out$res %>%
+    rename(genome=taxon)  %>%
+    dplyr::left_join(taxonomyclean,by=join_by(genome==genome))
 
 ancombc_table <- ancombc2_out$res %>%
   dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
@@ -1703,44 +1689,116 @@ tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
 	select(colors) %>%
 	pull()
 ```
+```{r}
+ancom_result %>%
+    mutate(significance = ifelse(p_regionIttoqqortoormii < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=-log(p_regionIttoqqortoormii), y=lfc_regionIttoqqortoormii, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      geom_text(aes(2.5, 10), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(2.5, -10), label = "Enriched\nin Ittoq", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="p-value") +
+      theme_classic()
+```
+```{r}
+library(dplyr)
+
+MAGotu %>% 
+    as.data.frame() %>%
+    dplyr::mutate(average = rowMeans(across(everything())))  %>%
+    rownames_to_column(var="genome") %>% 
+    dplyr::right_join(ancom_result, by=join_by(genome==genome)) %>% 
+    dplyr::mutate(significance = ifelse(p_regionIttoqqortoormii < 0.01, "1", "0")) %>%
+    ggplot(., aes(x=average, y=lfc_regionIttoqqortoormii, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      geom_text(aes(150, 10), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(150, -10), label = "Enriched\nin Ittoq", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="Average genome count") +
+      theme_classic()
+```
+
+```{r}
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  dplyr::right_join(ancom_result, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+ancom_result %>%
+    filter(p_regionIttoqqortoormii < 0.01) %>%
+    ggplot(., aes(x=lfc_regionIttoqqortoormii, y=forcats::fct_rev(phylum), color=phylum)) +
+      geom_jitter(size=3) +
+      geom_vline(xintercept=0) + 
+      xlim(-max(ancom_result$lfc_regionIttoqqortoormii)-2,max(ancom_result$lfc_regionIttoqqortoormii)+2) +
+      scale_color_manual(values=colors_alphabetic$colors) +
+      geom_text(aes(-max(ancom_result$lfc_regionIttoqqortoormii)+1, 1), label = "Enriched in Daneborg", color="#666666") +
+      geom_text(aes(max(ancom_result$lfc_regionIttoqqortoormii)-1, 1), label = "Enriched in Ittoq", color="#666666") +
+      theme(legend.position='none',
+          panel.background = element_blank(),
+          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+          axis.title.x=element_blank())+
+      labs(y="Phylum",x="Genome counts") + 
+      guides(col=guide_legend("Phylum"))
+
+ancom_results <- ancom_result %>%
+  filter(lfc_regionIttoqqortoormii < 0) %>% #
+  filter(p_regionIttoqqortoormii < 0.01) %>%
+  arrange(lfc_regionIttoqqortoormii) %>%
+  dplyr::select(genome,lfc_regionIttoqqortoormii,phylum)
+
+kable(ancom_results)
+```
 ```{r ANCOM-BC DA P plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(ancombc_table, aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+ancom_results %>%
+  ggplot(., aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
   geom_point(size=4) + 
-  scale_color_manual(values=tax_color) + 
+  scale_color_manual(values=colors_alphabetic$colors) + 
   geom_hline(yintercept=0) + 
   coord_flip()+
   xlab("phylum") + 
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
+
+
 ### genus level
 ```{r ANCOM-BC DA G, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 physeq.genus <- tax_glom(physeq, 'genus')
 tse_genus = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.genus)
 
-print(tse_genus)
-#class: TreeSummarizedExperiment 
-#dim: 12 58 
-#metadata(0):
-#assays(1): counts
-#rownames(12): EHA01923_bin.9 EHA01876_bin.8 ... EHA01908_bin.22 EHA01872_bin.6
-#rowData names(8): domain phylum ... species completeness
-#colnames(58): EHI01293 EHI01286 ... EHI01294 EHI01324
-#colData names(18): sample_code species ... diversity C
-
-ancombc2_out_genus <- ancombc2(data = tse,
-                         assay_name = "counts",
-                         fix_formula = "region",
-                         p_adj_method = "fdr",
-                         prv_cut = 0,
-                         group = "region",
-                         struc_zero = TRUE,
-                         neg_lb = TRUE,
-                         # multi group comparison is deactivated automatically
-                         global = TRUE)
+set.seed(1234) #set seed for reproducibility
+ancombc2_out_genus <- ancombc2(physeq.genus, 
+                  assay_name = "counts", 
+                  tax_level = NULL,
+                  fix_formula = "region",
+                  p_adj_method = "holm", 
+                  pseudo_sens = TRUE,
+                  prv_cut = 0.10, 
+                  lib_cut = 1000, 
+                  s0_perc = 0.05,
+                  group = NULL, 
+                  struc_zero = FALSE, 
+                  neg_lb = FALSE,
+                  alpha = 0.05, 
+                  n_cl = 2, 
+                  verbose = TRUE,
+                  global = FALSE, 
+                  pairwise = FALSE, 
+                  dunnet = FALSE, 
+                  trend = FALSE,
+                  iter_control = list(tol = 1e-5, max_iter = 20, verbose = FALSE),
+                  em_control = list(tol = 1e-5, max_iter = 100),
+                  lme_control = NULL, 
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
+                  trend_control = NULL)
 
 tax <- data.frame(physeq@tax_table) %>%
-  rownames_to_column(., "taxon")
+  rownames_to_column(., "taxon") 
+
+ancom_result_genus <- ancombc2_out_genus$res %>%
+    rename(genome=taxon)  %>%
+    dplyr::left_join(taxonomyclean,by=join_by(genome==genome))
 
 ancombc_table_genus <- ancombc2_out_genus$res %>%
   dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
@@ -1755,21 +1813,84 @@ colors_alphabetic <- ehi_phylum_colors1 %>%
 	dplyr::arrange(phylum)
 
 tax_table <- as.data.frame(unique(ancombc_table_genus$genus))
-colnames(tax_table)[1] <- "genus"
-# tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
-#	dplyr::arrange(phylum) %>%
-#	select(colors) %>%
-#	pull()
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	select(colors) %>%
+	pull()
+```
+```{r}
+ancom_result_genus %>%
+    mutate(significance = ifelse(p_regionIttoqqortoormii < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=-log(p_regionIttoqqortoormii), y=lfc_regionIttoqqortoormii, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      geom_text(aes(2.5, 10), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(2.5, -10), label = "Enriched\nin Ittoq", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="p-value") +
+      theme_classic()
+```
+```{r}
+MAGotu %>% 
+    as.data.frame() %>%
+    dplyr::mutate(average = rowMeans(across(everything())))  %>%
+    rownames_to_column(var="genome") %>% 
+    dplyr::right_join(ancom_result_genus, by=join_by(genome==genome)) %>% 
+    dplyr::mutate(significance = ifelse(p_regionIttoqqortoormii < 0.01, "1", "0")) %>%
+    ggplot(., aes(x=average, y=lfc_regionIttoqqortoormii, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      geom_text(aes(150, 10), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(150, -10), label = "Enriched\nin Ittoq", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="Average genome count") +
+      theme_classic()
+```
+```{r}
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  dplyr::right_join(ancom_result_genus, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+ancom_result_genus %>%
+    filter(p_regionIttoqqortoormii < 0.01) %>%
+    ggplot(., aes(x=lfc_regionIttoqqortoormii, y=forcats::fct_rev(phylum), color=phylum)) +
+      geom_jitter(size=3) +
+      geom_vline(xintercept=0) + 
+      xlim(-max(ancom_result_genus$lfc_regionIttoqqortoormii)-2,max(ancom_result_genus$lfc_regionIttoqqortoormii)+2) +
+      scale_color_manual(values=colors_alphabetic$colors) +
+      geom_text(aes(-max(ancom_result_genus$lfc_regionIttoqqortoormii)+1, 1), label = "Enriched in Daneborg", color="#666666") +
+      geom_text(aes(max(ancom_result_genus$lfc_regionIttoqqortoormii)-1, 1), label = "Enriched in Ittoq", color="#666666") +
+     theme(legend.position='none',
+          panel.background = element_blank(),
+          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+          axis.title.x=element_blank())+
+      labs(y="Genus",x="Genome counts") + 
+      guides(col=guide_legend("Phylum"))
+
+ancom_result_genus <- ancom_result_genus %>%
+  filter(lfc_regionIttoqqortoormii < 0) %>%
+  filter(p_regionIttoqqortoormii < 0.05) %>%
+  arrange(lfc_regionIttoqqortoormii) %>%
+  dplyr::select(genome, lfc_regionIttoqqortoormii, p_regionIttoqqortoormii, phylum, genus)
+
+kable(ancom_result_genus)
 ```
 ```{r ANCOM-BC DA G plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(ancombc_table_genus, aes(x=forcats::fct_rev(genus), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  dplyr::right_join(ancom_result_genus, by=join_by(phylum == phylum)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+ggplot(ancom_result_genus, aes(x=forcats::fct_rev(genus), y=lfc_regionIttoqqortoormii, color=phylum)) + 
   geom_point(size=4) + 
-  scale_color_manual(values=tax_color) + 
+  scale_color_manual(values=colors_alphabetic$colors) + 
   geom_hline(yintercept=0) + 
   coord_flip()+
   xlab("genus") + 
-  ylab("log2FoldChange")+
-  guides(col=guide_legend("Phylum"))
+  ylab("log2FoldChange") +
+  guides(col=guide_legend("phylum"))
 ```
 
 ### LinDA
@@ -3171,6 +3292,7 @@ ggplot(all_metadata, aes(x = region, y = Virus_., group = region, color = region
 # Parvo
 # Wilcoxon Exact rank test
 library(exactRankTests)
+summary(all_metadata$PARVO_Parvoviridae_.)
 wilcox_exact_results_Parvo <- exactRankTests::wilcox.exact(all_metadata$PARVO_Parvoviridae_. ~ region, data = all_metadata)
 print(wilcox_exact_results_Parvo)
 # Results: p = 7.547e-09
