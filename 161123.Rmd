@@ -1483,7 +1483,7 @@ region_deseq_phylum <- DESeq(region_deseq_phylum)
 results_table <- results(region_deseq_phylum)
 ```
 ```{r DESeq2 summary DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-deseq_res_ittoq_vs_daneborg <- results(region_deseq_phylum, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
+deseq_res_ittoq_vs_daneborg <- results(region_deseq_phylum, alpha=0.05, contrast=c("region", "Ittoqqortoormii", "Daneborg"))
 
 summary(deseq_res_ittoq_vs_daneborg) 
 # limit to only show results significant at p- adjusted value of 0.05
@@ -1491,11 +1491,11 @@ sigtab_res_deseq_res_ittoq_vs_daneborg <- deseq_res_ittoq_vs_daneborg[which(dese
 
 summary(sigtab_res_deseq_res_ittoq_vs_daneborg) 
 ```
-3 phyla are significantly differently abundant between Ittoq and Daneborg
+there are 5 genes showing increased expression in ittoq compared to Daneborg, 1 showing decreased expression in ittoq compared to daneborg
 
 Add in taxonomic information and sort by baseMean
 ```{r DESeq2 DA P baseMean, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-sigtab_deseq <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.005), ]
+sigtab_deseq <- deseq_res_ittoq_vs_daneborg[which(deseq_res_ittoq_vs_daneborg$padj < 0.05), ]
 
 sigtab_deseq_region_phylum_with_tax <- cbind(as(sigtab_deseq, "data.frame"), as(tax_table(taxtable)[row.names(sigtab_deseq), ], "matrix"))
 sigtab_deseq_region_phylum_with_tax[order(sigtab_deseq_region_phylum_with_tax$baseMean, decreasing=T), ]
@@ -1536,11 +1536,7 @@ ggplot(sigtab_deseq_with_tax1, aes(x=forcats::fct_rev(reorder(phylum, as.integer
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
-Heatmap
-```{r DESeq2 DA P heatmap, comment="", echo=FALSE, message=FALSE, warning=FALSE} 
-top_phylum <- rownames(sigtab_deseq_region_phylum_with_tax)[sigtab_deseq_region_phylum_with_tax$padj < 0.005]
-pheatmap(assay(region_deseq_phylum)[top_phylum, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_phylum_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Phylum level")
-```
+
 
 ### Genus level
 ```{r DESeq2 DA G, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -1553,35 +1549,18 @@ region_deseq_genus <- DESeq(region_deseq_genus)
 results_table <- results(region_deseq_genus)
 ```
 ```{r DESeq2 DA G summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-deseq_res_ittoq_vs_daneborg_genus <- results(region_deseq_genus, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
+deseq_res_ittoq_vs_daneborg_genus <- results(region_deseq_genus, alpha=0.05, contrast=c("region", "Ittoqqortoormii", "Daneborg"))
 
 summary(deseq_res_ittoq_vs_daneborg_genus) 
-# out of 131 with nonzero total read count
-# adjusted p-value < 0.005
-# LFC > 0 (up)       : 2, 1.5%
-# LFC < 0 (down)     : 17, 13%
-# outliers [1]       : 0, 0%
-# low counts [2]     : 51, 39%
-# (mean count < 1)
-# [1] see 'cooksCutoff' argument of ?results
-# [2] see 'independentFiltering' argument of ?results
 
 sigtab_res_deseq_res_ittoq_vs_daneborg_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.05), ]
 
 summary(sigtab_res_deseq_res_ittoq_vs_daneborg_genus) 
-# out of 45 with nonzero total read count
-# adjusted p-value < 0.005
-# LFC > 0 (up)       : 2, 4.4%
-# LFC < 0 (down)     : 17, 38%
-# outliers [1]       : 0, 0%
-# low counts [2]     : 0, 0%
-# (mean count < 1)
-# [1] see 'cooksCutoff' argument of ?results
-# [2] see 'independentFiltering' argument of ?results
+
 ```
-22 genusus w/ significant DA between regions
+34 MAGs are enriched in Ittoq, compared to Daneborg. 8 are enriched in Daneborg, compared to Ittoq
 ```{r DESeq2 DA G stats, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-sigtab_deseq_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.005), ]
+sigtab_deseq_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.05), ]
 
 sigtab_deseq_region_genus_with_tax <- cbind(as(sigtab_deseq_genus, "data.frame"), as(tax_table(taxtable)[row.names(sigtab_deseq_genus), ], "matrix"))
 sigtab_deseq_region_genus_with_tax[order(sigtab_deseq_region_genus_with_tax$baseMean, decreasing=T), ]
@@ -1625,22 +1604,40 @@ ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
-```{r DESeq2 DA G heatmap, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-top_genus <- rownames(sigtab_deseq_region_genus_with_tax)[sigtab_deseq_region_genus_with_tax$padj < 0.005]
-pheatmap(assay(region_deseq_genus)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = sigtab_deseq_region_genus_with_tax$phylum, main = "Significantly Differentially Expressed Genes at the Genus level")
-```
 
 ## ANCOM-BC
+```{r}
+phylo_samples <- all_metadata %>% 
+                    column_to_rownames("sample") %>% 
+                    mutate(region = factor(region, levels = c("Daneborg","Ittoqqortoormii"))) %>% #TJ1 = Daneborg, TJ2 = Ittoq
+                    sample_data() #convert to phyloseq sample_data object
+
+phylo_counts <- count_table_cov_size %>% 
+                    filter(!genome %in% structural_zeros$genome) %>% # remove structural zeros
+                    column_to_rownames("genome") %>% 
+                    mutate_all(~ replace(., . == 0, 0.00001)) %>% #add pseudo counts to avoid structural zero issues 
+                    otu_table(., taxa_are_rows = TRUE) #convert to phyloseq otu_table object
+
+phylo_taxonomy <- taxonomyclean %>% 
+                    filter(genome %in% rownames(phylo_counts)) %>% # remove structural zeros
+                    mutate(genome2=genome) %>% #create a pseudo genome name column
+                    column_to_rownames("genome2") %>% 
+                    dplyr::select(domain,phylum,class,order,family,genus,species,genome) %>% #add an additional taxonomic level to ensure genome-level analysis (as not all genomes have species-level taxonomic assignments. Otherwise, ANCOMBC2 aggregates analyses per species)
+                    as.matrix() %>% 
+                    tax_table() #convert to phyloseq tax_table object
+
+#Generate phyloseq object required to input ANCOMBC
+physeq_ancom <- phyloseq(phylo_counts, phylo_taxonomy, phylo_samples)
+```
 
 ### phylum level
 ```{r ANCOM-BC DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq.phylum <- tax_glom(physeq, 'phylum')
-tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum) # create tse object
+# tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum) # create tse object
 
 set.seed(1234) #set seed for reproducibility
-ancombc2_out <- ancombc2(physeq.phylum, 
+ancom_output_phylum <- ancombc2(physeq_ancom, 
                   assay_name = "counts", 
-                  tax_level = NULL,
+                  tax_level = "phylum",
                   fix_formula = "region",
                   p_adj_method = "holm", 
                   pseudo_sens = TRUE,
@@ -1663,24 +1660,22 @@ ancombc2_out <- ancombc2(physeq.phylum,
                   mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
                   trend_control = NULL)
 
-tax <- data.frame(physeq@tax_table) %>%
+tax <- data.frame(physeq_ancom@tax_table) %>%
   rownames_to_column(., "taxon") 
 
-ancom_result <- ancombc2_out$res %>%
-    rename(genome=taxon)  %>%
+ancom_result_phylum <- ancom_output_phylum$res %>%
+    dplyr::rename(genome=taxon) %>%
     dplyr::left_join(taxonomyclean,by=join_by(genome==genome))
 
-ancombc_table <- ancombc2_out$res %>%
-  dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
-  filter(q_regionIttoqqortoormii < 0.05) %>%
-  dplyr::arrange(q_regionIttoqqortoormii) %>%
-  merge(., tax, by="taxon")
-
-colors_alphabetic <- ehi_phylum_colors1 %>%
-  dplyr::right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
-  select(phylum, colors) %>%
-	unique() %>%
-	dplyr::arrange(phylum)
+ancom_result_phylum %>%
+    mutate(significance = ifelse(q_regionIttoqqortoormii < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=-log(p_regionIttoqqortoormii), y=lfc_regionIttoqqortoormii, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      geom_text(aes(2.5, 10), label = "Enriched\nin Ittoq", color="#666666") +
+      geom_text(aes(2.5, -10), label = "Enriched\nin Daneborg", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="p-value") +
+      theme_classic()
 
 tax_table <- as.data.frame(unique(ancombc_table$phylum))
 colnames(tax_table)[1] <- "phylum"
@@ -1690,68 +1685,48 @@ tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
 	pull()
 ```
 ```{r}
-ancom_result %>%
-    mutate(significance = ifelse(p_regionIttoqqortoormii < 0.05, "1", "0")) %>%
-    ggplot(., aes(x=-log(p_regionIttoqqortoormii), y=lfc_regionIttoqqortoormii, color=significance)) +
-      geom_point() +
-      scale_color_manual(values = c("#cccccc","#00FFFF")) +
-      geom_text(aes(2.5, 10), label = "Enriched\nin Daneborg", color="#666666") +
-      geom_text(aes(2.5, -10), label = "Enriched\nin Ittoq", color="#666666") +
-      labs(color="Significance", y="Difference between treatments", x="p-value") +
-      theme_classic()
-```
-```{r}
-library(dplyr)
-
-MAGotu %>% 
-    as.data.frame() %>%
-    dplyr::mutate(average = rowMeans(across(everything())))  %>%
-    rownames_to_column(var="genome") %>% 
-    dplyr::right_join(ancom_result, by=join_by(genome==genome)) %>% 
-    dplyr::mutate(significance = ifelse(p_regionIttoqqortoormii < 0.01, "1", "0")) %>%
-    ggplot(., aes(x=average, y=lfc_regionIttoqqortoormii, color=significance)) +
-      geom_point() +
-      scale_color_manual(values = c("#cccccc","#00FFFF")) +
-      geom_text(aes(150, 10), label = "Enriched\nin Daneborg", color="#666666") +
-      geom_text(aes(150, -10), label = "Enriched\nin Ittoq", color="#666666") +
-      labs(color="Significance", y="Difference between treatments", x="Average genome count") +
-      theme_classic()
-```
-
-```{r}
-colors_alphabetic <- ehi_phylum_colors1 %>%
-  dplyr::right_join(ancom_result, by=join_by(phylum == phylum)) %>%
-  select(phylum, colors) %>%
-	unique() %>%
-	dplyr::arrange(phylum)
-
-ancom_result %>%
-    filter(p_regionIttoqqortoormii < 0.01) %>%
+ancom_result_phylum %>%
+    filter(p_regionIttoqqortoormii < 0.05) %>%
     ggplot(., aes(x=lfc_regionIttoqqortoormii, y=forcats::fct_rev(phylum), color=phylum)) +
       geom_jitter(size=3) +
       geom_vline(xintercept=0) + 
-      xlim(-max(ancom_result$lfc_regionIttoqqortoormii)-2,max(ancom_result$lfc_regionIttoqqortoormii)+2) +
-      scale_color_manual(values=colors_alphabetic$colors) +
-      geom_text(aes(-max(ancom_result$lfc_regionIttoqqortoormii)+1, 1), label = "Enriched in Daneborg", color="#666666") +
-      geom_text(aes(max(ancom_result$lfc_regionIttoqqortoormii)-1, 1), label = "Enriched in Ittoq", color="#666666") +
-      theme(legend.position='none',
+      xlim(-max(ancom_result_phylum$lfc_regionIttoqqortoormii)-2,max(ancom_result_phylum$lfc_regionIttoqqortoormii)+2) +
+      scale_color_manual(values=phylum_colors) +
+      geom_text(aes(-max(ancom_result_phylum$lfc_regionIttoqqortoormii)+1, 1), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(max(ancom_result_phylum$lfc_regionIttoqqortoormii)-1, 1), label = "Enriched\nin Ittoq", color="#666666") +
+     theme(legend.position='none',
           panel.background = element_blank(),
           axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
           axis.title.x=element_blank())+
       labs(y="Phylum",x="Genome counts") + 
       guides(col=guide_legend("Phylum"))
-
-ancom_results <- ancom_result %>%
+```
+```{r}
+#Enriched Daneborg
+ancom_result_phylum %>%
   filter(lfc_regionIttoqqortoormii < 0) %>% #
-  filter(q_regionIttoqqortoormii < 0.05) %>%
+  filter(p_regionIttoqqortoormii < 0.05) %>%
   arrange(lfc_regionIttoqqortoormii) %>%
-  dplyr::select(genome,lfc_regionIttoqqortoormii,q_regionIttoqqortoormii, phylum)
+  dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,p_regionIttoqqortoormii) %>%
+  kable()
 
-kable(ancom_results)
+# Enriched Ittoq
+ancom_result_phylum %>%
+  filter(lfc_regionIttoqqortoormii > 0) %>% #
+  filter(p_regionIttoqqortoormii < 0.05) %>% 
+  arrange(-lfc_regionIttoqqortoormii) %>%
+  dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,p_regionIttoqqortoormii) %>%
+  kable()
 ```
 ```{r ANCOM-BC DA P plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-ancom_results %>%
-  ggplot(., aes(x=forcats::fct_rev(phylum), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+colors_alphabetic <- ehi_phylum_colors1 %>%
+  dplyr::right_join(ancom_result_phylum, by=join_by(phylum == genome)) %>%
+  select(phylum, colors) %>%
+	unique() %>%
+	dplyr::arrange(phylum)
+
+ancom_result_phylum %>%
+  ggplot(., aes(x=forcats::fct_rev(genome), y=lfc_regionIttoqqortoormii, color=phylum)) + 
   geom_point(size=4) + 
   scale_color_manual(values=colors_alphabetic$colors) + 
   geom_hline(yintercept=0) + 
@@ -1760,17 +1735,14 @@ ancom_results %>%
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
-
-
-### genus level
-```{r ANCOM-BC DA G, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq.genus <- tax_glom(physeq, 'genus')
-tse_genus = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.genus)
+### Genus level
+```{r ANCOM-BC DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+# tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum) # create tse object
 
 set.seed(1234) #set seed for reproducibility
-ancombc2_out_genus <- ancombc2(physeq.genus, 
+ancom_output_genus <- ancombc2(physeq_ancom, 
                   assay_name = "counts", 
-                  tax_level = NULL,
+                  tax_level = "genus",
                   fix_formula = "region",
                   p_adj_method = "holm", 
                   pseudo_sens = TRUE,
@@ -1793,26 +1765,23 @@ ancombc2_out_genus <- ancombc2(physeq.genus,
                   mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
                   trend_control = NULL)
 
-tax <- data.frame(physeq@tax_table) %>%
+tax <- data.frame(physeq_ancom@tax_table) %>%
   rownames_to_column(., "taxon") 
 
-ancom_result_genus <- ancombc2_out_genus$res %>%
-    rename(genome=taxon)  %>%
+ancom_result_genus <- ancom_output_genus$res %>%
+    dplyr::rename(genome=taxon) %>%
     dplyr::left_join(taxonomyclean,by=join_by(genome==genome))
 
-ancombc_table_genus <- ancombc2_out_genus$res %>%
-  dplyr::select(taxon, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii) %>%
-  filter(q_regionIttoqqortoormii < 0.05) %>%
-  dplyr::arrange(q_regionIttoqqortoormii) %>%
-  merge(., tax, by="taxon")
+ancom_result_genus %>%
+    mutate(significance = ifelse(q_regionIttoqqortoormii < 0.05, "1", "0")) %>%
+    ggplot(., aes(x=-log(p_regionIttoqqortoormii), y=lfc_regionIttoqqortoormii, color=significance)) +
+      geom_point() +
+      scale_color_manual(values = c("#cccccc","#00FFFF")) +
+      geom_text(aes(2.5, 10), label = "Enriched\nin Ittoq", color="#666666") +
+      geom_text(aes(2.5, -10), label = "Enriched\nin Daneborg", color="#666666") +
+      labs(color="Significance", y="Difference between treatments", x="p-value") +
+      theme_classic()
 
-colors_alphabetic <- ehi_phylum_colors1 %>%
-  dplyr::right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
-  select(phylum, colors) %>%
-	unique() %>%
-	dplyr::arrange(phylum)
-
-tax_table <- as.data.frame(unique(ancombc_table_genus$genus))
 colnames(tax_table)[1] <- "phylum"
 tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
 	dplyr::arrange(phylum) %>%
@@ -1821,77 +1790,56 @@ tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
 ```
 ```{r}
 ancom_result_genus %>%
-    mutate(significance = ifelse(p_regionIttoqqortoormii < 0.05, "1", "0")) %>%
-    ggplot(., aes(x=-log(p_regionIttoqqortoormii), y=lfc_regionIttoqqortoormii, color=significance)) +
-      geom_point() +
-      scale_color_manual(values = c("#cccccc","#00FFFF")) +
-      geom_text(aes(2.5, 10), label = "Enriched\nin Daneborg", color="#666666") +
-      geom_text(aes(2.5, -10), label = "Enriched\nin Ittoq", color="#666666") +
-      labs(color="Significance", y="Difference between treatments", x="p-value") +
-      theme_classic()
+    filter(p_regionIttoqqortoormii < 0.05) %>%
+    ggplot(., aes(x=lfc_regionIttoqqortoormii, y=forcats::fct_rev(phylum), color=phylum)) +
+      geom_jitter(size=3) +
+      geom_vline(xintercept=0) + 
+      xlim(-max(ancom_result_genus$lfc_regionIttoqqortoormii)-2,max(ancom_result_genus$lfc_regionIttoqqortoormii)+2) +
+      scale_color_manual(values=phylum_colors) +
+      geom_text(aes(-max(ancom_result_genus$lfc_regionIttoqqortoormii)+1, 1), label = "Enriched\nin Daneborg", color="#666666") +
+      geom_text(aes(max(ancom_result_genus$lfc_regionIttoqqortoormii)-1, 1), label = "Enriched\nin Ittoq", color="#666666") +
+     theme(legend.position='none',
+          panel.background = element_blank(),
+          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+          axis.title.x=element_blank())+
+      labs(y="Phylum",x="Genome counts") + 
+      guides(col=guide_legend("Phylum"))
 ```
 ```{r}
-MAGotu %>% 
-    as.data.frame() %>%
-    dplyr::mutate(average = rowMeans(across(everything())))  %>%
-    rownames_to_column(var="genome") %>% 
-    dplyr::right_join(ancom_result_genus, by=join_by(genome==genome)) %>% 
-    dplyr::mutate(significance = ifelse(p_regionIttoqqortoormii < 0.01, "1", "0")) %>%
-    ggplot(., aes(x=average, y=lfc_regionIttoqqortoormii, color=significance)) +
-      geom_point() +
-      scale_color_manual(values = c("#cccccc","#00FFFF")) +
-      geom_text(aes(150, 10), label = "Enriched\nin Daneborg", color="#666666") +
-      geom_text(aes(150, -10), label = "Enriched\nin Ittoq", color="#666666") +
-      labs(color="Significance", y="Difference between treatments", x="Average genome count") +
-      theme_classic()
+#Enriched Daneborg
+ancom_result_genus %>%
+  filter(lfc_regionIttoqqortoormii < 0) %>% #
+  filter(p_regionIttoqqortoormii < 0.05) %>%
+  arrange(lfc_regionIttoqqortoormii) %>%
+  dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,p_regionIttoqqortoormii) %>%
+  kable()
+
+# Enriched Ittoq
+ancom_result_genus %>%
+  filter(lfc_regionIttoqqortoormii > 0) %>% #
+  filter(p_regionIttoqqortoormii < 0.05) %>% 
+  arrange(-lfc_regionIttoqqortoormii) %>%
+  dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,p_regionIttoqqortoormii) %>%
+  kable()
 ```
-```{r}
+```{r ANCOM-BC DA P plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 colors_alphabetic <- ehi_phylum_colors1 %>%
-  dplyr::right_join(ancom_result_genus, by=join_by(phylum == phylum)) %>%
+  dplyr::right_join(ancom_result_genus, by=join_by(phylum == genome)) %>%
   select(phylum, colors) %>%
 	unique() %>%
 	dplyr::arrange(phylum)
 
 ancom_result_genus %>%
-    filter(p_regionIttoqqortoormii < 0.01) %>%
-    ggplot(., aes(x=lfc_regionIttoqqortoormii, y=forcats::fct_rev(phylum), color=phylum)) +
-      geom_jitter(size=3) +
-      geom_vline(xintercept=0) + 
-      xlim(-max(ancom_result_genus$lfc_regionIttoqqortoormii)-2,max(ancom_result_genus$lfc_regionIttoqqortoormii)+2) +
-      scale_color_manual(values=colors_alphabetic$colors) +
-      geom_text(aes(-max(ancom_result_genus$lfc_regionIttoqqortoormii)+1, 1), label = "Enriched in Daneborg", color="#666666") +
-      geom_text(aes(max(ancom_result_genus$lfc_regionIttoqqortoormii)-1, 1), label = "Enriched in Ittoq", color="#666666") +
-     theme(legend.position='none',
-          panel.background = element_blank(),
-          axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
-          axis.title.x=element_blank())+
-      labs(y="Genus",x="Genome counts") + 
-      guides(col=guide_legend("Phylum"))
-
-ancom_result_genus <- ancom_result_genus %>%
-  filter(lfc_regionIttoqqortoormii < 0) %>%
-  filter(q_regionIttoqqortoormii < 0.05) %>%
-  arrange(lfc_regionIttoqqortoormii) %>%
-  dplyr::select(genome, lfc_regionIttoqqortoormii, q_regionIttoqqortoormii, phylum, genus)
-
-kable(ancom_result_genus)
-```
-```{r ANCOM-BC DA G plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-colors_alphabetic <- ehi_phylum_colors1 %>%
-  dplyr::right_join(ancom_result_genus, by=join_by(phylum == phylum)) %>%
-  select(phylum, colors) %>%
-	unique() %>%
-	dplyr::arrange(phylum)
-
-ggplot(ancom_result_genus, aes(x=forcats::fct_rev(genus), y=lfc_regionIttoqqortoormii, color=phylum)) + 
+  ggplot(., aes(x=forcats::fct_rev(genome), y=lfc_regionIttoqqortoormii, color=phylum)) + 
   geom_point(size=4) + 
   scale_color_manual(values=colors_alphabetic$colors) + 
   geom_hline(yintercept=0) + 
   coord_flip()+
-  xlab("genus") + 
-  ylab("log2FoldChange") +
-  guides(col=guide_legend("phylum"))
+  xlab("phylum") + 
+  ylab("log2FoldChange")+
+  guides(col=guide_legend("Phylum"))
 ```
+
 ### ADLEx2
 
 ```{r}
@@ -2020,8 +1968,6 @@ count_ALDEx.all %>%
   kable()
 ```
 
-
-
 ### LinDA
 #### phylum level
 ```{r LinDA DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -2141,247 +2087,14 @@ ggplot(LinDA_table_genus, aes(x=forcats::fct_rev(genus), y=log2FoldChange, color
   guides(col=guide_legend("Phylum"))
 ```
 
-## Functional DA
-### Set up:
-Make functional phyloseq object
-```{r phyloseq func, comment="", echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
-# OTU Table
-count_filtered_func <- count_table_cov_size[rownames(count_filtered) %in% rownames(GIFTs),]
-FuncOTU <- otu_table(count_filtered_func, taxa_are_rows = T)
-
-# Tax Table
-genome <- rownames(GIFTs_elements)
-rownames(GIFTs_elements) <- NULL
-GIFTs_elements_clean  <- cbind(genome,GIFTs_elements) %>%
-  as.data.frame()
-GIFTs_elements_clean1 <- GIFTs_elements_clean[,-1] %>%
-  as.data.frame()
-funcmatrix <- as.matrix(GIFTs_elements_clean1)
-rownames(funcmatrix) <- GIFTs_elements_clean$genome
-functable <- tax_table(funcmatrix) 
-  
-# Metadata
-metadata <- na.omit(metadata)
-rownames(metadata) <- NULL
-metadata.pre <- column_to_rownames(metadata, "sample")
-
-# Sample table
-sample_tab <- sample_data(metadata.pre)
-
-## Tree
-tree <- phytools::force.ultrametric(tree, method = "extend")
-treephylo = phyloseq::phy_tree(tree)
-
-## Merge into a phyloseq object
-physeq_FUNC <- phyloseq(FuncOTU, treephylo, sample_tab, functable)
-```
-
-```{r CLR transform for DA Func, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq_clr_FUNC <- microbiome::transform(physeq_FUNC, 'clr') 
-
-Daneborg_physeq_FUNC <- subset_samples(physeq_clr_FUNC, region == "Daneborg")
-Ittoq_physeq_FUNC <- subset_samples(physeq_clr_FUNC, region == "Ittoqqortoormii")
-```
-### Wilcoxon testing
-Ittoq
-```{r Ittoq summary for Func DA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq_FUNC_ittoq <- subset_samples(physeq_clr_FUNC, region == "Ittoqqortoormii")
-physeq_FUNC_ittoq <- prune_taxa(taxa_sums(physeq_FUNC_ittoq)>0, physeq_FUNC_ittoq)
-table.rel1_ittoq_FUNC <- physeq_FUNC_ittoq@otu_table
-means.table.rel1_ittoq_FUNC <- as.data.frame(rowMeans(table.rel1_ittoq_FUNC))
-sd.table.rel1_ittoq_FUNC <- as.data.frame(matrixStats::rowSds(table.rel1_ittoq_FUNC, useNames = TRUE))
-summary.FUNC_ittoq <- merge(means.table.rel1_ittoq_FUNC, sd.table.rel1_ittoq_FUNC, by="row.names")
-colnames(summary.FUNC_ittoq) <- c("Gift","Mean", "SD")
-print(summary.FUNC_ittoq[order(-summary.FUNC_ittoq$Mean),], row.names = FALSE)
-```
-
-Daneborg
-```{r Daneborg summary for Func DA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq_FUNC_daneborg <- subset_samples(physeq_clr_FUNC, region == "Daneborg")
-physeq_FUNC_daneborg <- prune_taxa(taxa_sums(physeq_FUNC_daneborg)>0, physeq_FUNC_daneborg)
-table.rel1_daneborg_FUNC <- physeq_FUNC_daneborg@otu_table
-means.table.rel1_daneborg_FUNC <- as.data.frame(rowMeans(table.rel1_daneborg_FUNC))
-sd.table.rel1_daneborg_FUNC <- as.data.frame(matrixStats::rowSds(table.rel1_daneborg_FUNC, useNames = TRUE))
-summary.FUNC_daneborg <- merge(means.table.rel1_daneborg_FUNC, sd.table.rel1_daneborg_FUNC, by="row.names")
-colnames(summary.FUNC_daneborg) <- c("Gift","Mean", "SD")
-print(summary.FUNC_daneborg[order(-summary.FUNC_daneborg$Mean),], row.names = FALSE)
-```
-```{r mean_func, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq_clr_FUNC.t <- as.data.frame(t(as.matrix(physeq_clr_FUNC@otu_table)))
-table.W_FUNC <- tibble::rownames_to_column(physeq_clr_FUNC.t, "sample")
-sample_type <- all_metadata[,c(1,4)]
-table.W.meta_FUNC <- merge(table.W_FUNC,sample_type,by="sample")
-table.W.meta_FUNC <- table.W.meta_FUNC[,-c(1)]
-means_FUNC_by_region_all <- table.W.meta_FUNC %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
-means_FUNC_by_region <- table.W.meta_FUNC %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
-means_all_FUNC <- as.data.frame(means_FUNC_by_region_all)
-means_FUNC <- as.data.frame(means_FUNC_by_region)
-
-means_FUNC <- means_FUNC[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
-
-knitr::kable(means_FUNC, format = "html", full_width = F, digits = 3) %>%
-  kable_styling(latex_options="scale_down")
-```
-```{r wilcox_func, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-physeq_clr_FUNC.t <- as.data.frame(t(as.matrix(physeq_clr_FUNC@otu_table)))
-table.W_FUNC <- tibble::rownames_to_column(physeq_clr_FUNC.t, "sample")
-sample_type <- metadata[,c(1,4)]
-FUNC_table <- merge(table.W_FUNC,sample_type,by="sample")
-FUNC_table <- FUNC_table[,-c(1)]
-FUNC_table.no <- FUNC_table[,-ncol(FUNC_table)]
-all.taxa_FUNC <- colnames(FUNC_table.no)
-Wilcox_result_FUNC <- c()
-for (y in all.taxa_FUNC){
-  res.wilcox_FUNC <- wilcox.test(FUNC_table[,y] ~ region, data = FUNC_table,
-                            exact = FALSE, alternative = "less")
-  Wilcox_result_FUNC <- rbind(Wilcox_result_FUNC,c(res.wilcox_FUNC[[1]],Pvalue=res.wilcox_FUNC[[3]]))
-}
-rownames(Wilcox_result_FUNC) <- all.taxa_FUNC
-Wilcox_result_FUNC <- as.data.frame(Wilcox_result_FUNC)
-
-Wilcox_result_FUNC$p_adjusted <- p.adjust(Wilcox_result_FUNC$Pvalue, method = "fdr")
-
-Wilcox_result_sign_FUNC <- subset(Wilcox_result_FUNC, p_adjusted <= 0.05) %>%
-  rownames_to_column(., "FUNC")
-knitr::kable(Wilcox_result_sign_FUNC, format = "html", full_width = F,col.names = c("Gift", "W", "p-value","p-value adjusted"), digits = 10) %>%
-  kable_styling(latex_options="scale_down")
-```
-
-### DESeq2
-
-```{r DESeq2 Func DA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-deseq_func <- phyloseq_to_deseq2(physeq_FUNC, ~region)
-
-deseq_func <- DESeq(deseq_func)
-results_table_FUNC <- results(deseq_func)
-```
-```{r DESeq2 Func DA analysis, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-deseq_res_ittoq_vs_daneborg_FUNC <- results(deseq_func, alpha=0.005, contrast=c("region", "Daneborg", "Ittoqqortoormii"))
-
-summary(deseq_res_ittoq_vs_daneborg_FUNC) 
-# out of 545 with nonzero total read count
-# adjusted p-value < 0.005
-# LFC > 0 (up)       : 64, 12%
-# LFC < 0 (down)     : 87, 16%
-# outliers [1]       : 0, 0%
-# low counts [2]     : 82, 15%
-# (mean count < 0)
-# [1] see 'cooksCutoff' argument of ?results
-# [2] see 'independentFiltering' argument of ?results
-
-sigtab_res_deseq_res_ittoq_vs_daneborg_FUNC <- deseq_res_ittoq_vs_daneborg_FUNC[which(deseq_res_ittoq_vs_daneborg_FUNC$padj < 0.05), ]
-
-summary(sigtab_res_deseq_res_ittoq_vs_daneborg_FUNC) 
-# out of 208 with nonzero total read count
-# adjusted p-value < 0.005
-# LFC > 0 (up)       : 64, 31%
-# LFC < 0 (down)     : 87, 42%
-# outliers [1]       : 0, 0%
-# low counts [2]     : 0, 0%
-# (mean count < 0)
-# [1] see 'cooksCutoff' argument of ?results
-# [2] see 'independentFiltering' argument of ?results
-```
-So from this information, we know that at the there are 151 functional genes that are significantly differently abundant between Ittoq and Daneborg
-
-Add in Functional information and sort by baseMean
-```{r DESeq2 Func DA baseMean, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-sigtab_deseq_FUNC <- deseq_res_ittoq_vs_daneborg_FUNC[which(deseq_res_ittoq_vs_daneborg_FUNC$padj < 0.005), ]
-
-func_matrix <- as.character(as(tax_table(taxtable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
-
-sigtab_deseq_region_FUNC_with_FUNC <- cbind(as(sigtab_deseq_FUNC, "data.frame"), as(tax_table(functable)[row.names(sigtab_deseq_FUNC), ], "matrix"))
-sigtab_deseq_region_FUNC_with_FUNC[order(sigtab_deseq_region_FUNC_with_FUNC$baseMean, decreasing=T), ]
-genome <- rownames(sigtab_deseq_region_FUNC_with_FUNC)
-
-deseq2_ins_fis_func <- as.data.frame(cbind(sigtab_deseq_region_FUNC_with_FUNC, genome))
-
-x = tapply(deseq2_ins_fis_func$log2FoldChange, deseq2_ins_fis_func$genome, function(x) max(x))
-x = sort(x, TRUE)
-deseq2_ins_fis_func$genome = factor(as.character(deseq2_ins_fis_func$genome), levels=names(x))
-x = tapply(deseq2_ins_fis_func$log2FoldChange, deseq2_ins_fis_func$genome, function(x) max(x))
-x = sort(x, TRUE)
-deseq2_ins_fis_func$genome = factor(as.character(deseq2_ins_fis_func$genome), levels=names(x))
-```
-```{r DESeq2 Func DA plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(deseq2_ins_fis_func, aes(x=forcats::fct_rev(reorder(genome, as.integer(factor(genome)))), y=log2FoldChange)) + 
-  geom_point(size=4) + 
- #scale_color_manual(values=tax_color1) + 
-  geom_hline(yintercept=0) + 
-  coord_flip()+
-  xlab("Geonome") + 
-  ylab("log2FoldChange")
-```
-```{r DESeq2 Func DA heatmap, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-top_FUNC <- rownames(deseq2_ins_fis_func)[deseq2_ins_fis_func$padj < 0.005]
-pheatmap(assay(deseq_func)[top_genus, ],scale = "row", cluster_cols = F, labels_col = all_metadata$region, labels_row = deseq2_ins_fis_func$genome, main = "Significantly Differentially Expressed Genes at the Functional level")
-```
-###LinDA
-```{r LinDA Func DA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-tse_func = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq_FUNC)
-tse_LinDA_FUNC <- mia::subsetByPrevalentTaxa(tse_func, detection = 0, prevalence = 0.1)
-```
-```{r LinDA Func DA analysis, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-otu.tab_func <- as.data.frame(assay(tse_LinDA_FUNC))
-meta_func <- as.data.frame(colData(tse_LinDA_FUNC)) %>% select(region)
-LinDA_FUNC <- LinDA::linda(
-  otu.tab_func, 
-  meta_func, 
-  formula = '~region', 
-  alpha = 0.05, 
-  prev.cut = 0,
-  lib.cut = 1000, 
-  winsor.quan = 0.97)
-
-LinDA_FUNC
-LinDA::linda.plot(LinDA_FUNC, c('region') )
-
-LinDA_table_FUNC <- rownames_to_column(LinDA_FUNC$output$regionIttoqqortoormii, "genus") 
-```
-```{r LinDA Func DA summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-tax_func <- data.frame(physeq_FUNC@tax_table) %>%
-  rownames_to_column(., "genome")
-
-LinDA_table_func <- rownames_to_column(LinDA_FUNC$output$regionIttoqqortoormii, "genome") 
-LinDA_table_func <- merge(LinDA_table_func, GIFTs_elements_clean, by = "genome", all.x = TRUE)
-
-LinDA_table_func <- LinDA_table_func %>%
-  dplyr::select(genome, lfcSE, padj, log2FoldChange) %>%
-  filter(padj < 0.005)
-
-#colors_alphabetic <- ehi_phylum_colors1 %>%
- # right_join(taxonomyclean, by=join_by(phylum == phylum)) %>%
- # select(phylum, colors) %>%
-#	unique() %>%
-#	dplyr::arrange(phylum)
-
-tax_table_func <- as.data.frame(unique(LinDA_table_func$genome))
-colnames(tax_table_func)[1] <- "genome"
-# tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
-#	dplyr::arrange(phylum) %>%
-#	select(colors) %>%
-#	pull()
-```
-```{r LinDA Func DA plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(LinDA_table_func, aes(x = genome, y = log2FoldChange)) + 
-  geom_point(size = 4) + 
-  geom_hline(yintercept = 0) + 
-  coord_flip() +
-  xlab("genome") + 
-  ylab("log2FoldChange")
-```
-
-
-######################### FUNC WORKFLOW ####################################
+# Func DA
 Kegg data prep from EHI workflow
 ```{r kegg data prep from EHI, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 
 # Microbiome functional attribute table
 kegg_file="/Users/elsa/Desktop/THESIS/Thesis/DMB0032_merged_kegg.tsv"
 kegg_table <- read.table(kegg_file,sep="\t",header=T)
-
 kegg_table_clean <- dplyr::distinct(kegg_table) #remove duplicate rows
-
 kegg_table_clean_1 <- count_filtered_rel[rownames(count_filtered_rel) %in% rownames(kegg_table_clean),]
 
 ```
@@ -2811,7 +2524,172 @@ library(gridExtra)
 grid.arrange(arrangeGrob(ce1, ce2,ce3, ce4, ce5, ce6, ce7, ce8, ce9, ce10, ce11, ce12, ncol = 4))
 ```
 
+# UPSETRDA
+```{r}
+## Upset visualization: MAGs in different locations and shared among locations
+library(UpSetR)
+locationcolors=c('#c4d7d1','#408892')
+
+MAGrel <- count_table_cov_size[, -which(names(count_table_cov_size) == "genome")]
+MAGrel_pa=1*(MAGrel>0)
+#MAGrel_pa[1:6,1:6]
+table_upset_analysis_cont=t(aggregate(t(MAGrel_pa),by=list(all_metadata$region),FUN=sum)[,-1])
+colnames(table_upset_analysis_cont)=levels(as.factor(all_metadata$region))
+table_upset_analysis=(table_upset_analysis_cont>0)*1
+table_upset_analysis=data.frame(table_upset_analysis)
+table_upset_analysis=apply(table_upset_analysis,2,as.integer)
+rownames(table_upset_analysis) <- rownames(MAGrel_pa)
+
+#pdf("figures/MAG_intersection.pdf",width=8,height=6, onefile=F)
+upset(as.data.frame(table_upset_analysis),
+      keep.order = T,
+      sets = rev(c("Daneborg","Ittoqqortoormii")),
+      sets.bar.color= rev(locationcolors),
+      mb.ratio = c(0.55, 0.45), order.by = "freq")
+#dev.off()
+```
+#RDA
+```{r}
+count_table_rda <- data.frame(physeq@otu_table)
+count_table_t <- data.frame(t(count_table_rda))
+hel1 <- decostand(count_table_t, "hellinger")
+
+physeq_clr <- microbiome::transform(physeq, 'clr')
+
+count_crl <- data.frame(physeq_clr@otu_table)
+count_crl_t <- data.frame(t(count_crl))
+metadata_crl <- data.frame(physeq_clr@sam_data)
+metadata_crl <- rownames_to_column(metadata_crl, "sample")
+metadata_crl <- metadata_crl[match(rownames(count_crl_t),metadata_crl$sample),]
+#mean(rownames(count_crl_t)==metadata_crl$sample)
+#metadata_crl$Day=factor(metadata_crl$Day)
+design <- metadata_crl[, c("sample", "region")]
+
+rda.model <- rda(count_crl_t ~ region, data = design)# Run the model
+rda.model.hel <- rda(hel1 ~ region, data = design)# Run the model
+
+#Anova
+anova(rda.model)
+anova(rda.model.hel)
+
+RsquareAdj(rda.model)
+RsquareAdj(rda.model.hel)
+anova.cca(rda.model, step = 1000)
+anova.cca(rda.model, step = 1000, by = "term")
+anova.cca(rda.model, step = 1000, by = "axis")
+perc <- round(100*(summary(rda.model)$cont$importance[2, 1:2]), 2)
+## extract scores - these are coordinates in the RDA space
+sc_si <- vegan::scores(rda.model, display="sites", choices=c(1,2), scaling=1)
+sc_sp <- vegan::scores(rda.model, display="species", choices=c(1,2), scaling=1)
+sc_bp <- vegan::scores(rda.model, display="bp", choices=c(1, 2), scaling=1)
+```
+```{r}
+# Prepare data for plotting
+rda_sc_wa <- vegan::scores(rda.model,
+                           display = "wa",
+                           scaling = 1
+)
+rda_sc_cn <- data.frame(vegan::scores(rda.model,
+                                      display = "cn",
+                                      scaling = 1
+))
+rda_sc_sp <- data.frame(vegan::scores(rda.model,
+                                      display = "sp",
+                                      scaling = 2
+))
+
+# Select MAGs from quantile
+ASV_Scores_RDA1quantiles <- quantile(rda_sc_sp$RDA1,
+                                     probs = c(0.01, 0.99)
+)
+HighFit_ASVs <- rda_sc_sp[
+  rda_sc_sp$RDA1 < ASV_Scores_RDA1quantiles[1] |
+    rda_sc_sp$RDA1 > ASV_Scores_RDA1quantiles[2],
+]
+
+HighFit_ASVNames <- rownames(HighFit_ASVs)
+species_index <- data.frame(
+  Species = HighFit_ASVNames,
+  Index = 1:length(HighFit_ASVNames)
+)
+
+# combine dataframes
+all_dataframe <- data.frame(rda_sc_wa, design)
+
+# Plot
+ggplot(all_dataframe, aes(y = PC1, x = RDA1)) +
+  geom_point(aes(y = PC1, x = RDA1, colour = region)) +
+  # text
+  xlab(paste0("RDA1 (", perc[1], "%)")) +
+  ylab(paste0("PC1 (", perc[2], "%)")) +
+  #  ggtitle("TITLE") +
+  # segment
+  geom_segment(data = HighFit_ASVs,
+               aes(x = 0, xend = RDA1, y = 0, yend = PC1),
+               arrow = arrow(length = unit(0.25, "cm")),
+               color = "grey") +
+  geom_point(data = HighFit_ASVs,
+             aes(y = PC1, x = RDA1),
+             show.legend = FALSE,
+             color = "grey") +
+  geom_label_repel(data = HighFit_ASVs,
+                   aes(y = PC1, x = RDA1,label = species_index$Species),
+                   size = 3,
+                   show.legend = FALSE,
+                   colour = "grey",
+                   max.overlaps = 20) +
+  #  scale_colour_manual(values = c("red", "blue")) +
+  scale_shape_discrete(solid = TRUE) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 10),
+    legend.position = "none"
+  )
+
+```
+
+################# RQL ####################
+#RQL
+```{r}
+counts_table <- read.table(counts_file, sep="\t",row.names=1,header=T)
+coverage_table <- read.table(coverage_file, sep="\t",row.names=1,header=T)
+metadata <- read.table(metadata_file,sep="\t",header=T)%>%
+	dplyr::rename(sample=EHI_plaintext)
+mags_table <- read.table(taxonomy_file,sep="\t",header=T)
+tree <- read.tree(tree_file)
+```
+
+```{r}
+# Abundance table
+genome_counts <- counts_table %>%
+  column_to_rownames(., "genome")
+# Metadata
+metadata=all_metadata
+# MAG stats (mag_length)
+counts_raw=read_tsv("~/Documents/Projects/Domesticat/count_table.tsv")%>%
+  dplyr::rename(genome=1) %>%  
+  dplyr::rename_all(~ str_replace_all(., "DomestiCAT-", ""))  %>%
+  dplyr::rename_all(~ str_replace_all(., "DomestiCAT_", "")) %>%
+  dplyr::rename_all(~ str_replace_all(., "-", "_"))
+
+stats <- counts_raw[,c(1,4)] %>%
+  dplyr::rename(mag_length = 'Malaysia_501 Length') %>%
+  as.data.frame()%>%
+  column_to_rownames(., "genome")
+
+# MAG taxonomy
+mags_table <- mags_table
+
+annotation_raw <- filtered_df
+GIFTs <- distill(annotation_raw,GIFT_db,genomecol=2,annotcol=c(9,10,19))
+GIFTs_elements <- to.elements(GIFTs,GIFT_db)
+GIFTs_functions <- to.functions(GIFTs_elements,GIFT_db)
+GIFTs_domains <- to.domains(GIFTs_functions,GIFT_db)
+```
+
+
 ################# Kraken ####################
+#Kraken
 
 ```{r Percent Eukaryotic summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 summary(all_metadata$Eukaryota_.)
@@ -2821,16 +2699,12 @@ summary(all_metadata$Eukaryota_.)
 # Shapiro-Wilk test for normality
 shapiro_results_Euk <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Eukaryota_.)$p.value)
-# Results: p = 0.00615 Daneborg, p = 0.0369 Ittoq
-# THEREFORE neither region has normally distributed values for % Eukaryotic reads
+  summarise(shapiro_p_value = shapiro.test(Eukaryota_.)$p.value) # Results: p = 0.00615 Daneborg, p = 0.0369 Ittoq
 
 # Wilcoxon Exact rank test
 library(exactRankTests)
 wilcox_exact_results_Euk <- exactRankTests::wilcox.exact(Eukaryota_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Euk)
-# Results: p = 0.6329
-# THEREFORE no sig difference in % Eukaryotic reads between regions
+print(wilcox_exact_results_Euk) # Results: p = 0.6329 # THEREFORE no sig difference in % Eukaryotic reads between regions
 
 # Plot
 ggplot(all_metadata, aes(x = region, y = Eukaryota_., group = region, color = region)) +
@@ -2855,33 +2729,26 @@ ggplot(all_metadata, aes(x = region, y = Eukaryota_., group = region, color = re
 Cryptosporidium
 ```{r Cryptosporidium summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 summary(all_metadata$Cryptosporidium_.)
-# Range 0.00300 - 0.02000
+# Range 0.00300 - 0.02000 , note no samples with 0s
 # Med = 0.00600, Mean = 0.00669
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Crypto_R <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Cryptosporidium_.)$p.value)
-# Results: p = 0.0631 Daneborg, p = 0.0000802 Ittoq
-# THEREFORE cannot assume normality for whole dataset
+  summarise(shapiro_p_value = shapiro.test(Cryptosporidium_.)$p.value) # Results: p = 0.0631 Daneborg, p = 0.0000802 Ittoq
 shapiro_results_Crypto_PR <- all_metadata %>%
   filter(PR_cryptosporidium != "excluded") %>%
   group_by(PR_cryptosporidium) %>%
-  summarise(shapiro_p_value = shapiro.test(Cryptosporidium_.)$p.value)
-# Results: p =  0.00000147 for "no" , p = 0.621 for "yes"
+  summarise(shapiro_p_value = shapiro.test(Cryptosporidium_.)$p.value) # Results: p =  0.00000147 for "no" , p = 0.621 for "yes"
 
 # Wilcoxon Exact rank test
 library(exactRankTests)
 wilcox_exact_results_Crypto_R <- exactRankTests::wilcox.exact(Cryptosporidium_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Crypto_R)
-# Results: p = 0.007237
-# THEREFORE there IS a significant difference in Crypto between regions
+print(wilcox_exact_results_Crypto_R) # Results: p = 0.007237 # THEREFORE there IS a significant difference in Crypto between regions
 wilcox_results_Crypto_PR <- all_metadata %>%
   filter(PR_cryptosporidium != "excluded") %>%
   group_by(PR_cryptosporidium) %>%
-  summarise(wilcox_p_value = wilcox.test(Cryptosporidium_. ~ PR_cryptosporidium, data = .)$p.value)
-# Results: p =  0.483
-# THEREFORE no significant difference detected in Cryptosporidium values, when grouped by PR results 
+  summarise(wilcox_p_value = wilcox.test(Cryptosporidium_. ~ PR_cryptosporidium, data = .)$p.value) # Results: p =  0.483 # THEREFORE no significant difference detected in Cryptosporidium values, when grouped by PR results 
 
 # Plot by region
 ggplot(all_metadata, aes(x = region, y = Cryptosporidium_., group = region, color = region)) +
@@ -2917,42 +2784,43 @@ ggplot(all_metadata %>% filter(PR_cryptosporidium != "excluded"),
     x = "PR Results",
     y = "% of Eukaryotic reads"
   )
+
+############ what happens when we remove the outlier at 0.02?
 ```
 
 Giardia
 ```{r Giardia summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 summary(all_metadata$Giardia_.)
 # Range 0 - 0.004
-# Med = 0.0002, Mean = 0.0004107
 summary((subset(all_metadata, Giardia_. != 0)$Giardia_.))
+# range 0.00001 - 0.004 ; when negative samples are removed
+means_Giardia_region <- all_metadata %>%
+  group_by(region) %>%
+  summarize(mean_Giardia = mean(Giardia_., na.rm = TRUE)) # means = 0.00035 Daneborg, 0.00047 Ittoq
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Giardia_R <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Giardia_.)$p.value)
-# Results: p = 6.32e-10 Daneborg, p = 4.12e- 5 Ittoq
+  summarise(shapiro_p_value = shapiro.test(Giardia_.)$p.value) # Results: p = 6.32e-10 Daneborg, p = 4.12e- 5 Ittoq
 shapiro_results_Giardia_PR <- all_metadata %>%
   filter(PR_giardia != "excluded") %>%
   group_by(PR_giardia) %>%
-  summarise(shapiro_p_value = shapiro.test(Giardia_.)$p.value)
-# Results: p =  1.52e-11 for "no" , p = 6.72e- 1 for "yes"
-# THEREFORE cannot assume normality for whole dataset
+  summarise(shapiro_p_value = shapiro.test(Giardia_.)$p.value) # Results: p =  1.52e-11 for "no" , p = 6.72e- 1 for "yes"
 
 # Wilcoxon Exact rank test
 library(exactRankTests)
-wilcox_exact_results_Giardia_R <- exactRankTests::wilcox.exact(Giardia_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Giardia_R)
-# Results: p = p-value = 0.044
-# THEREFORE there IS a significant difference in Giardia between regions
+wilcox_exact_results_Giardia_R <- all_metadata %>%
+  filter(Giardia_. != 0) %>%
+  wilcox.exact(Giardia_. ~ region, data = .) # Results: p = p-value = 0.01454 significant difference in Giardia between regions
+
 wilcox_results_Giardia_PR <- all_metadata %>%
   filter(PR_giardia != "excluded") %>%
-  group_by(PR_giardia) %>%
+  filter(Giardia_. != 0) %>%
   summarise(wilcox_p_value = wilcox.test(Giardia_. ~ PR_giardia, data = .)$p.value)
-# Results: p =  0.514
-# THEREFORE no significant difference detected in Giardia values, when grouped by PR results 
+# Results: p =  0.0521357 no significant difference detected in Giardia values, when grouped by PR results 
 
 # Plot by region
-ggplot(all_metadata, aes(x = region, y = Giardia_., group = region, color = region)) +
+ggplot(all_metadata %>% filter(Giardia_. != 0), aes(x = region, y = Giardia_., group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
   theme_minimal() +
@@ -2969,7 +2837,7 @@ ggplot(all_metadata, aes(x = region, y = Giardia_., group = region, color = regi
   )
 
 # Plot by PR results
-ggplot(all_metadata %>% filter(PR_giardia != "excluded"),
+ggplot(all_metadata %>% filter(PR_giardia != "excluded") %>% filter(Giardia_. != 0),
        aes(x = PR_giardia, y = Giardia_., group = PR_giardia, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
@@ -2982,7 +2850,7 @@ ggplot(all_metadata %>% filter(PR_giardia != "excluded"),
   ) +
   labs(
     title = "Giardia",
-    x = "PR Results",
+    x = "Classical Parasitology",
     y = "% of Eukaryotic reads"
   )
 ```
@@ -2992,84 +2860,28 @@ summary(all_metadata$Sarcocystis_.)
 # Range 0 - 3.000e-04 
 # Med = 0, Mean = 6.207e-06
 
-# Shapiro-Wilk test for normality (grouped by region)
-shapiro_results_Sarcocystis_R <- all_metadata %>%
-  group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Sarcocystis_.)$p.value)
-# Results: p = 1.31e-11 Daneborg, p = 2.43e-11 Ittoq
-# THEREFORE cannot assume normality for whole dataset
-
-# Wilcoxon Exact rank test
-library(exactRankTests)
-wilcox_exact_results_Sarcocystis_R <- exactRankTests::wilcox.exact(Sarcocystis_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Sarcocystis_R)
-# Results: p = p-value =  0.4912
-# THEREFORE there IS a NOT a sig difference in Sarcocystis between regions
-wilcox_results_Sarcocystis_PR <- all_metadata %>%
-  filter(PR_sarcocystis != "excluded") %>%
-  group_by(PR_sarcocystis) %>%
-  summarise(wilcox_p_value = wilcox.test(Sarcocystis_. ~ PR_sarcocystis, data = .)$p.value)
-# Results: p =   0.706
-# THEREFORE no significant difference detected in Sarcocystis values, when grouped by PR results 
-
-# Plot by region
-ggplot(all_metadata, aes(x = region, y = Sarcocystis_., group = region, color = region)) +
-  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
-  geom_jitter(width = 0.1, show.legend = TRUE) +
-  theme_minimal() +
-  theme(
-    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank()
-  ) +
-  labs(
-    title = "Sarcocystis",
-    x = "Region",
-    y = "% of Eukaryotic reads"
-  )
-
-# Plot by PR results
-ggplot(all_metadata %>% filter(PR_sarcocystis != "excluded"),
-       aes(x = PR_sarcocystis, y = Sarcocystis_., group = PR_sarcocystis, color = region)) +
-  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
-  geom_jitter(width = 0.1, show.legend = TRUE) +
-  theme_minimal() +
-  theme(
-    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank()
-  ) +
-  labs(
-    title = "Sarcocystis",
-    x = "PR Results",
-    y = "% of Eukaryotic reads"
-  )
+# only 3 samples (2 Ittoq, 1 Daneborg) had Sarcocystis DNA. 
 ```
+
 Toxoplasma_gondii
 ```{r Toxoplasma_gondii summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 summary(all_metadata$Toxoplasma_gondii_.)
-# Range 0.001 - 0.03
-# Med = 0.004, Mean = 0.004897 
+# Range 0.001 - 0.03 ; Med = 0.004, Mean = 0.004897 
+means_T_gondii_region <- all_metadata %>%
+  group_by(region) %>%
+  summarize(mean_T_gondii = mean(Toxoplasma_gondii_., na.rm = TRUE)) # Daneborg 0.00445 ; Ittoq 0.00534
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Toxoplasma_gondii_R <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Toxoplasma_gondii_.)$p.value)
-# Results: p = 0.00431 Daneborg, p = 0.00000000427 Ittoq
-# THEREFORE cannot assume normality for whole dataset
+  summarise(shapiro_p_value = shapiro.test(Toxoplasma_gondii_.)$p.value) # Results: p = 0.00431 Daneborg, p = 0.00000000427 Ittoq # THEREFORE cannot assume normality for whole dataset
 
 # Wilcoxon Exact rank test
 wilcox_exact_results_Toxoplasma_gondii_R <- exactRankTests::wilcox.exact(Toxoplasma_gondii_. ~ region, data = all_metadata)
 print(wilcox_exact_results_Toxoplasma_gondii_R)
-# Results: p-value = 0.6477
-# THEREFORE there IS NO significant difference in Toxoplasma_gondii between regions
-wilcox_results_Toxoplasma_gondii_PR <- all_metadata %>%
-  filter(sero_toxoplasma_gondii_PR != "excluded") %>%
-  group_by(sero_toxoplasma_gondii_PR) %>%
-  summarise(wilcox_p_value = wilcox.test(Giardia_. ~ sero_toxoplasma_gondii_PR, data = .)$p.value)
-# Results:p-value = 1
+# Results: p-value = 0.6477 NO significant difference in Toxoplasma_gondii between regions
+
+# serological testing for only 5 dogs by P/R, only one positive, so too small to compare
 
 # Plot by region
 ggplot(all_metadata, aes(x = region, y = Toxoplasma_gondii_., group = region, color = region)) +
@@ -3087,24 +2899,6 @@ ggplot(all_metadata, aes(x = region, y = Toxoplasma_gondii_., group = region, co
     x = "Region",
     y = "% of Eukaryotic reads"
   )
-
-# Plot by PR results
-ggplot(all_metadata %>% filter( sero_toxoplasma_gondii_PR!= "excluded"),
-       aes(x = sero_toxoplasma_gondii_PR, y = Giardia_., group = sero_toxoplasma_gondii_PR, color = region)) +
-  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
-  geom_jitter(width = 0.1, show.legend = TRUE) +
-  theme_minimal() +
-  theme(
-    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank()
-  ) +
-  labs(
-    title = "Toxoplasma gondii",
-    x = "PR Results",
-    y = "% of Eukaryotic reads"
-  )
 ```
 
 No toxacaris detected with kraken
@@ -3112,26 +2906,21 @@ No toxacaris detected with kraken
 Trichinella
 ```{r Trichinella summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 summary(all_metadata$Trichinella_.)
-# Range 0.005 - 0.3
-# Med = 0.01, Mean = 0.01429
+# Range 0.005 - 0.3 Med = 0.01, Mean = 0.01429
+means_Trichinella_region <- all_metadata %>%
+  group_by(region) %>%
+  summarize(mean_Trichinella = mean(Trichinella_., na.rm = TRUE)) # Daneborg 0.0203 ; Ittoq 0.00831
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Trichinella_R <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Trichinella_.)$p.value)
-# Results: p = 2.12e-11 Daneborg, p = 9.37e- 4 Ittoq
-shapiro_results_Trichinella_PR <- all_metadata %>%
-  filter(sero_trichincella_spp_PR != "excluded") %>%
-  group_by(sero_trichincella_spp_PR) %>%
-  summarise(shapiro_p_value = shapiro.test(Trichinella_.)$p.value)
-# Results: p =  0.314 for "yes"
-# THEREFORE cannot assume normality for whole dataset
+  summarise(shapiro_p_value = shapiro.test(Trichinella_.)$p.value) # Results: p = 2.12e-11 Daneborg, p = 9.37e- 4 Ittoq
+
+# serological testing for only 5 dogs by P/R, all positive, so no way to compare
 
 # Wilcoxon Exact rank test
 wilcox_exact_results_Trichinella_R <- exactRankTests::wilcox.exact(Trichinella_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Trichinella_R)
-# Results: p = 0.0002889
-# THEREFORE there IS a significant difference in Trichinella between regions
+print(wilcox_exact_results_Trichinella_R) # Results: p = 0.0002889 significant difference in Trichinella between regions
 
 # Plot by region
 ggplot(all_metadata, aes(x = region, y = Trichinella_., group = region, color = region)) +
@@ -3150,24 +2939,6 @@ ggplot(all_metadata, aes(x = region, y = Trichinella_., group = region, color = 
     y = "% of Eukaryotic reads"
   ) +
     coord_cartesian(ylim = c(0, 0.03))
-
-# Plot by PR results
-ggplot(all_metadata %>% filter(sero_trichincella_spp_PR != "excluded"),
-       aes(x = sero_trichincella_spp_PR, y = Trichinella_., group = sero_trichincella_spp_PR, color = region)) +
-  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
-  geom_jitter(width = 0.1, show.legend = TRUE) +
-  theme_minimal() +
-  theme(
-    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank()
-  ) +
-  labs(
-    title = "Trichinella",
-    x = "PR Results",
-    y = "% of Eukaryotic reads"
-  )
 ```
 
 Taenia
@@ -3176,28 +2947,25 @@ summary(all_metadata$Taenia_.)
 # Range 0 - 0.008
 # Med = 0, Mean = 0.0004343
 mean(subset(all_metadata, Taenia_. != 0)$Taenia_.) #0.001145
+means_Taenia_region <- all_metadata %>% 
+  filter(Taenia_. != 0) %>%
+  group_by(region) %>%
+  summarize(mean_Taenia = mean(Taenia_., na.rm = TRUE)) # Daneborg 0.00101 ; Ittoq 0.0017
 
 # Shapiro-Wilk test for normality (grouped by region)
 shapiro_results_Taenia_R <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Taenia_.)$p.value)
-# Results: p = 1.03e- 9 Daneborg, p = 1.45e-11 Ittoq
-# THEREFORE cannot assume normality for whole dataset
+  summarise(shapiro_p_value = shapiro.test(Taenia_.)$p.value) #Results: p = 1.03e- 9 Daneborg, p = 1.45e-11 Ittoq
 
 # Wilcoxon Exact rank test
-wilcox_exact_results_Taenia_R <- exactRankTests::wilcox.exact(Taenia_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Taenia_R)
-# Results: p 7.409e-06
-# THEREFORE there IS a significant difference in Taenia between regions
-wilcox_results_Taenia_PR <- all_metadata %>%
-  filter(PR_Tania_serialis != "excluded") %>%
-  group_by(PR_Tania_serialis) %>%
-  summarise(wilcox_p_value = wilcox.test(Taenia_. ~ PR_Tania_serialis, data = .)$p.value)
-# Results: p =  0.0732
-# THEREFORE no significant difference detected in Taenia values, when grouped by PR results 
+wilcox_exact_results_Taenia_R <- all_metadata %>%
+  filter(Taenia_. != 0) %>% # hash this line to calculate WITH negative dogs included
+  wilcox.exact(Taenia_. ~ region, data = .) # p-value = 0.4643, no significant difference in Taenia between regions (with zeros removed) ; p-value = 7.409e-06, sig difference when zeros included
+
+# PR results only found 1 dog with Taenia, therefore unable to group by their results. 
 
 # Plot by region
-ggplot(all_metadata, aes(x = region, y = Taenia_., group = region, color = region)) +
+ggplot(all_metadata %>% filter(Taenia_. != 0), aes(x = region, y = Taenia_., group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
   theme_minimal() +
@@ -3212,24 +2980,6 @@ ggplot(all_metadata, aes(x = region, y = Taenia_., group = region, color = regio
     x = "Region",
     y = "% of Eukaryotic reads"
   )
-
-# Plot by PR results
-ggplot(all_metadata %>% filter(PR_Tania_serialis != "excluded"),
-       aes(x = PR_Tania_serialis, y = Taenia_., group = PR_Tania_serialis, color = region)) +
-  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE) +
-  geom_jitter(width = 0.1, show.legend = TRUE) +
-  theme_minimal() +
-  theme(
-    axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank()
-  ) +
-  labs(
-    title = "Taenia",
-    x = "PR Results",
-    y = "% of Eukaryotic reads"
-  )
 ```
 
 Uncinaria
@@ -3238,19 +2988,20 @@ summary(all_metadata$Uncinaria_.)
 # Range 0 - 0.02 
 # Med = 0, Mean = 0.0003843
 summary((subset(all_metadata, Uncinaria_. != 0)$Uncinaria_.))
+means_Uncinaria_region <- all_metadata %>% 
+  filter(Uncinaria_. != 0) %>%
+  group_by(region) %>%
+  summarize(mean_Uncinaria = mean(Uncinaria_., na.rm = TRUE)) # Daneborg 0.0012 ; Ittoq 0.000072
 
 # Shapiro-Wilk test for normality
 shapiro_results_Uncinaria <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Uncinaria_.)$p.value)
-# Results: p = 1.71e-11 Daneborg, p =  3.81e-10 Ittoq
-# THEREFORE neither region has normally distributed values
+  summarise(shapiro_p_value = shapiro.test(Uncinaria_.)$p.value) # Results: p = 1.71e-11 Daneborg, p =  3.81e-10 Ittoq
 
 # Wilcoxon Exact rank test
-wilcox_exact_results_Uncinaria <- exactRankTests::wilcox.exact(Uncinaria_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Uncinaria)
-# Results: p =0.0001526
-# THEREFORE YES sig difference between regions
+wilcox_exact_results_Uncinaria_R <- all_metadata %>%
+  filter(Uncinaria_. != 0) %>% # hash this line to calculate WITH negative dogs included
+  wilcox.exact(Uncinaria_. ~ region, data = .) # p = 0.1303, NO significance when zeros are excluded ; p =0.0001526 # THEREFORE YES sig difference between regions (with zeros included)
 
 # Plot
 ggplot(all_metadata, aes(x = region, y = Uncinaria_., group = region, color = region)) +
@@ -3272,22 +3023,20 @@ ggplot(all_metadata, aes(x = region, y = Uncinaria_., group = region, color = re
 ```
 Echinococcus
 ```{r Percent Echinococcus summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-summary(all_metadata$Echinococcus_.)
-# Range 0.003 - 0.08
-# Med = 0.00850, Mean = 0.01167
+summary(all_metadata$Echinococcus_.) # Range 0.003 - 0.08  Med = 0.00850, Mean = 0.01167
+means_Echinococcus_region <- all_metadata %>% 
+  filter(Echinococcus_. != 0) %>%
+  group_by(region) %>%
+  summarize(mean_Echinococcus = mean(Echinococcus_., na.rm = TRUE)) # Daneborg 0.013 ; Ittoq 0.010
 
 # Shapiro-Wilk test for normality
 shapiro_results_Echinococcus <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Echinococcus_.)$p.value)
-# Results: p = 0.00000000897 Daneborg, p =  0.00000784 Ittoq
-# THEREFORE neither region has normally distributed values
+  summarise(shapiro_p_value = shapiro.test(Echinococcus_.)$p.value) # Results: p = 0.00000000897 Daneborg, p =  0.00000784 Ittoq
 
 # Wilcoxon Exact rank test
 wilcox_exact_results_Echinococcus <- exactRankTests::wilcox.exact(Echinococcus_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Echinococcus)
-# Results: p =0.312
-# THEREFORE no sig difference between regions
+print(wilcox_exact_results_Echinococcus) # Results: p =0.312 THEREFORE no sig difference between regions
 
 # Plot
 ggplot(all_metadata, aes(x = region, y = Echinococcus_., group = region, color = region)) +
@@ -3308,22 +3057,16 @@ ggplot(all_metadata, aes(x = region, y = Echinococcus_., group = region, color =
 ```
 Cestoda
 ```{r Percent Cestoda summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-summary(all_metadata$Cestoda_.)
-# Range 0.06 - 0.9 
-# Med = 0.1, Mean = 0.1129
+summary(all_metadata$Cestoda_.) # Range 0.06 - 0.9  Med = 0.1, Mean = 0.1129
 
 # Shapiro-Wilk test for normality
 shapiro_results_Cestoda <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Cestoda_.)$p.value)
-# Results: p = 3.39e-11 Daneborg, p =  1.03e- 9 Ittoq
-# THEREFORE neither region has normally distributed values
+  summarise(shapiro_p_value = shapiro.test(Cestoda_.)$p.value) # Results: p = 3.39e-11 Daneborg, p =  1.03e- 9 Ittoq
 
 # Wilcoxon Exact rank test
 wilcox_exact_results_Cestoda <- exactRankTests::wilcox.exact(Cestoda_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Cestoda)
-# Results: p =0.04305
-# THEREFORE YES sig difference between regions
+print(wilcox_exact_results_Cestoda) # Results: p =0.04305  sig difference between regions
 
 # Plot
 ggplot(all_metadata, aes(x = region, y = Cestoda_., group = region, color = region)) +
@@ -3344,22 +3087,16 @@ ggplot(all_metadata, aes(x = region, y = Cestoda_., group = region, color = regi
 ```
 Nematoda
 ```{r Percent Nematoda summary, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-summary(all_metadata$Nematoda_.)
-# Range   0.02 - 0.4 
-# Med = 0.3, Mean = 0.259
+summary(all_metadata$Nematoda_.) # Range   0.02 - 0.4  Med = 0.3, Mean = 0.259
 
 # Shapiro-Wilk test for normality
 shapiro_results_Nematoda <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Nematoda_.)$p.value)
-# Results: p = 0.00000112 Daneborg, p =   0.00000262 Ittoq
-# THEREFORE neither region has normally distributed values
+  summarise(shapiro_p_value = shapiro.test(Nematoda_.)$p.value) # Results: p = 0.00000112 Daneborg, p =   0.00000262 Ittoq
 
 # Wilcoxon Exact rank test
 wilcox_exact_results_Nematoda <- exactRankTests::wilcox.exact(Nematoda_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Nematoda)
-# Results: p =0.3481
-# THEREFORE no sig difference between regions
+print(wilcox_exact_results_Nematoda) # Results: p =0.3481 no sig difference between regions
 
 # Plot
 ggplot(all_metadata, aes(x = region, y = Nematoda_., group = region, color = region)) +
@@ -3381,24 +3118,18 @@ ggplot(all_metadata, aes(x = region, y = Nematoda_., group = region, color = reg
 # Viruses
 
 Viral overall
-```{r}
-summary(all_metadata$Virus_.)
-# Range 0.3-4.0 % reads mapped to Virus
-# Med = 0.07%, Mean = 0.225
+```{r Virus}
+summary(all_metadata$Virus_.) # Range 0.3-4.0 % reads mapped to Virus Med = 0.07%, Mean = 0.225
 
 # Shapiro-Wilk test for normality
 shapiro_results_Virus <- all_metadata %>%
   group_by(region) %>%
-  summarise(shapiro_p_value = shapiro.test(Virus_.)$p.value)
-# Results: p = 0.000237 Daneborg, p = 0.00000000206 Ittoq
-# THEREFORE neither region has normally distributed values for % Virus reads
+  summarise(shapiro_p_value = shapiro.test(Virus_.)$p.value) # Results: p = 0.000237 Daneborg, p = 0.00000000206 Ittoq
 
 # Wilcoxon Exact rank test
 library(exactRankTests)
 wilcox_exact_results_Virus <- exactRankTests::wilcox.exact(Virus_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Virus)
-# Results: p = 0.002321
-# THEREFORE YES sig diff in % Virus reads between regions
+print(wilcox_exact_results_Virus) # Results: p = 0.002321 YES sig diff in % Virus reads between regions
 
 # Plot
 ggplot(all_metadata, aes(x = region, y = Virus_., group = region, color = region)) +
@@ -3417,149 +3148,75 @@ ggplot(all_metadata, aes(x = region, y = Virus_., group = region, color = region
     y = "% of unmapped reads"
   ) + coord_cartesian(ylim = c(0, 1) )
 ```
-```{r}
+```{r Parvo Adeno Pap}
 # Parvo
-# Wilcoxon Exact rank test
 library(exactRankTests)
 summary(all_metadata$PARVO_Parvoviridae_.)
 wilcox_exact_results_Parvo <- exactRankTests::wilcox.exact(all_metadata$PARVO_Parvoviridae_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Parvo)
-# Results: p = 7.547e-09
-# THEREFORE YES sig diff in % Viral reads mapped to Parvo between regions
-
-count_Parvo <- aggregate(PARVO_Parvoviridae ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 28, Ittoq = 27
-count_Bocaparvovirus <- aggregate(PARVO_Bocaparvovirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 23, Ittoq = 27
-count_Human_Bocavirus <- aggregate(PARVO_Human_Bocavirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 19, Ittoq = 1
-count_Bufavirus_1 <- aggregate(PARVO_Bufavirus_1 ~ region, data = all_metadata, FUN = sum)
-# Daneborg 9, Ittoq = 10
-count_Canine_Minute <- aggregate(PARVO_Canine_Minute ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 0, Ittoq = 1
-count_Canine_bufavirus <- aggregate(PARVO_Canine_bufavirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 0, Ittoq = 1
-count_Canine_protoparvovirus <- aggregate(PARVO_Canine_protoparvovirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 0, Ittoq = 1
-count_Canine_parvovirus <- aggregate(PARVO_Canine_parvovirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 1, Ittoq = 0
+print(wilcox_exact_results_Parvo) # Results: p = 7.547e-09 sig diff in % Viral reads mapped to Parvo between regions
+means_Parvoviridae_region <- all_metadata %>% 
+  filter(PARVO_Parvoviridae_. != 0) %>%
+  group_by(region) %>%
+  summarize(mean_PARVO_Parvoviridae_. = mean(PARVO_Parvoviridae_., na.rm = TRUE)) # Daneborg 0.42 ; Ittoq 0.41 (without zeros) / Daneborg 0.41 ; Ittoq 0.38 (with zeros)
 
 # Adenovirus
-# Wilcoxon Exact rank test
 library(exactRankTests)
 wilcox_exact_results_Adeno <- exactRankTests::wilcox.exact(all_metadata$ADENO_Adenoviridae_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Adeno)
-# Results: p = 0.0001022
-# THEREFORE YES sig diff in % Viral reads mapped to Adeno between regions
-
-count_Adeno <- aggregate(ADENO_Adenoviridae ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 19 Ittoq = 27
-count_Canine_mastadenovirus <- aggregate(ADENO_Canine_mastadenovirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 0, Ittoq = 3
-count_Human_adenovirus <- aggregate(ADENO_Human_adenovirus ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 3, Ittoq = 24
+print(wilcox_exact_results_Adeno) # Results: p = 0.0001022  sig diff in % Viral reads mapped to Adeno between regions
+means_Adeno_region <- all_metadata %>% 
+  filter(ADENO_Adenoviridae_. != 0) %>% # hash out to calculate with zeros
+  group_by(region) %>%
+  summarize(mean_ADENO_Adenoviridae_. = mean(ADENO_Adenoviridae_., na.rm = TRUE)) # Daneborg 0.012 ; Ittoq 0.082 (without zeros) / Daneborg 0.0081 , 0.076 (with zeros)
 
 #Papilloma
-# Wilcoxon Exact rank test
 library(exactRankTests)
 wilcox_exact_results_Pap <- exactRankTests::wilcox.exact(all_metadata$PAP_Papillomaviridae_. ~ region, data = all_metadata)
-print(wilcox_exact_results_Pap)
-# Results: p = 8.691e-05
-# THEREFORE YES sig diff in % Viral reads mapped to Pap between regions
-
-count_Pap <- aggregate(PAP_Papillomaviridae ~ region, data = all_metadata, FUN = sum)
-#Daneborg = 28 Ittoq = 29
-count_HPV <- aggregate(PAP_HPV ~ region, data = all_metadata, FUN = sum)
-# Daneborg = 28, Ittoq = 29
-count_Tick_assoc_papillomavirus_lsx <- aggregate(PAP_Tick_assoc_papillomavirus_lsx ~ region, data = all_metadata, FUN = sum)
-# Daneborg 0, Ittoq = 25
+print(wilcox_exact_results_Pap) # Results: p = 8.691e-05 sig diff in % Viral reads mapped to Pap between regions
+means_Adeno_region <- all_metadata %>% 
+  filter(PAP_Papillomaviridae_. != 0) %>% # hash out to calculate with zeros
+  group_by(region) %>%
+  summarize(mean_PAP_Papillomaviridae_. = mean(PAP_Papillomaviridae_., na.rm = TRUE)) # Daneborg 0.02 , Ittoq 0.21 (without zeros) / values do not change with zeros added
 ```
 
-
-
-```{r}
+## Fishers Exact testing:
+```{r inferred species}
 inferred_species <- read.csv("/Users/elsa/Desktop/THESIS/Thesis/inferred_species.csv") %>% as.data.frame()
-
 columns_to_select <- setdiff(names(inferred_species), "region")
 
 # Perform left join excluding the 'region' column
 all_metadata <- dplyr::left_join(all_metadata, inferred_species %>% select(all_of(columns_to_select)), by = "sample")
+```
+```{r counts of higher resolution taxonomic info}
+# Parvo
+count_Parvo <- aggregate(PARVO_Parvoviridae ~ region, data = all_metadata, FUN = sum) # Daneborg = 28, Ittoq = 27
+count_Bocaparvovirus <- aggregate(PARVO_Bocaparvovirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 23, Ittoq = 27
+count_Human_Bocavirus <- aggregate(PARVO_Human_Bocavirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 19, Ittoq = 1
+count_Bufavirus_1 <- aggregate(PARVO_Bufavirus_1 ~ region, data = all_metadata, FUN = sum) # Daneborg 9, Ittoq = 10
+count_Canine_Minute <- aggregate(PARVO_Canine_Minute ~ region, data = all_metadata, FUN = sum) # Daneborg = 0, Ittoq = 1
+count_Canine_bufavirus <- aggregate(PARVO_Canine_bufavirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 0, Ittoq = 1
+count_Canine_protoparvovirus <- aggregate(PARVO_Canine_protoparvovirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 0, Ittoq = 1
+count_Canine_parvovirus <- aggregate(PARVO_Canine_parvovirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 1, Ittoq = 0
 
+# Adeno
+count_Adeno <- aggregate(ADENO_Adenoviridae ~ region, data = all_metadata, FUN = sum) # Daneborg = 19 Ittoq = 27
+count_Canine_mastadenovirus <- aggregate(ADENO_Canine_mastadenovirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 0, Ittoq = 3
+count_Human_adenovirus <- aggregate(ADENO_Human_adenovirus ~ region, data = all_metadata, FUN = sum) # Daneborg = 3, Ittoq = 24
+
+# Pap
+count_Pap <- aggregate(PAP_Papillomaviridae ~ region, data = all_metadata, FUN = sum) #Daneborg = 28 Ittoq = 29
+count_HPV <- aggregate(PAP_HPV ~ region, data = all_metadata, FUN = sum) # Daneborg = 28, Ittoq = 29
+count_Tick_assoc_papillomavirus_lsx <- aggregate(PAP_Tick_assoc_papillomavirus_lsx ~ region, data = all_metadata, FUN = sum) # Daneborg 0, Ittoq = 25
+```
+```{r contingency tables}
+disease_columns <- c("S_capracanis", "S_tuagulusi", "S_hirsuta", "G_intestinalis", "G_peramelis", "G_muris", "Tr_spiralis", "Tr_OTHER", "Tr_pathgoniensis", "Tr_pseudospiralis", "Ta_laticollis", "Ta_asiatica", "Ta_solium", "Ta_OTHER", "Ta_krabbei", "Ta_arctos", "Ta_multiceps", "Ta_saginata", "Ta_madoquae", "E_granulosus", "E_multilocularis", "C_ubiquitum", "C_parvum", "C_hominis_TU502", "C_proventriculi", "C_muris_RN66", "C_OTHER", "C_wrairi", "C_canis", "PARVO_Parvoviridae", "PARVO_Bocaparvovirus", "PARVO_Human_Bocavirus", "PARVO_Bufavirus_1" , "PARVO_Canine_Minute", "PARVO_Canine_bufavirus", "PARVO_Canine_bufavirus", "PARVO_Canine_protoparvovirus", "PARVO_Canine_parvovirus", "ADENO_Adenoviridae", "ADENO_Human_adenovirus", "ADENO_Canine_mastadenovirus", "PAP_HPV", "PAP_Papillomaviridae", "PAP_Tick_assoc_papillomavirus_lsx")
+
+
+contingency_table <- table(all_metadata$region, all_metadata$C_meleagridis) # change out disease to test all
+
+# Run Fisher's exact test
+fisher_result <- fisher.test(contingency_table)
+
+# Print the results
+print(fisher_result)
 ```
 
-```{r}
-# Reshape the data for ggplot2 using tidyr
-inferred_species_long <- inferred_species %>%
-  pivot_longer(cols = -c(sample, region), names_to = "species", values_to = "count")
-inferred_species_long <- inferred_species %>%
-  pivot_longer(cols = -c(sample, region), names_to = "species", values_to = "count")
-
-# Define a function to group species based on prefixes
-group_species <- function(species) {
-  if (grepl("^C_", species)) {
-    return("C_")
-  } else if (grepl("^G_", species)) {
-    return("G_")
-  } else if (grepl("^Ta_", species)) {
-    return("Ta_")
-  } else if (grepl("^Tr_", species)) {
-    return("Tr_")
-  } else if (grepl("^S_", species)) {
-    return("S_")
-  } else if (grepl("^E_", species)) {
-    return("E_")
-  } else {
-    return("Other")
-  }
-}
-
-custom_palette <- brewer.pal(n = 7, name = "Set3")
-
-# Add a new column for species group
-inferred_species_long <- inferred_species_long %>%
-  mutate(species_group = sapply(species, group_species))
-
-# Create a stacked bar graph with facets along the x-axis
-ggplot(inferred_species_long, aes(x = sample, y = count, fill = species_group)) +
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values = setNames(custom_palette, unique(inferred_species_long$species_group))) +  # Use custom color palette
-  facet_wrap(~region, scales = "free_x") +  # Display scales along the bottom
-  labs(title = "Stacked Bar Graph",
-       x = "Sample ID",
-       y = "Count",
-       fill = "Species Group") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-```
-
-# DA of potentially pathogenic bacteria:
-```{r}
-pathogenic_physeq = subset_taxa(physeq_clr_genus, genus=="Bacteroides" | genus== "Campylobacter_D" | genus== "Clostridium"| genus== "Clostridium_AH"| genus== "Clostridium_G"| genus== "Clostridium_H"| genus== "Clostridium_I"| genus== "Clostridium_Q"| genus== "Enterococcus_B"| genus== "Escherichia"| genus== "Fusobacterium_A"| genus== "Fusobacterium_B" | genus== "Helicobacter_A" | genus== "Helicobacter_B" | genus== "Helicobacter_C" | genus== "Helicobacter_D" | genus== "Helicobacter_G" | genus== "Klebsiella" | genus== "Streptococcus")
-
-pathogenic_physeq.t <- as.data.frame(t(as.matrix(pathogenic_physeq@otu_table)))
-table.W_pathogenic <- tibble::rownames_to_column(pathogenic_physeq.t, "sample")
-sample_type <- metadata[,c(1,4)]
-taxa_table_pathogenic <- merge(table.W_pathogenic,sample_type,by="sample")
-taxa_table_pathogenic <- taxa_table_pathogenic[,-c(1)]
-taxa_table_pathogenic.no <- taxa_table_pathogenic[,-ncol(taxa_table_pathogenic)]
-all.taxa_pathogenic <- colnames(taxa_table_pathogenic.no)
-Wilcox_result_pathogenic <- c()
-for (y in all.taxa_pathogenic){
-  res.wilcox_pathogenic <- wilcox.test(taxa_table_pathogenic[,y] ~ region, data = taxa_table_pathogenic,
-                            exact = FALSE, alternative = "less")
-  Wilcox_result_pathogenic <- rbind(Wilcox_result_pathogenic,c(res.wilcox_pathogenic[[1]],Pvalue=res.wilcox_pathogenic[[3]]))
-}
-rownames(Wilcox_result_pathogenic) <- all.taxa_pathogenic
-Wilcox_result_pathogenic <- as.data.frame(Wilcox_result_pathogenic)
-
-Wilcox_result_pathogenic$p_adjusted <- p.adjust(Wilcox_result_pathogenic$Pvalue, method = "fdr")
-
-Wilcox_result_sign_pathogenic <- subset(Wilcox_result_pathogenic, p_adjusted <= 0.05) %>%
-  rownames_to_column(., "Phylum")
-knitr::kable(Wilcox_result_pathogenic, format = "html", full_width = F,col.names = c("Genus", "W", "p-value","p-value adjusted"), digits = 10) %>%
-  kable_styling(latex_options="scale_down")
-
-knitr::kable(Wilcox_result_sign_pathogenic, format = "html", full_width = F,col.names = c("Genus", "W", "p-value","p-value adjusted"), digits = 10) %>%
-  kable_styling(latex_options="scale_down")
-
-# No sig differences in potentially pathogenic bacteria when samples are grouped by region
-```
