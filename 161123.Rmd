@@ -1089,7 +1089,7 @@ GIFTs_elements_tSNE_rel_means_Daneborg %>%
 ```
 
 # DA
-```{r}
+```{r remove structural zeros}
 # remove MAGs only present in one treatment, in this case the region
 Ittoq_samples <- all_metadata %>% 
                     filter(region == "Ittoqqortoormii") %>% 
@@ -1119,7 +1119,7 @@ structural_zeros <- count_table_cov_size %>%
    dplyr::left_join(mags_table, by=join_by(genome==genome)) %>%
    arrange(present,-average)
 ```
-```{r}
+```{r plot structural zeros}
 structural_zeros %>%
     mutate(average = ifelse(present == "Ittoq", average * -1, average)) %>% #convert Ittoq genome counts to negative
     ggplot(., aes(x=average, y=forcats::fct_rev(phylum), color=phylum)) +
@@ -1135,37 +1135,31 @@ structural_zeros %>%
       labs(y="Genus",x="Genome counts") + 
       guides(col=guide_legend("Phylum"))
 ```
-```{r}
+```{r new count table without structural zeros}
 # Make new counts table with structural zeros removed
 count_table_cov_size_DA <- count_table_cov_size[!count_table_cov_size$genome %in% structural_zeros$genome, ]
 row.names(count_table_cov_size_DA) <- count_table_cov_size_DA$genome
 count_table_cov_size_DA$genome <- NULL 
 ```
 
-```{r}
+```{r physeq object with normalized counts, structural zeros removed}
 ## Making phyloseq object -- for DA analysis
-
 # OTU table
-MAGotu <- otu_table(count_table_cov_size_DA, taxa_are_rows = T)
-
+MAGotu <- otu_table(count_table_cov_size_DA, taxa_are_rows = T) # normalized counts, structural zeros removed
 # Tax table
 taxonomyclean1 <- taxonomyclean[,-1]
 taxmatrix <- as.matrix(taxonomyclean1[1:8])
 rownames(taxmatrix) <- taxonomyclean$genome
 taxtable <- tax_table(taxmatrix) 
-
 #Metadata
 metadata <- na.omit(metadata)
 rownames(metadata) <- NULL
 metadata.pre <- column_to_rownames(metadata, "sample")
-
 #Sample table
 sample_tab <- sample_data(metadata.pre)
-
 # Tree
 tree <- phytools::force.ultrametric(tree, method = "extend")
 treephylo = phyloseq::phy_tree(tree)
-
 ## Merge into phyloseq object
 physeq <- phyloseq(MAGotu, treephylo, sample_tab,taxtable)
 ```
@@ -1173,7 +1167,7 @@ physeq <- phyloseq(MAGotu, treephylo, sample_tab,taxtable)
 ## CLR transformation and wilcoxon testing
 ### Phylum level
 CLR transforming phyloseq object:
-```{r clr transform for DA, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+```{r clr transform for wilcoxon, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 # Perform CLR transformation
 physeq_clr <- microbiome::transform(physeq, 'clr') # use whenever a package does NOT include its own data transformation
 
@@ -1214,17 +1208,7 @@ table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
 sample_type <- all_metadata[,c(1,4)]
 table.W.meta <- merge(table.W,sample_type,by="sample")
 table.W.meta <- table.W.meta[,-c(1)]
-means_phylum_by_region_all <- table.W.meta %>% dplyr::group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
-means_phylum_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
-means_all <- as.data.frame(means_phylum_by_region_all)
-means <- as.data.frame(means_phylum_by_region)
-
-means <- means[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
-
-knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
-  kable_styling(latex_options="scale_down")
 ```
-
 ```{r wilcox_phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 physeq_clr_phylum.t <- as.data.frame(t(as.matrix(physeq_clr_phylum@otu_table)))
 table.W <- tibble::rownames_to_column(physeq_clr_phylum.t, "sample")
@@ -1257,11 +1241,18 @@ table.W_filtered_meta <- table.W_filtered %>%
   rownames_to_column(., "sample") %>%
   merge(.,sample_type,by="sample")
 table.W_filtered_meta <- table.W_filtered_meta[,-c(1)]
-means_phylum_by_region <- table.W_filtered_meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:3],.funs = c(mean="mean", sd="sd"))
-means <- as.data.frame(means_phylum_by_region)
-means <- means[,c(1,2,5,3,6,4,7)]
-knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
-  kable_styling(latex_options="scale_down")
+
+regions <- c("Daneborg", "Ittoqqortoormii")
+
+summary_table.W_filtered_meta <- table.W_filtered_meta %>%
+  group_by(region) %>%
+  summarise(
+    mean_Actinomycetota = mean(Actinomycetota),
+    sd_Actinomycetota = sd(Actinomycetota),
+    mean_Bacillota_A = mean(Bacillota_A),
+    sd_Bacillota_A = sd(Bacillota_A)
+  ) %>%
+  filter(region %in% regions)
 ```
 Plotting:
 ```{r Plots for Wilcox DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -1278,34 +1269,22 @@ p1<- table.W_filtered_meta %>%
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
   ylab("Bacillota A")
-
-# Bacillota_C
+# Actinomycetota
 p2<- table.W_filtered_meta %>%
-  ggplot(aes(x = region, y = Bacillota_C, group = region, color = region)) +
+  ggplot(aes(x = region, y = Actinomycetota, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
-# geom_text(label = "p-adj= 0.0000") +
+# geom_text(label = "p-adj= 0.0003") +
   theme(panel.background = element_blank(),
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Bacillota C")
+  ylab("Actinomycetota")
 
-# Campylobacterota
-p3<- table.W_filtered_meta %>%
-  ggplot(aes(x = region, y = Campylobacterota, group = region, color = region)) +
-  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
-  geom_jitter(width = 0.1, show.legend = TRUE) +
-  # geom_text(label = "p-adj= 0.0464") +
-  theme(panel.background = element_blank(),
-        panel.border = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
-  xlab("Region") + 
-  ylab("Campylobacterota")
+library(gridExtra)
+grid.arrange(arrangeGrob(p1, p2, ncol = 2))
 ```
 
 ### Genus level
@@ -1345,17 +1324,7 @@ table.W_genus <- tibble::rownames_to_column(physeq_clr_genus.t, "sample")
 sample_type <- all_metadata[,c(1,4)]
 table.W.meta_genus <- merge(table.W_genus,sample_type,by="sample")
 table.W.meta_genus <- table.W.meta_genus[,-c(1)]
-means_genus_by_region_all <- table.W.meta_genus %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(Maximum="max", Minimum="min",mean="mean", sd="sd"))
-means_genus_by_region <- table.W.meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:12],.funs = c(mean="mean", sd="sd"))
-means_all_genus <- as.data.frame(means_genus_by_region_all)
-means <- as.data.frame(means_genus_by_region)
-
-means_genus <- means[,c(1,2,14,3,15,4,16,5,17,6,18,7,19,8,20,9,21,10,22,11,23,12,24,13,25)]
-
-knitr::kable(means_genus, format = "html", full_width = F, digits = 3) %>%
-  kable_styling(latex_options="scale_down")
 ```
-
 ```{r wilcox_genus, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 physeq_clr_genus.t <- as.data.frame(t(as.matrix(physeq_clr_genus@otu_table)))
 table.W <- tibble::rownames_to_column(physeq_clr_genus.t, "sample")
@@ -1388,49 +1357,57 @@ table.W_filtered_meta <- table.W_filtered %>%
   rownames_to_column(., "sample") %>%
   merge(.,sample_type,by="sample")
 table.W_filtered_meta <- table.W_filtered_meta[,-c(1)]
-means_genus_by_region <- table.W_filtered_meta %>% group_by(region) %>% summarise_at(.vars = names(.)[1:3],.funs = c(mean="mean", sd="sd"))
-means <- as.data.frame(means_genus_by_region)
-means <- means[,c(1,2,5,3,6,4,7)]
-knitr::kable(means, format = "html", full_width = F, digits = 3) %>%
-  kable_styling(latex_options="scale_down")
+
+summary_table.W_filtered_meta <- table.W_filtered_meta %>%
+  group_by(region) %>%
+  summarise(
+    mean_Collinsella = mean(Collinsella),
+    sd_Collinsella = sd(Collinsella),
+    mean_Blautia_A = mean(Blautia_A),
+    sd_Blautia_A = sd(Blautia_A),
+    mean_Oliverpabstia = mean(Oliverpabstia),
+    sd_Oliverpabstia = sd(Oliverpabstia),
+    mean_Allobaculum = mean(Allobaculum),
+    sd_Allobaculum = sd(Allobaculum),
+    mean_Paraprevotella = mean(Paraprevotella),
+    sd_Paraprevotella = sd(Paraprevotella),
+    mean_Bacteria_Deferribacterota_Deferribacteres_Deferribacterales_Mucispirillaceae_ = mean(Bacteria_Deferribacterota_Deferribacteres_Deferribacterales_Mucispirillaceae_),
+    sd_Bacteria_Deferribacterota_Deferribacteres_Deferribacterales_Mucispirillaceae_ = sd(Bacteria_Deferribacterota_Deferribacteres_Deferribacterales_Mucispirillaceae_),
+  ) %>%
+  filter(region %in% regions)
 ```
 
 Box plots: 
 ```{r}
-# Slackia_A
+# Collinsella
 g1<- table.W_filtered_meta %>%
-  ggplot(aes(x = region, y = Slackia_A, group = region, color = region)) +
+  ggplot(aes(x = region, y = Collinsella, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
-# geom_text(label = "p-adj= 0.0016") +
   theme(panel.background = element_blank(),
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Slackia A")
-
+  ylab("Collinsella")
 # Blautia_A
 g2<- table.W_filtered_meta %>%
   ggplot(aes(x = region, y = Blautia_A, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
-# geom_text(label = "p-adj= 0.0006") +
   theme(panel.background = element_blank(),
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Blautia A")
-
+  ylab("Blautia_A")
 # Oliverpabstia
 g3<- table.W_filtered_meta %>%
   ggplot(aes(x = region, y = Oliverpabstia, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
-# geom_text(label = "p-adj= 0.0374") +
   theme(panel.background = element_blank(),
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
@@ -1438,27 +1415,23 @@ g3<- table.W_filtered_meta %>%
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
   ylab("Oliverpabstia")
-
-# Megamonas
+# Allobaculum
 g4<- table.W_filtered_meta %>%
-  ggplot(aes(x = region, y = Megamonas, group = region, color = region)) +
+  ggplot(aes(x = region, y = Allobaculum, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
-# geom_text(label = "p-adj= 0.0000") +
   theme(panel.background = element_blank(),
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
-  ylab("Megamonas")
-
+  ylab("Allobaculum")
 # Paraprevotella
 g5<- table.W_filtered_meta %>%
   ggplot(aes(x = region, y = Paraprevotella, group = region, color = region)) +
   geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
   geom_jitter(width = 0.1, show.legend = TRUE) +
-# geom_text(label = "p-adj= 0.0236") +
   theme(panel.background = element_blank(),
         panel.border = element_blank(),
         panel.grid.major = element_blank(),
@@ -1466,13 +1439,51 @@ g5<- table.W_filtered_meta %>%
         axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
   xlab("Region") + 
   ylab("Paraprevotella")
+# Mucispirillum
+g6<- table.W_filtered_meta %>%
+  ggplot(aes(x = region, y = Bacteria_Deferribacterota_Deferribacteres_Deferribacterales_Mucispirillaceae_, group = region, color = region)) +
+  geom_boxplot(alpha = 0.2, outlier.shape = NA, width = 0.3, show.legend = FALSE, coef = 0) +
+  geom_jitter(width = 0.1, show.legend = TRUE) +
+  theme(panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+  xlab("Region") + 
+  ylab("Mucispirillum")
+
+library(gridExtra)
+grid.arrange(arrangeGrob(g1, g2,g3, g4, g5, g6, ncol = 3))
 ```
 
 ## DESeq2
+```{r DESEq2 Phyloseq object}
+phylo_samples_deseq <- all_metadata %>% 
+                    column_to_rownames("sample") %>% 
+                    mutate(region = factor(region, levels = c("Daneborg","Ittoqqortoormii"))) %>% #TJ1 = Daneborg, TJ2 = Ittoq
+                    sample_data() #convert to phyloseq sample_data object
+
+phylo_counts_deseq <- counts_table %>% # DESeq performs its own normalization, so the raw count table is added
+                    filter(!genome %in% structural_zeros$genome) %>% # remove structural zeros
+                    column_to_rownames("genome") %>% 
+                    mutate_all(~ replace(., . == 0, 0.00001)) %>% #add pseudo counts to avoid structural zero issues 
+                    otu_table(., taxa_are_rows = TRUE) #convert to phyloseq otu_table object
+
+phylo_taxonomy_deseq <- taxonomyclean %>% 
+                    filter(genome %in% rownames(phylo_counts)) %>% # remove structural zeros
+                    mutate(genome2=genome) %>% #create a pseudo genome name column
+                    column_to_rownames("genome2") %>% 
+                    dplyr::select(domain,phylum,class,order,family,genus,species,genome) %>% 
+                    as.matrix() %>% 
+                    tax_table() #convert to phyloseq tax_table object
+
+#Generate phyloseq object required to input ANCOMBC
+physeq_deseq <- phyloseq(phylo_counts_deseq, phylo_taxonomy_deseq, phylo_samples_deseq)
+```
 ### Phylum level
 ```{r DESeq2 DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 # aggregate at phylum level
-physeq.phylum <- tax_glom(physeq, 'phylum')
+physeq.phylum <- tax_glom(physeq_deseq, 'phylum')
 
 # convert phyloseq object to DESeq object
 # DESeq runs with its own transformation, do not use clr data
@@ -1536,12 +1547,10 @@ ggplot(sigtab_deseq_with_tax1, aes(x=forcats::fct_rev(reorder(phylum, as.integer
   ylab("log2FoldChange")+
   guides(col=guide_legend("Phylum"))
 ```
-
-
 ### Genus level
 ```{r DESeq2 DA G, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 # aggregate at genus level
-physeq.genus <- tax_glom(physeq, 'genus')
+physeq.genus <- tax_glom(physeq_deseq, 'genus')
 
 region_deseq_genus <- phyloseq_to_deseq2(physeq.genus, ~ region) 
 
@@ -1556,7 +1565,6 @@ summary(deseq_res_ittoq_vs_daneborg_genus)
 sigtab_res_deseq_res_ittoq_vs_daneborg_genus <- deseq_res_ittoq_vs_daneborg_genus[which(deseq_res_ittoq_vs_daneborg_genus$padj < 0.05), ]
 
 summary(sigtab_res_deseq_res_ittoq_vs_daneborg_genus) 
-
 ```
 34 MAGs are enriched in Ittoq, compared to Daneborg. 8 are enriched in Daneborg, compared to Ittoq
 ```{r DESeq2 DA G stats, comment="", echo=FALSE, message=FALSE, warning=FALSE}
@@ -1592,7 +1600,6 @@ sigtab_deseq_with_tax2 <- sigtab_deseq_region_genus_with_tax %>%
   arrange(phylum)
 
 rownames(sigtab_deseq_with_tax2) <- sigtab_deseq_with_tax2$genus
-
 ```
 ```{r DESeq2 DA G plotting, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(sigtab_deseq_with_tax2, aes(x=forcats::fct_rev(reorder(genus, as.integer(factor(genus)))), y=log2FoldChange, color=phylum)) + 
@@ -1622,7 +1629,7 @@ phylo_taxonomy <- taxonomyclean %>%
                     filter(genome %in% rownames(phylo_counts)) %>% # remove structural zeros
                     mutate(genome2=genome) %>% #create a pseudo genome name column
                     column_to_rownames("genome2") %>% 
-                    dplyr::select(domain,phylum,class,order,family,genus,species,genome) %>% #add an additional taxonomic level to ensure genome-level analysis (as not all genomes have species-level taxonomic assignments. Otherwise, ANCOMBC2 aggregates analyses per species)
+                    dplyr::select(domain,phylum,class,order,family,genus,species,genome) %>% 
                     as.matrix() %>% 
                     tax_table() #convert to phyloseq tax_table object
 
@@ -1632,7 +1639,6 @@ physeq_ancom <- phyloseq(phylo_counts, phylo_taxonomy, phylo_samples)
 
 ### phylum level
 ```{r ANCOM-BC DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-
 set.seed(1234) #set seed for reproducibility
 ancom_output_phylum <- ancombc2(physeq_ancom, 
                   assay_name = "counts", 
@@ -1703,15 +1709,15 @@ ancom_result_phylum %>%
 ```{r}
 #Enriched Daneborg
 ancom_result_phylum %>%
-  filter(lfc_regionIttoqqortoormii < 0) %>% #
-  filter(p_regionIttoqqortoormii < 0.05) %>%
+  filter(lfc_regionIttoqqortoormii < 0) %>% 
+  filter(p_regionIttoqqortoormii < 0.05) %>% # note use of p here, should we switch to q?
   arrange(lfc_regionIttoqqortoormii) %>%
   dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,p_regionIttoqqortoormii) %>%
   kable()
 
 # Enriched Ittoq
 ancom_result_phylum %>%
-  filter(lfc_regionIttoqqortoormii > 0) %>% #
+  filter(lfc_regionIttoqqortoormii > 0) %>% 
   filter(p_regionIttoqqortoormii < 0.05) %>% 
   arrange(-lfc_regionIttoqqortoormii) %>%
   dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,p_regionIttoqqortoormii) %>%
@@ -1736,8 +1742,6 @@ ancom_result_phylum %>%
 ```
 ### Genus level
 ```{r ANCOM-BC DA P, comment="", echo=FALSE, message=FALSE, warning=FALSE}
-# tse = mia::makeTreeSummarizedExperimentFromPhyloseq(physeq.phylum) # create tse object
-
 set.seed(1234) #set seed for reproducibility
 ancom_output_genus <- ancombc2(physeq_ancom, 
                   assay_name = "counts", 
@@ -1807,15 +1811,15 @@ ancom_result_genus %>%
 ```{r}
 #Enriched Daneborg
 ancom_result_genus %>%
-  filter(lfc_regionIttoqqortoormii < 0) %>% #
-  filter(q_regionIttoqqortoormii < 0.05) %>%
+  filter(lfc_regionIttoqqortoormii < 0) %>% 
+  filter(q_regionIttoqqortoormii < 0.05) %>% # note use of q here
   arrange(lfc_regionIttoqqortoormii) %>%
   dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,q_regionIttoqqortoormii) %>%
   kable()
 
 # Enriched Ittoq
 ancom_result_genus %>%
-  filter(lfc_regionIttoqqortoormii > 0) %>% #
+  filter(lfc_regionIttoqqortoormii > 0) %>% 
   filter(q_regionIttoqqortoormii < 0.05) %>% 
   arrange(-lfc_regionIttoqqortoormii) %>%
   dplyr::select(genome,lfc_regionIttoqqortoormii,phylum,q_regionIttoqqortoormii) %>%
@@ -1842,7 +1846,6 @@ ancom_result_genus %>%
 ```
 
 ### ADLEx2
-
 ```{r}
 library(ALDEx2)
 
@@ -1981,7 +1984,6 @@ tse_LinDA <- mia::subsetByPrevalentTaxa(tse_LinDA, detection = 0, prevalence = 0
 ```
 ```{r LinDA DA P analysis, comment="", echo=FALSE, message=FALSE, warning=FALSE}
 # Un-comment lines below to install LinDA from GitHub if needed
-
 # install.packages(c("modeest", "lmerTest", "foreach", "parallel", "ggplot2", "ggrepel"))
 # install.packages("devtools")
 # devtools::install_github("zhouhj1994/LinDA")
